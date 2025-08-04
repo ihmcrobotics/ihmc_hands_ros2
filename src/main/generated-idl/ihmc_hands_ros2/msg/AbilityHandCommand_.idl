@@ -1,0 +1,70 @@
+#ifndef __ihmc_hands_ros2__msg__AbilityHandCommand__idl__
+#define __ihmc_hands_ros2__msg__AbilityHandCommand__idl__
+
+module ihmc_hands_ros2
+{
+  module msg
+  {
+    module dds
+    {
+      const octet POSITION_CONTROL =
+      0;
+
+      const octet VELOCITY_CONTROL =
+      1;
+
+      const octet VEL_TO_POS_CONTROL =
+      2;
+
+      const octet GRIP_CONTROL =
+      3;
+
+      const octet POWER_GRIP =
+      0;
+
+      const octet KEY_GRIP =
+      1;
+
+      const octet TRIPOD_OPEN_GRIP =
+      2;
+
+      const octet TRIPOD_CLOSED_GRIP =
+      3;
+
+      const octet RELAX_GRIP =
+      3;
+
+      const octet RUDE_GRIP =
+      4;
+
+      const octet HOOK_GRIP =
+      5;
+
+      const octet PINCH_OPEN_GRIP =
+      6;
+
+      const octet PINCH_CLOSED_GRIP =
+      7;
+
+
+      @TypeCode(type="ihmc_hands_ros2::msg::dds_::AbilityHandCommand_")
+      struct AbilityHandCommand
+      {
+        /**
+         * The hand's serial number. E.g. 24ABH265
+         */
+        string<8> serial_number;
+        /**
+         * Specifies the control mode
+         * Default = position control
+         */
+        octet control_mode;
+        octet grip;
+        float goal_positions[6];
+        float goal_velocities[6];
+      };
+    };
+  };
+};
+
+#endif

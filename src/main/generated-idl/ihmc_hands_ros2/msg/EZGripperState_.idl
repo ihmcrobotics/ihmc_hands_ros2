@@ -1,0 +1,75 @@
+#ifndef __ihmc_hands_ros2__msg__EZGripperState__idl__
+#define __ihmc_hands_ros2__msg__EZGripperState__idl__
+
+module ihmc_hands_ros2
+{
+  module msg
+  {
+    module dds
+    {
+      const octet LEFT =
+      0;
+
+      const octet RIGHT =
+      1;
+
+      const octet POSITION_CONTROL =
+      0;
+
+      const octet CALIBRATION =
+      1;
+
+      const octet ERROR_RESET =
+      2;
+
+      const octet COOLDOWN =
+      3;
+
+
+      @TypeCode(type="ihmc_hands_ros2::msg::dds_::EZGripperState_")
+      struct EZGripperState
+      {
+        /**
+         * Specifies the side of the robot of the gripper being referred to
+         */
+        @defaultValue(value=255)
+        octet robot_side;
+        /**
+         * Specifies the current operation mode.
+         */
+        @defaultValue(value=255)
+        octet operation_mode;
+        /**
+         * Temperature of the Dynamixel in Celsius
+         */
+        octet temperature;
+        /**
+         * The current Dynamixel position
+         * 0.0 = fully closed, 1.0 = fully open
+         */
+        float current_position;
+        /**
+         * The current amount of effort being used
+         * 0.0 = no effort, 1.0 = maximum effort
+         */
+        float current_effort;
+        /**
+         * Dynamixel's error code
+         * See: https://emanual.robotis.com/docs/en/dxl/protocol1/#error
+         */
+        octet error_code;
+        /**
+         * Realtime tick of the Dynamixel
+         * If this value isn't changing, communication with the gripper is broken
+         */
+        long realtime_tick;
+        /**
+         * Whether the hand has been calibrated
+         */
+        boolean is_calibrated;
+      };
+    };
+  };
+};
+
+#endif

@@ -1,0 +1,67 @@
+#ifndef __ihmc_hands_ros2__msg__EZGripperCommand__idl__
+#define __ihmc_hands_ros2__msg__EZGripperCommand__idl__
+
+module ihmc_hands_ros2
+{
+  module msg
+  {
+    module dds
+    {
+      const octet LEFT =
+      0;
+
+      const octet RIGHT =
+      1;
+
+      const octet POSITION_CONTROL =
+      0;
+
+      const octet CALIBRATION =
+      1;
+
+      const octet ERROR_RESET =
+      2;
+
+
+      @TypeCode(type="ihmc_hands_ros2::msg::dds_::EZGripperCommand_")
+      struct EZGripperCommand
+      {
+        /**
+         * Specifies the side of the robot of the gripper being referred to
+         */
+        @defaultValue(value=255)
+        octet robot_side;
+        /**
+         * Specifies the desired operation mode.
+         */
+        @defaultValue(value=255)
+        octet operation_mode;
+        /**
+         * The temperature limit. Once reached, the gripper will go into cooldown mode
+         * until the actuator's temperature falls by 10% of the temperature limit.
+         * By default set to 75. It is not recommended going above 80.
+         * Automatic cooldown can be disabled by setting this value to 255.
+         */
+        @defaultValue(value=75)
+        octet temperature_limit;
+        /**
+         * The goal position
+         * 0.0 = fully closed, 1.0 = fully open
+         */
+        float goal_position;
+        /**
+         * Maximum effort to put into achieving the goal position
+         * 0.0 = no effort (fingers will not move), 1.0 = maximum effort (can quickly overheat actuator)
+         * 0.3 is a reasonable normal value, and it is recommended not to exceed 0.8.
+         */
+        float max_effort;
+        /**
+         * Keeping the torque off when not needed can help keep the gripper's temperature down
+         */
+        boolean torque_on;
+      };
+    };
+  };
+};
+
+#endif

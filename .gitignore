@@ -1,0 +1,11 @@
+*/src/*/out
+
+**/build
+**/out
+**/gradle
+**/.gradle
+**/.idea
+**/.settings
+**/.vscode*
+
+gradlew*
