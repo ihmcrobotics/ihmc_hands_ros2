@@ -19,4 +19,11 @@ public interface HandInterface
     * @return This hand's side.
     */
    RobotSide getSide();
+
+   /**
+    * Get the type of this hand.
+    *
+    * @return This hand's type.
+    */
+   HandType getType();
 }

@@ -1,6 +1,7 @@
 package us.ihmc.handsros2.abilityHand;
 
 import us.ihmc.handsros2.HandInterface;
+import us.ihmc.handsros2.HandType;
 
 /**
  * <p>
@@ -35,6 +36,11 @@ public interface AbilityHandInterface extends HandInterface
 {
    int ACTUATOR_COUNT = 6;
    int TOUCH_SENSOR_COUNT = 30;
+
+   default HandType getType()
+   {
+      return HandType.ABILITY_HAND;
+   }
 
    /**
     * Get the current {@link AbilityHandCommandType}.

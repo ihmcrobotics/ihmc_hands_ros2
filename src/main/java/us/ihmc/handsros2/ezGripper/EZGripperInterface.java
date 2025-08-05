@@ -1,6 +1,7 @@
 package us.ihmc.handsros2.ezGripper;
 
 import us.ihmc.handsros2.HandInterface;
+import us.ihmc.handsros2.HandType;
 
 /**
  * Generic interface for a SAKE EZGripper.
@@ -8,6 +9,11 @@ import us.ihmc.handsros2.HandInterface;
 public interface EZGripperInterface extends HandInterface
 {
    int RAW_RANGE_OF_MOTION = 2500;
+
+   default HandType getType()
+   {
+      return HandType.EZ_GRIPPER;
+   }
 
    // COMMAND METHODS //
 
