@@ -1,3 +1,6 @@
+# An identifier for the hand. Up to 8 characters long
+string<=8 identifier
+
 byte LEFT=0
 byte RIGHT=1
 

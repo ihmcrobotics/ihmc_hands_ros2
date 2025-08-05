@@ -12,6 +12,7 @@ import us.ihmc.yoVariables.variable.YoInteger;
  */
 public abstract class YoEZGripper implements EZGripperInterface
 {
+   private final String identifier;
    private final RobotSide robotSide;
 
    // Low level control
@@ -26,8 +27,9 @@ public abstract class YoEZGripper implements EZGripperInterface
    private final YoInteger realtimeTick;
    private final YoInteger errorCode;
 
-   public YoEZGripper(YoRegistry registry, RobotSide robotSide)
+   public YoEZGripper(YoRegistry registry, String identifier, RobotSide robotSide)
    {
+      this.identifier = identifier;
       this.robotSide = robotSide;
 
       String prefix = robotSide.name() + "EZGripper";
@@ -44,7 +46,13 @@ public abstract class YoEZGripper implements EZGripperInterface
    }
 
    @Override
-   public RobotSide getRobotSide()
+   public String getIdentifier()
+   {
+      return identifier;
+   }
+
+   @Override
+   public RobotSide getSide()
    {
       return robotSide;
    }

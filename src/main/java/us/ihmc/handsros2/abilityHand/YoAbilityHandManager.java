@@ -20,7 +20,7 @@ public class YoAbilityHandManager extends AbilityHandManager
    {
       super(hand);
 
-      String prefix = hand.getHandSide().name() + super.getClass().getSimpleName();
+      String prefix = hand.getSide().name() + super.getClass().getSimpleName();
       controlMode = new YoEnum<>(prefix + "ControlMode", registry, ControlMode.class);
       grip = new YoEnum<>(prefix + "Grip", registry, Grip.class);
       for (int i = 0; i < ACTUATOR_COUNT; ++i)
@@ -29,7 +29,7 @@ public class YoAbilityHandManager extends AbilityHandManager
          goalPositions[i].set(30.0);
          goalVelocities[i] = new YoDouble(prefix + "GoalVelocity" + i, registry);
       }
-      goalPositions[ACTUATOR_COUNT-1].set(-30.0);
+      goalPositions[ACTUATOR_COUNT - 1].set(-30.0);
    }
 
    @Override

@@ -25,7 +25,7 @@ public class YoEZGripperManager extends EZGripperManager
    {
       super(gripper);
 
-      String prefix = gripper.getRobotSide().name() + "EZGripperManager";
+      String prefix = gripper.getSide().name() + super.getClass().getSimpleName();
       desiredOperationMode = new YoEnum<>(prefix + "DesiredOperationMode", registry, OperationMode.class);
       desiredOperationMode.set(OperationMode.POSITION_CONTROL);
       operationMode = new YoEnum<>(prefix + "operationMode", registry, OperationMode.class);

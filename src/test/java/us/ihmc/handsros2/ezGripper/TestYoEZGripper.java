@@ -5,9 +5,9 @@ import us.ihmc.yoVariables.registry.YoRegistry;
 
 public class TestYoEZGripper extends YoEZGripper
 {
-   public TestYoEZGripper(YoRegistry registry, RobotSide robotSide)
+   public TestYoEZGripper(YoRegistry registry, String identifier, RobotSide robotSide)
    {
-      super(registry, robotSide);
+      super(registry, identifier, robotSide);
    }
 
    @Override

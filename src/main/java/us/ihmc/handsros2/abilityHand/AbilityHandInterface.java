@@ -1,6 +1,6 @@
 package us.ihmc.handsros2.abilityHand;
 
-import us.ihmc.robotics.robotSide.RobotSide;
+import us.ihmc.handsros2.HandInterface;
 
 /**
  * <p>
@@ -31,19 +31,10 @@ import us.ihmc.robotics.robotSide.RobotSide;
  * <a href="https://github.com/psyonicinc/ability-hand-api/blob/master/Documentation/ABILITY-HAND-ICD.pdf">Ability Hand Interface Control Document</a>.
  * </p>
  */
-public interface AbilityHandInterface
+public interface AbilityHandInterface extends HandInterface
 {
    int ACTUATOR_COUNT = 6;
    int TOUCH_SENSOR_COUNT = 30;
-
-   String getSerialNumber();
-
-   /**
-    * Get this hand's side.
-    *
-    * @return This hand's side.
-    */
-   RobotSide getHandSide();
 
    /**
     * Get the current {@link AbilityHandCommandType}.
@@ -57,7 +48,7 @@ public interface AbilityHandInterface
     *
     * @param commandType The command type.
     */
-   void setCommandType(us.ihmc.handsros2.abilityHand.AbilityHandCommandType commandType);
+   void setCommandType(AbilityHandCommandType commandType);
 
    /**
     * Get the command value at the specified index.

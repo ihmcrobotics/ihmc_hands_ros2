@@ -13,13 +13,13 @@ public class EZGripperManagerTest
 {
    private static Stream<Arguments> getControllers()
    {
-      TestEZGripper abilityHand = new TestEZGripper(RobotSide.LEFT);
-      EZGripperManager manager = new EZGripperManager(abilityHand);
+      TestEZGripper ezGripper = new TestEZGripper("LeftEZGripper", RobotSide.LEFT);
+      EZGripperManager manager = new EZGripperManager(ezGripper);
 
-      YoEZGripper yoEZGripper = new TestYoEZGripper(null, RobotSide.RIGHT);
+      YoEZGripper yoEZGripper = new TestYoEZGripper(null, "RightEZGripper", RobotSide.RIGHT);
       YoEZGripperManager yoManager = new YoEZGripperManager(null, yoEZGripper);
 
-      return Stream.of(Arguments.of(manager, abilityHand), Arguments.of(yoManager, yoEZGripper));
+      return Stream.of(Arguments.of(manager, ezGripper), Arguments.of(yoManager, yoEZGripper));
    }
 
    @ParameterizedTest

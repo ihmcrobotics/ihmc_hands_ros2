@@ -2,6 +2,8 @@ package us.ihmc.handsros2.abilityHand;
 
 import ihmc_hands_ros2.msg.dds.AbilityHandCommand;
 import ihmc_hands_ros2.msg.dds.AbilityHandState;
+import us.ihmc.handsros2.HandMessageListener;
+import us.ihmc.handsros2.HandROS2ControllerCommunication;
 import us.ihmc.handsros2.abilityHand.AbilityHandManager.ControlMode;
 import us.ihmc.handsros2.abilityHand.AbilityHandManager.Grip;
 import us.ihmc.ros2.ROS2NodeBuilder;
@@ -13,7 +15,7 @@ import us.ihmc.ros2.RealtimeROS2Node;
  * <p>Hardware side ROS 2 communication for the {@link AbilityHandInterface}. Communicates with external controller.</p>
  * <p>Subscribes to {@link AbilityHandCommand} messages and publishes {@link AbilityHandState} messages.</p>
  */
-public class AbilityHandROS2ControllerCommunication
+public class AbilityHandROS2ControllerCommunication implements HandROS2ControllerCommunication<AbilityHandManager>
 {
    private final RealtimeROS2Node node;
 
@@ -21,7 +23,7 @@ public class AbilityHandROS2ControllerCommunication
    private final ROS2Publisher<AbilityHandState> statePublisher;
 
    private final AbilityHandCommand commandMessage;
-   private final AbilityHandMessageListener<AbilityHandCommand> commandListener;
+   private final HandMessageListener<AbilityHandCommand> commandListener;
    private final ROS2Subscription<AbilityHandCommand> commandSubscription;
 
    public AbilityHandROS2ControllerCommunication(String nodeName)
@@ -40,18 +42,15 @@ public class AbilityHandROS2ControllerCommunication
       statePublisher = node.createPublisher(AbilityHandROS2API.STATE_TOPIC);
 
       commandMessage = new AbilityHandCommand();
-      commandListener = new AbilityHandMessageListener<>(AbilityHandCommand::new);
+      commandListener = new HandMessageListener<>(AbilityHandCommand::new);
       commandSubscription = node.createSubscription(AbilityHandROS2API.COMMAND_TOPIC, commandListener);
    }
 
-   /**
-    * Read the latest command into the hand manager object.
-    *
-    * @param managerToUpdate Hand manager to update using the latest command.
-    */
+   /** {@inheritDoc} */
+   @Override
    public void readCommand(AbilityHandManager managerToUpdate)
    {
-      if (commandListener.readLatestMessage(managerToUpdate.getHand().getSerialNumber(), commandMessage))
+      if (commandListener.readLatestMessage(managerToUpdate.getHand().getIdentifier(), commandMessage))
       {
          managerToUpdate.setControlMode(ControlMode.fromByte(commandMessage.getControlMode()));
          managerToUpdate.setGrip(Grip.fromByte(commandMessage.getGrip()));
@@ -60,15 +59,12 @@ public class AbilityHandROS2ControllerCommunication
       }
    }
 
-   /**
-    * Publish the hand's state.
-    *
-    * @param managerToPublish The manager of the hand to publish.
-    */
+   /** {@inheritDoc} */
+   @Override
    public void publishState(AbilityHandManager managerToPublish)
    {
-      stateMessage.setSerialNumber(managerToPublish.getHand().getSerialNumber());
-      stateMessage.setHandSide(managerToPublish.getHand().getHandSide().toByte());
+      stateMessage.setSerialNumber(managerToPublish.getHand().getIdentifier());
+      stateMessage.setHandSide(managerToPublish.getHand().getSide().toByte());
       for (int i = 0; i < AbilityHandInterface.ACTUATOR_COUNT; ++i)
          stateMessage.getActuatorPositions()[i] = managerToPublish.getHand().getActuatorPosition(i);
       for (int i = 0; i < AbilityHandInterface.TOUCH_SENSOR_COUNT; ++i)
@@ -77,17 +73,15 @@ public class AbilityHandROS2ControllerCommunication
       statePublisher.publish(stateMessage);
    }
 
-   /**
-    * Initialize the communication. No messages will be received or published until this method is called.
-    */
+   /** {@inheritDoc} */
+   @Override
    public void start()
    {
       node.spin();
    }
 
-   /**
-    * Shut the communications down. Messages will no longer be received or published.
-    */
+   /** {@inheritDoc} */
+   @Override
    public void shutdown()
    {
       node.stopSpinning();

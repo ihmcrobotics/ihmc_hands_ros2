@@ -1,12 +1,14 @@
 package us.ihmc.handsros2.abilityHand;
 
+import us.ihmc.handsros2.HandManager;
+
 import static us.ihmc.handsros2.abilityHand.AbilityHandInterface.ACTUATOR_COUNT;
 
 /**
  * Manages higher-level control of an Ability Hand, including position, velocity,
  * velocity-to-position, and multi-stage grip operations.
  */
-public class AbilityHandManager
+public class AbilityHandManager implements HandManager<AbilityHandInterface>
 {
    /**
     * Control modes for the Ability Hand Manager.
@@ -15,7 +17,6 @@ public class AbilityHandManager
    {
       POSITION, VELOCITY, VEL_TO_POS, GRIP;
 
-      /** Array of all control modes. */
       public static final ControlMode[] values = values();
 
       /**
@@ -42,7 +43,7 @@ public class AbilityHandManager
 
    /**
     * Predefined multi-stage grip patterns with associated finger indices and target positions.
-    * Use Grip Editor from the Psyonic app to get angles for other grips
+    * Use Grip Editor in the PSYONIC app to get angles for other grips.
     */
    public enum Grip
    {
@@ -56,7 +57,6 @@ public class AbilityHandManager
       PINCH_O  (new int[][] {{0, 1, 2, 3}, {5}, {4}}, new  float[][] {{61, 20, 20, 20}, {-67}, {53}}),
       PINCH_C  (new int[][] {{0, 1, 2, 3}, {5}, {4}}, new  float[][] {{61, 97.5f, 97.5f, 97.5f}, {-67}, {53}});
 
-      /** Array of all grip patterns. */
       public static final Grip[] values = values();
 
       final int[][] stages;
@@ -123,9 +123,8 @@ public class AbilityHandManager
       goalVelocities = new float[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
    }
 
-   /**
-    * Updates the hand commands based on the current control mode. Should be called periodically.
-    */
+   /** {@inheritDoc} */
+   @Override
    public void update()
    {
       switch (controlMode)
@@ -255,11 +254,8 @@ public class AbilityHandManager
       }
    }
 
-   /**
-    * Returns the underlying hand interface.
-    *
-    * @return the AbilityHandInterface
-    */
+   /** {@inheritDoc} */
+   @Override
    public AbilityHandInterface getHand()
    {
       return hand;

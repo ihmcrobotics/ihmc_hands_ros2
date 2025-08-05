@@ -17,13 +17,13 @@ class TestAbilityHand implements AbilityHandInterface
    }
 
    @Override
-   public String getSerialNumber()
+   public String getIdentifier()
    {
       return serialNumber;
    }
 
    @Override
-   public RobotSide getHandSide()
+   public RobotSide getSide()
    {
       return handSide;
    }

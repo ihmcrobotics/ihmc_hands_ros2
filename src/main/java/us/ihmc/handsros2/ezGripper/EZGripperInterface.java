@@ -1,20 +1,13 @@
 package us.ihmc.handsros2.ezGripper;
 
-import us.ihmc.robotics.robotSide.RobotSide;
+import us.ihmc.handsros2.HandInterface;
 
 /**
  * Generic interface for a SAKE EZGripper.
  */
-public interface EZGripperInterface
+public interface EZGripperInterface extends HandInterface
 {
    int RAW_RANGE_OF_MOTION = 2500;
-
-   /**
-    * Get the robot's side this gripper is attached to.
-    *
-    * @return The robot's side this gripper is attached to.
-    */
-   RobotSide getRobotSide();
 
    // COMMAND METHODS //
 

@@ -1,22 +1,21 @@
 package ihmc_hands_ros2.msg.dds;
 
 import us.ihmc.communication.packets.Packet;
-import us.ihmc.euclid.interfaces.Settable;
 import us.ihmc.euclid.interfaces.EpsilonComparable;
-import java.util.function.Supplier;
+import us.ihmc.euclid.interfaces.Settable;
 import us.ihmc.pubsub.TopicDataType;
+
+import java.util.function.Supplier;
 
 public class EZGripperCommand extends Packet<EZGripperCommand> implements Settable<EZGripperCommand>, EpsilonComparable<EZGripperCommand>
 {
-   public static final byte LEFT = (byte) 0;
-   public static final byte RIGHT = (byte) 1;
    public static final byte POSITION_CONTROL = (byte) 0;
    public static final byte CALIBRATION = (byte) 1;
    public static final byte ERROR_RESET = (byte) 2;
    /**
-            * Specifies the side of the robot of the gripper being referred to
+            * An identifier for the hand. Up to 8 characters long
             */
-   public byte robot_side_ = (byte) 255;
+   public java.lang.StringBuilder identifier_;
    /**
             * Specifies the desired operation mode.
             */
@@ -46,6 +45,7 @@ public class EZGripperCommand extends Packet<EZGripperCommand> implements Settab
 
    public EZGripperCommand()
    {
+      identifier_ = new java.lang.StringBuilder(8);
    }
 
    public EZGripperCommand(EZGripperCommand other)
@@ -56,7 +56,8 @@ public class EZGripperCommand extends Packet<EZGripperCommand> implements Settab
 
    public void set(EZGripperCommand other)
    {
-      robot_side_ = other.robot_side_;
+      identifier_.setLength(0);
+      identifier_.append(other.identifier_);
 
       operation_mode_ = other.operation_mode_;
 
@@ -71,18 +72,27 @@ public class EZGripperCommand extends Packet<EZGripperCommand> implements Settab
    }
 
    /**
-            * Specifies the side of the robot of the gripper being referred to
+            * An identifier for the hand. Up to 8 characters long
             */
-   public void setRobotSide(byte robot_side)
+   public void setIdentifier(java.lang.String identifier)
    {
-      robot_side_ = robot_side;
+      identifier_.setLength(0);
+      identifier_.append(identifier);
+   }
+
+   /**
+            * An identifier for the hand. Up to 8 characters long
+            */
+   public java.lang.String getIdentifierAsString()
+   {
+      return getIdentifier().toString();
    }
    /**
-            * Specifies the side of the robot of the gripper being referred to
+            * An identifier for the hand. Up to 8 characters long
             */
-   public byte getRobotSide()
+   public java.lang.StringBuilder getIdentifier()
    {
-      return robot_side_;
+      return identifier_;
    }
 
    /**
@@ -190,7 +200,7 @@ public class EZGripperCommand extends Packet<EZGripperCommand> implements Settab
       if(other == null) return false;
       if(other == this) return true;
 
-      if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.robot_side_, other.robot_side_, epsilon)) return false;
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsStringBuilder(this.identifier_, other.identifier_, epsilon)) return false;
 
       if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.operation_mode_, other.operation_mode_, epsilon)) return false;
 
@@ -215,7 +225,7 @@ public class EZGripperCommand extends Packet<EZGripperCommand> implements Settab
 
       EZGripperCommand otherMyClass = (EZGripperCommand) other;
 
-      if(this.robot_side_ != otherMyClass.robot_side_) return false;
+      if (!us.ihmc.idl.IDLTools.equals(this.identifier_, otherMyClass.identifier_)) return false;
 
       if(this.operation_mode_ != otherMyClass.operation_mode_) return false;
 
@@ -237,8 +247,8 @@ public class EZGripperCommand extends Packet<EZGripperCommand> implements Settab
       StringBuilder builder = new StringBuilder();
 
       builder.append("EZGripperCommand {");
-      builder.append("robot_side=");
-      builder.append(this.robot_side_);      builder.append(", ");
+      builder.append("identifier=");
+      builder.append(this.identifier_);      builder.append(", ");
       builder.append("operation_mode=");
       builder.append(this.operation_mode_);      builder.append(", ");
       builder.append("temperature_limit=");

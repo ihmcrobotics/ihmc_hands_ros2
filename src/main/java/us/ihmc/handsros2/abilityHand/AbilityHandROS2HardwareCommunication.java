@@ -2,6 +2,8 @@ package us.ihmc.handsros2.abilityHand;
 
 import ihmc_hands_ros2.msg.dds.AbilityHandCommand;
 import ihmc_hands_ros2.msg.dds.AbilityHandState;
+import us.ihmc.handsros2.HandMessageListener;
+import us.ihmc.handsros2.HandROS2HardwareCommunication;
 import us.ihmc.ros2.ROS2NodeBuilder;
 import us.ihmc.ros2.ROS2Publisher;
 import us.ihmc.ros2.ROS2Subscription;
@@ -18,13 +20,13 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>High level ROS 2 communication for the {@link AbilityHandInterface}. Communicates with low-level hardware control process.</p>
  * <p>Subscribes to {@link AbilityHandState} messages and publishes {@link AbilityHandCommand} messages.</p>
  */
-public class AbilityHandROS2HardwareCommunication
+public class AbilityHandROS2HardwareCommunication implements HandROS2HardwareCommunication<AbilityHandCommand, AbilityHandState>
 {
    private final List<String> registeredHandSerialNumbers;
 
    private final RealtimeROS2Node node;
 
-   private final AbilityHandMessageListener<AbilityHandState> stateListener;
+   private final HandMessageListener<AbilityHandState> stateListener;
    private final ROS2Subscription<AbilityHandState> stateSubscription;
 
    private final Map<String, AbilityHandCommand> commandMessages;
@@ -45,7 +47,7 @@ public class AbilityHandROS2HardwareCommunication
          nodeBuilder.domainId(domainId);
       node = nodeBuilder.buildRealtime(nodeName);
 
-      stateListener = new AbilityHandMessageListener<>(AbilityHandState::new);
+      stateListener = new HandMessageListener<>(AbilityHandState::new);
       stateListener.onNewHandRegistered(this::registerNewHand);
       stateSubscription = node.createSubscription(AbilityHandROS2API.STATE_TOPIC, stateListener);
 
@@ -67,7 +69,8 @@ public class AbilityHandROS2HardwareCommunication
     *
     * @return Set of serial numbers of the available hands.
     */
-   public Set<String> getAvailableHandSerialNumbers()
+   @Override
+   public Set<String> getAvailableHands()
    {
       return commandMessages.keySet();
    }
@@ -80,7 +83,8 @@ public class AbilityHandROS2HardwareCommunication
     *
     * @return List of serial numbers of the available hands.
     */
-   public List<String> getAvailableHandSerialNumbersList()
+   @Override
+   public List<String> getAvailableHandList()
    {
       return registeredHandSerialNumbers;
    }
@@ -92,6 +96,7 @@ public class AbilityHandROS2HardwareCommunication
     * @param messageToPack Message to pack with the latest state.
     * @return {@code true} if a state message was available. {@code false} if no state had been received.
     */
+   @Override
    public boolean readState(String serialNumber, AbilityHandState messageToPack)
    {
       return stateListener.readLatestMessage(serialNumber, messageToPack);
@@ -103,6 +108,7 @@ public class AbilityHandROS2HardwareCommunication
     * @param serialNumber Serial number specifying the hand.
     * @return A copy of the latest state message.
     */
+   @Override
    public AbilityHandState readState(String serialNumber)
    {
       AbilityHandState stateMessage = new AbilityHandState();
@@ -120,6 +126,7 @@ public class AbilityHandROS2HardwareCommunication
     * @param handSerialNumber Serial number specifying the hand.
     * @return A reference to the command message for the specified hand.
     */
+   @Override
    public AbilityHandCommand getCommand(String handSerialNumber)
    {
       return commandMessages.get(handSerialNumber);
@@ -131,6 +138,7 @@ public class AbilityHandROS2HardwareCommunication
     * @param handSerialNumber Serial number specifying the hand.
     * @return {@code true} if the message was published. {@code false} if the hand specified wasn't found.
     */
+   @Override
    public boolean publishCommand(String handSerialNumber)
    {
       AbilityHandCommand commandMessage = commandMessages.get(handSerialNumber);
@@ -143,28 +151,18 @@ public class AbilityHandROS2HardwareCommunication
       return false;
    }
 
-   /**
-    * Start the communication.
-    */
+   /** {@inheritDoc} */
+   @Override
    public void start()
    {
       node.spin();
    }
 
-   /**
-    * Stop the communication. {@link #start()} can be called again after this method to re-start communication.
-    */
-   public void stop()
-   {
-      node.stopSpinning();
-   }
-
-   /**
-    * Shut the communication down. {@link #start()} cannot be called again after this method.
-    */
+   /** {@inheritDoc} */
+   @Override
    public void shutdown()
    {
-      stop();
+      node.stopSpinning();
 
       commandPublisher.remove();
       stateSubscription.remove();

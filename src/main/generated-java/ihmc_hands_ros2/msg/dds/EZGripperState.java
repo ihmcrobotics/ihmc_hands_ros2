@@ -1,10 +1,11 @@
 package ihmc_hands_ros2.msg.dds;
 
 import us.ihmc.communication.packets.Packet;
-import us.ihmc.euclid.interfaces.Settable;
 import us.ihmc.euclid.interfaces.EpsilonComparable;
-import java.util.function.Supplier;
+import us.ihmc.euclid.interfaces.Settable;
 import us.ihmc.pubsub.TopicDataType;
+
+import java.util.function.Supplier;
 
 public class EZGripperState extends Packet<EZGripperState> implements Settable<EZGripperState>, EpsilonComparable<EZGripperState>
 {
@@ -14,6 +15,10 @@ public class EZGripperState extends Packet<EZGripperState> implements Settable<E
    public static final byte CALIBRATION = (byte) 1;
    public static final byte ERROR_RESET = (byte) 2;
    public static final byte COOLDOWN = (byte) 3;
+   /**
+            * An identifier for the hand. Up to 8 characters long
+            */
+   public java.lang.StringBuilder identifier_;
    /**
             * Specifies the side of the robot of the gripper being referred to
             */
@@ -53,6 +58,7 @@ public class EZGripperState extends Packet<EZGripperState> implements Settable<E
 
    public EZGripperState()
    {
+      identifier_ = new java.lang.StringBuilder(8);
    }
 
    public EZGripperState(EZGripperState other)
@@ -63,6 +69,9 @@ public class EZGripperState extends Packet<EZGripperState> implements Settable<E
 
    public void set(EZGripperState other)
    {
+      identifier_.setLength(0);
+      identifier_.append(other.identifier_);
+
       robot_side_ = other.robot_side_;
 
       operation_mode_ = other.operation_mode_;
@@ -79,6 +88,30 @@ public class EZGripperState extends Packet<EZGripperState> implements Settable<E
 
       is_calibrated_ = other.is_calibrated_;
 
+   }
+
+   /**
+            * An identifier for the hand. Up to 8 characters long
+            */
+   public void setIdentifier(java.lang.String identifier)
+   {
+      identifier_.setLength(0);
+      identifier_.append(identifier);
+   }
+
+   /**
+            * An identifier for the hand. Up to 8 characters long
+            */
+   public java.lang.String getIdentifierAsString()
+   {
+      return getIdentifier().toString();
+   }
+   /**
+            * An identifier for the hand. Up to 8 characters long
+            */
+   public java.lang.StringBuilder getIdentifier()
+   {
+      return identifier_;
    }
 
    /**
@@ -227,6 +260,8 @@ public class EZGripperState extends Packet<EZGripperState> implements Settable<E
       if(other == null) return false;
       if(other == this) return true;
 
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsStringBuilder(this.identifier_, other.identifier_, epsilon)) return false;
+
       if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.robot_side_, other.robot_side_, epsilon)) return false;
 
       if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.operation_mode_, other.operation_mode_, epsilon)) return false;
@@ -256,6 +291,8 @@ public class EZGripperState extends Packet<EZGripperState> implements Settable<E
 
       EZGripperState otherMyClass = (EZGripperState) other;
 
+      if (!us.ihmc.idl.IDLTools.equals(this.identifier_, otherMyClass.identifier_)) return false;
+
       if(this.robot_side_ != otherMyClass.robot_side_) return false;
 
       if(this.operation_mode_ != otherMyClass.operation_mode_) return false;
@@ -282,6 +319,8 @@ public class EZGripperState extends Packet<EZGripperState> implements Settable<E
       StringBuilder builder = new StringBuilder();
 
       builder.append("EZGripperState {");
+      builder.append("identifier=");
+      builder.append(this.identifier_);      builder.append(", ");
       builder.append("robot_side=");
       builder.append(this.robot_side_);      builder.append(", ");
       builder.append("operation_mode=");

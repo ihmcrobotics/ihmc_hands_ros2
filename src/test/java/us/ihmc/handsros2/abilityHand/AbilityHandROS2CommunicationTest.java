@@ -104,6 +104,7 @@ public class AbilityHandROS2CommunicationTest
          assertEquals(testHand.getSensedPressure(i), stateReceived.getTouchSensorReadings()[i]);
       }
       assertEquals(COMMAND_TYPE, testHand.getCommandType());
+      assertEquals(HAND_SIDE, RobotSide.fromByte(stateReceived.getHandSide()));
       assertEquals(SERIAL_NUMBER, stateReceived.getSerialNumberAsString());
 
       // Shut things down
@@ -162,8 +163,8 @@ public class AbilityHandROS2CommunicationTest
       LockSupport.parkNanos((long) 1E8);
 
       // Now the communications class should have received the state message
-      assertEquals(1, communication.getAvailableHandSerialNumbers().size());
-      assertEquals(SERIAL_NUMBER, communication.getAvailableHandSerialNumbersList().get(0));
+      assertEquals(1, communication.getAvailableHands().size());
+      assertEquals(SERIAL_NUMBER, communication.getAvailableHandList().get(0));
 
       // Assert the state received is correct
       AbilityHandState stateReceived = communication.readState(SERIAL_NUMBER);

@@ -15,7 +15,7 @@ public class EZGripperCommandPubSubType implements us.ihmc.pubsub.TopicDataType<
    @Override
    public final java.lang.String getDefinitionChecksum()
    {
-   		return "b907dda053d3d5985ffdbaa92bd66ef540acb431676aca2e3d52760d69ea5c9b";
+   		return "3d16065cd844bddd52804e3889888924f19e9b2e9ab8e3ba14797f0f8baa3246";
    }
    
    @Override
@@ -52,8 +52,7 @@ public class EZGripperCommandPubSubType implements us.ihmc.pubsub.TopicDataType<
    {
       int initial_alignment = current_alignment;
 
-      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
-
+      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4) + 8 + 1;
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
 
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
@@ -77,8 +76,7 @@ public class EZGripperCommandPubSubType implements us.ihmc.pubsub.TopicDataType<
    {
       int initial_alignment = current_alignment;
 
-      current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
-
+      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4) + data.getIdentifier().length() + 1;
 
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
 
@@ -101,7 +99,9 @@ public class EZGripperCommandPubSubType implements us.ihmc.pubsub.TopicDataType<
 
    public static void write(ihmc_hands_ros2.msg.dds.EZGripperCommand data, us.ihmc.idl.CDR cdr)
    {
-      cdr.write_type_9(data.getRobotSide());
+      if(data.getIdentifier().length() <= 8)
+      cdr.write_type_d(data.getIdentifier());else
+          throw new RuntimeException("identifier field exceeds the maximum length: %d > %d".formatted(data.getIdentifier().length(), 8));
 
       cdr.write_type_9(data.getOperationMode());
 
@@ -117,8 +117,7 @@ public class EZGripperCommandPubSubType implements us.ihmc.pubsub.TopicDataType<
 
    public static void read(ihmc_hands_ros2.msg.dds.EZGripperCommand data, us.ihmc.idl.CDR cdr)
    {
-      data.setRobotSide(cdr.read_type_9());
-      	
+      cdr.read_type_d(data.getIdentifier());	
       data.setOperationMode(cdr.read_type_9());
       	
       data.setTemperatureLimit(cdr.read_type_9());
@@ -135,7 +134,7 @@ public class EZGripperCommandPubSubType implements us.ihmc.pubsub.TopicDataType<
    @Override
    public final void serialize(ihmc_hands_ros2.msg.dds.EZGripperCommand data, us.ihmc.idl.InterchangeSerializer ser)
    {
-      ser.write_type_9("robot_side", data.getRobotSide());
+      ser.write_type_d("identifier", data.getIdentifier());
       ser.write_type_9("operation_mode", data.getOperationMode());
       ser.write_type_9("temperature_limit", data.getTemperatureLimit());
       ser.write_type_5("goal_position", data.getGoalPosition());
@@ -146,7 +145,7 @@ public class EZGripperCommandPubSubType implements us.ihmc.pubsub.TopicDataType<
    @Override
    public final void deserialize(us.ihmc.idl.InterchangeSerializer ser, ihmc_hands_ros2.msg.dds.EZGripperCommand data)
    {
-      data.setRobotSide(ser.read_type_9("robot_side"));
+      ser.read_type_d("identifier", data.getIdentifier());
       data.setOperationMode(ser.read_type_9("operation_mode"));
       data.setTemperatureLimit(ser.read_type_9("temperature_limit"));
       data.setGoalPosition(ser.read_type_5("goal_position"));

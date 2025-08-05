@@ -4,6 +4,7 @@ import us.ihmc.robotics.robotSide.RobotSide;
 
 class TestEZGripper implements EZGripperInterface
 {
+   private final String identifier;
    private final RobotSide side;
 
    private float goalPosition = 0.1f;
@@ -16,13 +17,20 @@ class TestEZGripper implements EZGripperInterface
    private int realtimeTick = 0;
    private byte errorCode = 0;
 
-   public TestEZGripper(RobotSide side)
+   public TestEZGripper(String identifier, RobotSide side)
    {
+      this.identifier = identifier;
       this.side = side;
    }
 
    @Override
-   public RobotSide getRobotSide()
+   public String getIdentifier()
+   {
+      return identifier;
+   }
+
+   @Override
+   public RobotSide getSide()
    {
       return side;
    }

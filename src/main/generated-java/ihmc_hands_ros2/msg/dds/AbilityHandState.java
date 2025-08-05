@@ -1,10 +1,11 @@
 package ihmc_hands_ros2.msg.dds;
 
 import us.ihmc.communication.packets.Packet;
-import us.ihmc.euclid.interfaces.Settable;
 import us.ihmc.euclid.interfaces.EpsilonComparable;
-import java.util.function.Supplier;
+import us.ihmc.euclid.interfaces.Settable;
 import us.ihmc.pubsub.TopicDataType;
+
+import java.util.function.Supplier;
 
 public class AbilityHandState extends Packet<AbilityHandState> implements Settable<AbilityHandState>, EpsilonComparable<AbilityHandState>
 {

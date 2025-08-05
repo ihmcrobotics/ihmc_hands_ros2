@@ -2,25 +2,35 @@ package us.ihmc.handsros2.ezGripper;
 
 import ihmc_hands_ros2.msg.dds.EZGripperCommand;
 import ihmc_hands_ros2.msg.dds.EZGripperState;
+import us.ihmc.handsros2.HandMessageListener;
+import us.ihmc.handsros2.HandROS2HardwareCommunication;
 import us.ihmc.robotics.robotSide.RobotSide;
-import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.ros2.ROS2NodeBuilder;
 import us.ihmc.ros2.ROS2Publisher;
 import us.ihmc.ros2.ROS2Subscription;
 import us.ihmc.ros2.RealtimeROS2Node;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * <p>Controller side ROS 2 communication for the {@link EZGripperInterface}. Communicates with low-level hardware control process.</p>
  * <p>Subscribes to {@link EZGripperState} messages and publishes {@link EZGripperCommand} messages.</p>
  */
-public class EZGripperROS2HardwareCommunication
+public class EZGripperROS2HardwareCommunication implements HandROS2HardwareCommunication<EZGripperCommand, EZGripperState>
 {
+   private final List<String> registeredHandIdentifiers;
+
    private final RealtimeROS2Node node;
 
-   private final EZGripperMessageListener<EZGripperState> stateListener;
+   private final HandMessageListener<EZGripperState> stateListener;
    private final ROS2Subscription<EZGripperState> stateSubscription;
 
-   private final SideDependentList<EZGripperCommand> commandMessages;
+   private final Map<String, EZGripperCommand> commandMessages;
    private final ROS2Publisher<EZGripperCommand> commandPublisher;
 
    public EZGripperROS2HardwareCommunication(String nodeName)
@@ -30,86 +40,74 @@ public class EZGripperROS2HardwareCommunication
 
    public EZGripperROS2HardwareCommunication(String nodeName, int domainId)
    {
-      commandMessages = new SideDependentList<>();
+      registeredHandIdentifiers = Collections.synchronizedList(new ArrayList<>(2));
+      commandMessages = new ConcurrentHashMap<>(2);
 
       ROS2NodeBuilder nodeBuilder = new ROS2NodeBuilder();
       if (domainId >= 0)
          nodeBuilder.domainId(domainId);
       node = nodeBuilder.buildRealtime(nodeName);
 
-      stateListener = new EZGripperMessageListener<>(EZGripperState::new);
+      stateListener = new HandMessageListener<>(EZGripperState::new);
       stateListener.onNewHandRegistered(this::registerNewHand);
       stateSubscription = node.createSubscription(EZGripperROS2API.STATE_TOPIC, stateListener);
 
       commandPublisher = node.createPublisher(EZGripperROS2API.COMMAND_TOPIC);
    }
 
-   private void registerNewHand(RobotSide newGripperSide)
+   private void registerNewHand(StringBuilder newGripperIdentifier)
    {
+      String identifier = newGripperIdentifier.toString();
       EZGripperCommand commandMessage = new EZGripperCommand();
-      commandMessage.setRobotSide(newGripperSide.toByte());
-      commandMessages.put(newGripperSide, commandMessage);
+      commandMessage.setIdentifier(identifier);
+      commandMessages.put(identifier, commandMessage);
+      registeredHandIdentifiers.add(identifier);
    }
 
-   /**
-    * <p>Get the robot sides of the available grippers.</p>
-    * <p>Treat the array as read-only.</p>
-    *
-    * @return Array of robot sides of the available grippers.
-    */
-   public RobotSide[] getAvailableGripperSides()
+   /** {@inheritDoc} */
+   @Override
+   public Set<String> getAvailableHands()
    {
-      return commandMessages.sides();
+      return commandMessages.keySet();
    }
 
-   /**
-    * Read the latest state of the specified gripper.
-    *
-    * @param messageToPack Message to pack with the latest state.
-    * @return {@code true} if a message was read. {@code false} if no message was available.
-    */
-   public boolean readState(RobotSide gripperSide, EZGripperState messageToPack)
+   /** {@inheritDoc} */
+   @Override
+   public List<String> getAvailableHandList()
    {
-      return stateListener.readLatestMessage(gripperSide, messageToPack);
+      return registeredHandIdentifiers;
    }
 
-   /**
-    * Read the latest state message of the specified gripper.
-    *
-    * @param gripperSide Robot side specifying the gripper.
-    * @return A copy of the latest state message.
-    */
-   public EZGripperState readState(RobotSide gripperSide)
+   /** {@inheritDoc} */
+   @Override
+   public boolean readState(String identifier, EZGripperState messageToPack)
+   {
+      return stateListener.readLatestMessage(identifier, messageToPack);
+   }
+
+   /** {@inheritDoc} */
+   @Override
+   public EZGripperState readState(String identifier)
    {
       EZGripperState stateMessage = new EZGripperState();
-      if (readState(gripperSide, stateMessage))
+      if (readState(identifier, stateMessage))
          return stateMessage;
 
       return null;
    }
 
-   /**
-    * <p>Get the command message for the specified gripper.</p>
-    * <p>Use this method to set the desired command values.
-    * Then publish the command using {@link #publishCommand(RobotSide)}.</p>
-    *
-    * @param gripperSide Robot side specifying the gripper.
-    * @return A reference to the command message for the specified gripper.
-    */
-   public EZGripperCommand getCommand(RobotSide gripperSide)
+   /** {@inheritDoc} */
+   @Override
+   public EZGripperCommand getCommand(String identifier)
    {
-      return commandMessages.get(gripperSide);
+      return commandMessages.get(identifier);
    }
 
-   /**
-    * Publish the command for the specified gripper.
-    *
-    * @param gripperSide Robot side specifying the gripper.
-    * @return {@code true} if the message was published. {@code false} if the gripper specified wasn't found.
-    */
-   public boolean publishCommand(RobotSide gripperSide)
+   /** {@inheritDoc} */
+   @Override
+   public boolean publishCommand(String identifier)
    {
-      EZGripperCommand commandMessage = commandMessages.get(gripperSide);
+      EZGripperCommand commandMessage = commandMessages.get(identifier);
       if (commandMessage == null)
          return false;
 
@@ -117,28 +115,17 @@ public class EZGripperROS2HardwareCommunication
       return true;
    }
 
-   /**
-    * Start the communication.
-    */
+   /** {@inheritDoc} */
+   @Override
    public void start()
    {
       node.spin();
    }
 
-   /**
-    * Stop the communication. {@link #start()} can be called again after this method to re-start communication.
-    */
-   public void stop()
-   {
-      node.stopSpinning();
-   }
-
-   /**
-    * Shut the communication down. {@link #start()} cannot be called again after this method.
-    */
+   /** {@inheritDoc} */
    public void shutdown()
    {
-      stop();
+      node.stopSpinning();
 
       commandPublisher.remove();
       stateSubscription.remove();
