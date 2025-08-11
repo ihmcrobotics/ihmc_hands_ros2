@@ -2,6 +2,9 @@ package us.ihmc.handsros2.ezGripper;
 
 import us.ihmc.handsros2.HandInterface;
 import us.ihmc.handsros2.HandType;
+import us.ihmc.handsros2.ezGripper.EZGripperModel.EZGripperJointName;
+
+import static us.ihmc.handsros2.ezGripper.EZGripperModel.EZGripperJointName.*;
 
 /**
  * Generic interface for a SAKE EZGripper.
@@ -79,4 +82,22 @@ public interface EZGripperInterface extends HandInterface
    byte getErrorCode();
 
    void setErrorCode(byte errorCode);
+
+   /** {@inheritDoc} */
+   default void readJointAngles(double[] jointAngles)
+   {
+      double angle = getCurrentPosition() * JOINT_RANGE;
+      jointAngles[GRIPPER_X1.getIndex(getSide())] = angle;
+      jointAngles[GRIPPER_X2.getIndex(getSide())] = angle;
+
+      // We can't know the
+      jointAngles[GRIPPER_X1_TIP.getIndex(getSide())] = 0.0;
+      jointAngles[GRIPPER_X2_TIP.getIndex(getSide())] = 0.0;
+   }
+
+   /** {@inheritDoc} */
+   default int getJointCount()
+   {
+      return EZGripperJointName.values.length;
+   }
 }

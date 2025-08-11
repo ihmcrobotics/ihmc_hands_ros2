@@ -26,4 +26,20 @@ public interface HandInterface
     * @return This hand's type.
     */
    HandType getType();
+
+   /**
+    * Read the current joint angles into the passed in array.
+    *
+    * @param jointAngles Array to pack the joint angles into.
+    */
+   void readJointAngles(double[] jointAngles);
+
+   /**
+    * Get the number of joints in the hand.
+    * The length of the joint angle array passed into
+    * {@link #readJointAngles(double[])} should be at least this long.
+    *
+    * @return The number of joints in the hand.
+    */
+   int getJointCount();
 }

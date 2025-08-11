@@ -23,7 +23,7 @@ ihmc {
 
 mainDependencies {
    api("us.ihmc:ros2-library:1.2.3")
-   api("us.ihmc:ihmc-robotics-tools:0.15.4")
+   api("us.ihmc:ihmc-robotics-tools:0.15.6")
 }
 
 testDependencies {

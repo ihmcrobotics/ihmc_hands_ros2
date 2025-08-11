@@ -2,6 +2,9 @@ package us.ihmc.handsros2.abilityHand;
 
 import us.ihmc.handsros2.HandInterface;
 import us.ihmc.handsros2.HandType;
+import us.ihmc.handsros2.abilityHand.AbilityHandModel.AbilityHandJointName;
+
+import static us.ihmc.handsros2.abilityHand.AbilityHandModel.AbilityHandJointName.*;
 
 /**
  * <p>
@@ -148,5 +151,26 @@ public interface AbilityHandInterface extends HandInterface
 
       // Do a bunch of funky math to get the approximate force in Newtons
       return (121591f / (40960000f / rawADCValue + 10000f)) + 0.878894f;
+   }
+
+   /** {@inheritDoc} */
+   default void readJointAngles(double[] jointAngles)
+   {
+      jointAngles[INDEX_Q1.getIndex(getSide())] = Math.toRadians(getActuatorPosition(0));
+      jointAngles[INDEX_Q2.getIndex(getSide())] = Q2_JOINT_MULTIPLIER * Math.toRadians(getActuatorPosition(0)) + Q2_JOINT_OFFSET;
+      jointAngles[MIDDLE_Q1.getIndex(getSide())] = Math.toRadians(getActuatorPosition(1));
+      jointAngles[MIDDLE_Q2.getIndex(getSide())] = Q2_JOINT_MULTIPLIER * Math.toRadians(getActuatorPosition(1)) + Q2_JOINT_OFFSET;
+      jointAngles[RING_Q1.getIndex(getSide())] = Math.toRadians(getActuatorPosition(2));
+      jointAngles[RING_Q2.getIndex(getSide())] = Q2_JOINT_MULTIPLIER * Math.toRadians(getActuatorPosition(2)) + Q2_JOINT_OFFSET;
+      jointAngles[PINKY_Q1.getIndex(getSide())] = Math.toRadians(getActuatorPosition(3));
+      jointAngles[PINKY_Q2.getIndex(getSide())] = Q2_JOINT_MULTIPLIER * Math.toRadians(getActuatorPosition(3)) + Q2_JOINT_OFFSET;
+      jointAngles[THUMB_Q1.getIndex(getSide())] = Math.toRadians(getActuatorPosition(5));
+      jointAngles[THUMB_Q2.getIndex(getSide())] = Math.toRadians(getActuatorPosition(4));
+   }
+
+   /** {@inheritDoc} */
+   default int getJointCount()
+   {
+      return AbilityHandJointName.values.length;
    }
 }
