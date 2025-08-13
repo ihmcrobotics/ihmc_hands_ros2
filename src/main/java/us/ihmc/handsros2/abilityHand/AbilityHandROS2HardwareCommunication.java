@@ -92,7 +92,7 @@ public class AbilityHandROS2HardwareCommunication implements HandROS2HardwareCom
    /**
     * Read the latest state message of the specified hand.
     *
-    * @param identifier  Identifier specifying the hand.
+    * @param identifier    Identifier specifying the hand.
     * @param messageToPack Message to pack with the latest state.
     * @return {@code true} if a state message was available. {@code false} if no state had been received.
     */
