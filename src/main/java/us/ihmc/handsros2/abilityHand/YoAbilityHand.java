@@ -13,19 +13,19 @@ import us.ihmc.yoVariables.variable.YoInteger;
  */
 public class YoAbilityHand implements AbilityHandInterface
 {
-   private final String serialNumber;
+   private final String identifier;
    private final RobotSide handSide;
    private final YoEnum<AbilityHandCommandType> commandType;
    private final YoDouble[] commandValues = new YoDouble[ACTUATOR_COUNT];
    private final YoDouble[] actuatorPositions = new YoDouble[ACTUATOR_COUNT];
    private final YoInteger[] rawFSRReadings = new YoInteger[TOUCH_SENSOR_COUNT];
 
-   public YoAbilityHand(YoRegistry registry, String serialNumber, RobotSide handSide)
+   public YoAbilityHand(YoRegistry registry, String identifier, RobotSide handSide)
    {
-      this.serialNumber = serialNumber;
+      this.identifier = identifier;
       this.handSide = handSide;
 
-      String prefix = handSide.name() + "AbilityHand_" + serialNumber + "_";
+      String prefix = handSide.name() + "AbilityHand_" + identifier + "_";
       commandType = new YoEnum<>(prefix + "CommandType", registry, AbilityHandCommandType.class);
       commandType.set(AbilityHandCommandType.POSITION);
 
@@ -48,7 +48,7 @@ public class YoAbilityHand implements AbilityHandInterface
    @Override
    public String getIdentifier()
    {
-      return serialNumber;
+      return identifier;
    }
 
    @Override

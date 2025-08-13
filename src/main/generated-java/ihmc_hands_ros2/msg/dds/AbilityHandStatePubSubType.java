@@ -15,7 +15,7 @@ public class AbilityHandStatePubSubType implements us.ihmc.pubsub.TopicDataType<
    @Override
    public final java.lang.String getDefinitionChecksum()
    {
-   		return "67ed6e03595ad2d95930355835e0f1655fe04e57eea50f6d7d68609720a5dee9";
+   		return "938077469d6e8cf04474b44975caa046f069a9935ca94d5915081183f2136dad";
    }
    
    @Override
@@ -72,7 +72,7 @@ public class AbilityHandStatePubSubType implements us.ihmc.pubsub.TopicDataType<
    {
       int initial_alignment = current_alignment;
 
-      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4) + data.getSerialNumber().length() + 1;
+      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4) + data.getIdentifier().length() + 1;
 
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
 
@@ -85,9 +85,9 @@ public class AbilityHandStatePubSubType implements us.ihmc.pubsub.TopicDataType<
 
    public static void write(ihmc_hands_ros2.msg.dds.AbilityHandState data, us.ihmc.idl.CDR cdr)
    {
-      if(data.getSerialNumber().length() <= 8)
-      cdr.write_type_d(data.getSerialNumber());else
-          throw new RuntimeException("serial_number field exceeds the maximum length: %d > %d".formatted(data.getSerialNumber().length(), 8));
+      if(data.getIdentifier().length() <= 8)
+      cdr.write_type_d(data.getIdentifier());else
+          throw new RuntimeException("identifier field exceeds the maximum length: %d > %d".formatted(data.getIdentifier().length(), 8));
 
       cdr.write_type_9(data.getHandSide());
 
@@ -105,7 +105,7 @@ public class AbilityHandStatePubSubType implements us.ihmc.pubsub.TopicDataType<
 
    public static void read(ihmc_hands_ros2.msg.dds.AbilityHandState data, us.ihmc.idl.CDR cdr)
    {
-      cdr.read_type_d(data.getSerialNumber());	
+      cdr.read_type_d(data.getIdentifier());	
       data.setHandSide(cdr.read_type_9());
       	
       for(int i0 = 0; i0 < data.getActuatorPositions().length; ++i0)
@@ -126,7 +126,7 @@ public class AbilityHandStatePubSubType implements us.ihmc.pubsub.TopicDataType<
    @Override
    public final void serialize(ihmc_hands_ros2.msg.dds.AbilityHandState data, us.ihmc.idl.InterchangeSerializer ser)
    {
-      ser.write_type_d("serial_number", data.getSerialNumber());
+      ser.write_type_d("identifier", data.getIdentifier());
       ser.write_type_9("hand_side", data.getHandSide());
       ser.write_type_f("actuator_positions", data.getActuatorPositions());
       ser.write_type_f("touch_sensor_readings", data.getTouchSensorReadings());
@@ -135,7 +135,7 @@ public class AbilityHandStatePubSubType implements us.ihmc.pubsub.TopicDataType<
    @Override
    public final void deserialize(us.ihmc.idl.InterchangeSerializer ser, ihmc_hands_ros2.msg.dds.AbilityHandState data)
    {
-      ser.read_type_d("serial_number", data.getSerialNumber());
+      ser.read_type_d("identifier", data.getIdentifier());
       data.setHandSide(ser.read_type_9("hand_side"));
       ser.read_type_f("actuator_positions", data.getActuatorPositions());
       ser.read_type_f("touch_sensor_readings", data.getTouchSensorReadings());

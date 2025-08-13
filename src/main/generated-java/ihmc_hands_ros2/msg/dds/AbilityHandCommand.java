@@ -25,7 +25,7 @@ public class AbilityHandCommand extends Packet<AbilityHandCommand> implements Se
    /**
             * The hand's serial number. E.g. 24ABH265
             */
-   public java.lang.StringBuilder serial_number_;
+   public java.lang.StringBuilder identifier_;
    /**
             * Specifies the control mode
             * Default = position control
@@ -37,7 +37,7 @@ public class AbilityHandCommand extends Packet<AbilityHandCommand> implements Se
 
    public AbilityHandCommand()
    {
-      serial_number_ = new java.lang.StringBuilder(8);
+      identifier_ = new java.lang.StringBuilder(8);
       goal_positions_ = new float[6];
 
       goal_velocities_ = new float[6];
@@ -52,8 +52,8 @@ public class AbilityHandCommand extends Packet<AbilityHandCommand> implements Se
 
    public void set(AbilityHandCommand other)
    {
-      serial_number_.setLength(0);
-      serial_number_.append(other.serial_number_);
+      identifier_.setLength(0);
+      identifier_.append(other.identifier_);
 
       control_mode_ = other.control_mode_;
 
@@ -76,25 +76,25 @@ public class AbilityHandCommand extends Packet<AbilityHandCommand> implements Se
    /**
             * The hand's serial number. E.g. 24ABH265
             */
-   public void setSerialNumber(java.lang.String serial_number)
+   public void setIdentifier(java.lang.String identifier)
    {
-      serial_number_.setLength(0);
-      serial_number_.append(serial_number);
+      identifier_.setLength(0);
+      identifier_.append(identifier);
    }
 
    /**
             * The hand's serial number. E.g. 24ABH265
             */
-   public java.lang.String getSerialNumberAsString()
+   public java.lang.String getIdentifierAsString()
    {
-      return getSerialNumber().toString();
+      return getIdentifier().toString();
    }
    /**
             * The hand's serial number. E.g. 24ABH265
             */
-   public java.lang.StringBuilder getSerialNumber()
+   public java.lang.StringBuilder getIdentifier()
    {
-      return serial_number_;
+      return identifier_;
    }
 
    /**
@@ -153,7 +153,7 @@ public class AbilityHandCommand extends Packet<AbilityHandCommand> implements Se
       if(other == null) return false;
       if(other == this) return true;
 
-      if (!us.ihmc.idl.IDLTools.epsilonEqualsStringBuilder(this.serial_number_, other.serial_number_, epsilon)) return false;
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsStringBuilder(this.identifier_, other.identifier_, epsilon)) return false;
 
       if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.control_mode_, other.control_mode_, epsilon)) return false;
 
@@ -182,7 +182,7 @@ public class AbilityHandCommand extends Packet<AbilityHandCommand> implements Se
 
       AbilityHandCommand otherMyClass = (AbilityHandCommand) other;
 
-      if (!us.ihmc.idl.IDLTools.equals(this.serial_number_, otherMyClass.serial_number_)) return false;
+      if (!us.ihmc.idl.IDLTools.equals(this.identifier_, otherMyClass.identifier_)) return false;
 
       if(this.control_mode_ != otherMyClass.control_mode_) return false;
 
@@ -208,8 +208,8 @@ public class AbilityHandCommand extends Packet<AbilityHandCommand> implements Se
       StringBuilder builder = new StringBuilder();
 
       builder.append("AbilityHandCommand {");
-      builder.append("serial_number=");
-      builder.append(this.serial_number_);      builder.append(", ");
+      builder.append("identifier=");
+      builder.append(this.identifier_);      builder.append(", ");
       builder.append("control_mode=");
       builder.append(this.control_mode_);      builder.append(", ");
       builder.append("grip=");

@@ -4,7 +4,6 @@ import ihmc_hands_ros2.msg.dds.EZGripperCommand;
 import ihmc_hands_ros2.msg.dds.EZGripperState;
 import us.ihmc.handsros2.HandMessageListener;
 import us.ihmc.handsros2.HandROS2HardwareCommunication;
-import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.ros2.ROS2NodeBuilder;
 import us.ihmc.ros2.ROS2Publisher;
 import us.ihmc.ros2.ROS2Subscription;

@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class AbilityHandROS2HardwareCommunication implements HandROS2HardwareCommunication<AbilityHandCommand, AbilityHandState>
 {
-   private final List<String> registeredHandSerialNumbers;
+   private final List<String> registeredHandIdentifiers;
 
    private final RealtimeROS2Node node;
 
@@ -39,7 +39,7 @@ public class AbilityHandROS2HardwareCommunication implements HandROS2HardwareCom
 
    public AbilityHandROS2HardwareCommunication(String nodeName, int domainId)
    {
-      registeredHandSerialNumbers = Collections.synchronizedList(new ArrayList<>(2));
+      registeredHandIdentifiers = Collections.synchronizedList(new ArrayList<>(2));
       commandMessages = new ConcurrentHashMap<>(2);
 
       ROS2NodeBuilder nodeBuilder = new ROS2NodeBuilder();
@@ -54,20 +54,20 @@ public class AbilityHandROS2HardwareCommunication implements HandROS2HardwareCom
       commandPublisher = node.createPublisher(AbilityHandROS2API.COMMAND_TOPIC);
    }
 
-   private void registerNewHand(StringBuilder newHandSerialNumber)
+   private void registerNewHand(StringBuilder newHandIdentifier)
    {
-      String serialNumber = newHandSerialNumber.toString();
+      String identifier = newHandIdentifier.toString();
       AbilityHandCommand commandMessage = new AbilityHandCommand();
-      commandMessage.setSerialNumber(serialNumber);
-      commandMessages.put(serialNumber, commandMessage);
-      registeredHandSerialNumbers.add(serialNumber);
+      commandMessage.setIdentifier(identifier);
+      commandMessages.put(identifier, commandMessage);
+      registeredHandIdentifiers.add(identifier);
    }
 
    /**
-    * <p>Get the serial numbers of the available hands.</p>
+    * <p>Get the identifiers of the available hands.</p>
     * <p>Treat the set as read-only.</p>
     *
-    * @return Set of serial numbers of the available hands.
+    * @return Set of identifiers of the available hands.
     */
    @Override
    public Set<String> getAvailableHands()
@@ -76,43 +76,43 @@ public class AbilityHandROS2HardwareCommunication implements HandROS2HardwareCom
    }
 
    /**
-    * <p>Get a synchronized list of the serial numbers of the available hands.</p>
+    * <p>Get a synchronized list of the identifiers of the available hands.</p>
     * <p>The list is created using {@link Collections#synchronizedList(List)},
     * thus a synchronized block must be used when iterating over the list.</p>
     * <p>Treat the list as read-only.</p>
     *
-    * @return List of serial numbers of the available hands.
+    * @return List of identifiers of the available hands.
     */
    @Override
    public List<String> getAvailableHandList()
    {
-      return registeredHandSerialNumbers;
+      return registeredHandIdentifiers;
    }
 
    /**
     * Read the latest state message of the specified hand.
     *
-    * @param serialNumber  Serial number specifying the hand.
+    * @param identifier  Identifier specifying the hand.
     * @param messageToPack Message to pack with the latest state.
     * @return {@code true} if a state message was available. {@code false} if no state had been received.
     */
    @Override
-   public boolean readState(String serialNumber, AbilityHandState messageToPack)
+   public boolean readState(String identifier, AbilityHandState messageToPack)
    {
-      return stateListener.readLatestMessage(serialNumber, messageToPack);
+      return stateListener.readLatestMessage(identifier, messageToPack);
    }
 
    /**
     * Read the latest state message of the specified hand.
     *
-    * @param serialNumber Serial number specifying the hand.
+    * @param identifier Identifier specifying the hand.
     * @return A copy of the latest state message.
     */
    @Override
-   public AbilityHandState readState(String serialNumber)
+   public AbilityHandState readState(String identifier)
    {
       AbilityHandState stateMessage = new AbilityHandState();
-      if (readState(serialNumber, stateMessage))
+      if (readState(identifier, stateMessage))
          return stateMessage;
 
       return null;
@@ -123,25 +123,25 @@ public class AbilityHandROS2HardwareCommunication implements HandROS2HardwareCom
     * <p>Use this method to set the desired command values.
     * Then publish the command using {@link #publishCommand(String)}.</p>
     *
-    * @param handSerialNumber Serial number specifying the hand.
+    * @param identifier Identifier specifying the hand.
     * @return A reference to the command message for the specified hand.
     */
    @Override
-   public AbilityHandCommand getCommand(String handSerialNumber)
+   public AbilityHandCommand getCommand(String identifier)
    {
-      return commandMessages.get(handSerialNumber);
+      return commandMessages.get(identifier);
    }
 
    /**
     * Publish the command for the specified hand.
     *
-    * @param handSerialNumber Serial number specifying the hand.
+    * @param identifier Identifier specifying the hand.
     * @return {@code true} if the message was published. {@code false} if the hand specified wasn't found.
     */
    @Override
-   public boolean publishCommand(String handSerialNumber)
+   public boolean publishCommand(String identifier)
    {
-      AbilityHandCommand commandMessage = commandMessages.get(handSerialNumber);
+      AbilityHandCommand commandMessage = commandMessages.get(identifier);
       if (commandMessage != null)
       {
          commandPublisher.publish(commandMessage);

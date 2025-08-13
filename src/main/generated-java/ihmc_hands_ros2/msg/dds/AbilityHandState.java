@@ -14,7 +14,7 @@ public class AbilityHandState extends Packet<AbilityHandState> implements Settab
    /**
             * The hand's serial number. E.g. 24ABH265
             */
-   public java.lang.StringBuilder serial_number_;
+   public java.lang.StringBuilder identifier_;
    /**
             * Specifies whether the hand is a left or right hand
             */
@@ -30,7 +30,7 @@ public class AbilityHandState extends Packet<AbilityHandState> implements Settab
 
    public AbilityHandState()
    {
-      serial_number_ = new java.lang.StringBuilder(8);
+      identifier_ = new java.lang.StringBuilder(8);
       actuator_positions_ = new float[6];
 
       touch_sensor_readings_ = new float[30];
@@ -45,8 +45,8 @@ public class AbilityHandState extends Packet<AbilityHandState> implements Settab
 
    public void set(AbilityHandState other)
    {
-      serial_number_.setLength(0);
-      serial_number_.append(other.serial_number_);
+      identifier_.setLength(0);
+      identifier_.append(other.identifier_);
 
       hand_side_ = other.hand_side_;
 
@@ -67,25 +67,25 @@ public class AbilityHandState extends Packet<AbilityHandState> implements Settab
    /**
             * The hand's serial number. E.g. 24ABH265
             */
-   public void setSerialNumber(java.lang.String serial_number)
+   public void setIdentifier(java.lang.String identifier)
    {
-      serial_number_.setLength(0);
-      serial_number_.append(serial_number);
+      identifier_.setLength(0);
+      identifier_.append(identifier);
    }
 
    /**
             * The hand's serial number. E.g. 24ABH265
             */
-   public java.lang.String getSerialNumberAsString()
+   public java.lang.String getIdentifierAsString()
    {
-      return getSerialNumber().toString();
+      return getIdentifier().toString();
    }
    /**
             * The hand's serial number. E.g. 24ABH265
             */
-   public java.lang.StringBuilder getSerialNumber()
+   public java.lang.StringBuilder getIdentifier()
    {
-      return serial_number_;
+      return identifier_;
    }
 
    /**
@@ -139,7 +139,7 @@ public class AbilityHandState extends Packet<AbilityHandState> implements Settab
       if(other == null) return false;
       if(other == this) return true;
 
-      if (!us.ihmc.idl.IDLTools.epsilonEqualsStringBuilder(this.serial_number_, other.serial_number_, epsilon)) return false;
+      if (!us.ihmc.idl.IDLTools.epsilonEqualsStringBuilder(this.identifier_, other.identifier_, epsilon)) return false;
 
       if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.hand_side_, other.hand_side_, epsilon)) return false;
 
@@ -166,7 +166,7 @@ public class AbilityHandState extends Packet<AbilityHandState> implements Settab
 
       AbilityHandState otherMyClass = (AbilityHandState) other;
 
-      if (!us.ihmc.idl.IDLTools.equals(this.serial_number_, otherMyClass.serial_number_)) return false;
+      if (!us.ihmc.idl.IDLTools.equals(this.identifier_, otherMyClass.identifier_)) return false;
 
       if(this.hand_side_ != otherMyClass.hand_side_) return false;
 
@@ -190,8 +190,8 @@ public class AbilityHandState extends Packet<AbilityHandState> implements Settab
       StringBuilder builder = new StringBuilder();
 
       builder.append("AbilityHandState {");
-      builder.append("serial_number=");
-      builder.append(this.serial_number_);      builder.append(", ");
+      builder.append("identifier=");
+      builder.append(this.identifier_);      builder.append(", ");
       builder.append("hand_side=");
       builder.append(this.hand_side_);      builder.append(", ");
       builder.append("actuator_positions=");

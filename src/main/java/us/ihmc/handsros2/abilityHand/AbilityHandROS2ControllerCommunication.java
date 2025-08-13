@@ -63,7 +63,7 @@ public class AbilityHandROS2ControllerCommunication implements HandROS2Controlle
    @Override
    public void publishState(AbilityHandManager managerToPublish)
    {
-      stateMessage.setSerialNumber(managerToPublish.getHand().getIdentifier());
+      stateMessage.setIdentifier(managerToPublish.getHand().getIdentifier());
       stateMessage.setHandSide(managerToPublish.getHand().getSide().toByte());
       for (int i = 0; i < AbilityHandInterface.ACTUATOR_COUNT; ++i)
          stateMessage.getActuatorPositions()[i] = managerToPublish.getHand().getActuatorPosition(i);

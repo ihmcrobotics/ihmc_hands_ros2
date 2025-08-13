@@ -60,9 +60,9 @@ public class HandMessageListener<T extends Packet<T>> implements NewMessageListe
    {
       // Ability Hand message
       if (message instanceof AbilityHandCommand command)
-         return command.getSerialNumber();
+         return command.getIdentifier();
       else if (message instanceof AbilityHandState state)
-         return state.getSerialNumber();
+         return state.getIdentifier();
       // EZGripper messages
       else if (message instanceof EZGripperCommand command)
          return command.getIdentifier();

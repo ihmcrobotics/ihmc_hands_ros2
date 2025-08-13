@@ -40,7 +40,7 @@ public class AbilityHandROS2CommunicationTest
 
       // Create a command message and its publisher
       AbilityHandCommand command = new AbilityHandCommand();
-      command.setSerialNumber(SERIAL_NUMBER);
+      command.setIdentifier(SERIAL_NUMBER);
       command.setControlMode(ControlMode.POSITION.toByte());
       System.arraycopy(COMMAND_VALUES, 0, command.getGoalPositions(), 0, ACTUATOR_COUNT);
       ROS2Publisher<AbilityHandCommand> publisher = node.createPublisher(AbilityHandROS2API.COMMAND_TOPIC);
@@ -105,7 +105,7 @@ public class AbilityHandROS2CommunicationTest
       }
       assertEquals(COMMAND_TYPE, testHand.getCommandType());
       assertEquals(HAND_SIDE, RobotSide.fromByte(stateReceived.getHandSide()));
-      assertEquals(SERIAL_NUMBER, stateReceived.getSerialNumberAsString());
+      assertEquals(SERIAL_NUMBER, stateReceived.getIdentifierAsString());
 
       // Shut things down
       controllerCommunication.shutdown();
@@ -133,7 +133,7 @@ public class AbilityHandROS2CommunicationTest
 
       // Create a state message and its publisher
       AbilityHandState state = new AbilityHandState();
-      state.setSerialNumber(SERIAL_NUMBER);
+      state.setIdentifier(SERIAL_NUMBER);
       state.setHandSide(HAND_SIDE.toByte());
       System.arraycopy(ACTUATOR_POSITIONS, 0, state.getActuatorPositions(), 0, ACTUATOR_COUNT);
       System.arraycopy(TOUCH_SENSOR_READINGS, 0, state.getTouchSensorReadings(), 0, TOUCH_SENSOR_COUNT);
@@ -169,14 +169,14 @@ public class AbilityHandROS2CommunicationTest
       // Assert the state received is correct
       AbilityHandState stateReceived = communication.readState(SERIAL_NUMBER);
       assertNotNull(stateReceived);
-      assertEquals(SERIAL_NUMBER, stateReceived.getSerialNumberAsString());
+      assertEquals(SERIAL_NUMBER, stateReceived.getIdentifierAsString());
       assertEquals(HAND_SIDE, RobotSide.fromByte(stateReceived.getHandSide()));
       assertArrayEquals(ACTUATOR_POSITIONS, stateReceived.getActuatorPositions());
       assertArrayEquals(TOUCH_SENSOR_READINGS, stateReceived.getTouchSensorReadings());
 
       // Make sure the communications created a command message for the hand
       assertNotNull(communication.getCommand(SERIAL_NUMBER));
-      assertEquals(SERIAL_NUMBER, communication.getCommand(SERIAL_NUMBER).getSerialNumberAsString());
+      assertEquals(SERIAL_NUMBER, communication.getCommand(SERIAL_NUMBER).getIdentifierAsString());
 
       // Set the command message and publish it
       communication.getCommand(SERIAL_NUMBER).setControlMode(CONTROL_MODE.toByte());
@@ -192,7 +192,7 @@ public class AbilityHandROS2CommunicationTest
 
       // Make sure subscription received it correctly
       assertTrue(received.get());
-      assertEquals(SERIAL_NUMBER, commandReceived.getSerialNumberAsString());
+      assertEquals(SERIAL_NUMBER, commandReceived.getIdentifierAsString());
       assertEquals(CONTROL_MODE, ControlMode.fromByte(commandReceived.getControlMode()));
       assertArrayEquals(GOAL_POSITIONS, commandReceived.getGoalPositions());
 

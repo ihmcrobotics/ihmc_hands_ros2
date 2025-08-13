@@ -20,7 +20,7 @@ module ihmc_hands_ros2
         /**
          * The hand's serial number. E.g. 24ABH265
          */
-        string<8> serial_number;
+        string<8> identifier;
         /**
          * Specifies whether the hand is a left or right hand
          */

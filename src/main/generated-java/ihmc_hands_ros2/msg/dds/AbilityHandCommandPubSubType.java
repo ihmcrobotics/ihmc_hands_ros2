@@ -15,7 +15,7 @@ public class AbilityHandCommandPubSubType implements us.ihmc.pubsub.TopicDataTyp
    @Override
    public final java.lang.String getDefinitionChecksum()
    {
-   		return "d14bbea094d5f552f9927aa05fb1f457f25ba78ee325bc8e1d6176f72efeb1d4";
+   		return "c59919eca6cd172bcb32df3db4e8fcbbd7223e8909efa682d14efba250d4f2f3";
    }
    
    @Override
@@ -74,7 +74,7 @@ public class AbilityHandCommandPubSubType implements us.ihmc.pubsub.TopicDataTyp
    {
       int initial_alignment = current_alignment;
 
-      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4) + data.getSerialNumber().length() + 1;
+      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4) + data.getIdentifier().length() + 1;
 
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
 
@@ -90,9 +90,9 @@ public class AbilityHandCommandPubSubType implements us.ihmc.pubsub.TopicDataTyp
 
    public static void write(ihmc_hands_ros2.msg.dds.AbilityHandCommand data, us.ihmc.idl.CDR cdr)
    {
-      if(data.getSerialNumber().length() <= 8)
-      cdr.write_type_d(data.getSerialNumber());else
-          throw new RuntimeException("serial_number field exceeds the maximum length: %d > %d".formatted(data.getSerialNumber().length(), 8));
+      if(data.getIdentifier().length() <= 8)
+      cdr.write_type_d(data.getIdentifier());else
+          throw new RuntimeException("identifier field exceeds the maximum length: %d > %d".formatted(data.getIdentifier().length(), 8));
 
       cdr.write_type_9(data.getControlMode());
 
@@ -112,7 +112,7 @@ public class AbilityHandCommandPubSubType implements us.ihmc.pubsub.TopicDataTyp
 
    public static void read(ihmc_hands_ros2.msg.dds.AbilityHandCommand data, us.ihmc.idl.CDR cdr)
    {
-      cdr.read_type_d(data.getSerialNumber());	
+      cdr.read_type_d(data.getIdentifier());	
       data.setControlMode(cdr.read_type_9());
       	
       data.setGrip(cdr.read_type_9());
@@ -135,7 +135,7 @@ public class AbilityHandCommandPubSubType implements us.ihmc.pubsub.TopicDataTyp
    @Override
    public final void serialize(ihmc_hands_ros2.msg.dds.AbilityHandCommand data, us.ihmc.idl.InterchangeSerializer ser)
    {
-      ser.write_type_d("serial_number", data.getSerialNumber());
+      ser.write_type_d("identifier", data.getIdentifier());
       ser.write_type_9("control_mode", data.getControlMode());
       ser.write_type_9("grip", data.getGrip());
       ser.write_type_f("goal_positions", data.getGoalPositions());
@@ -145,7 +145,7 @@ public class AbilityHandCommandPubSubType implements us.ihmc.pubsub.TopicDataTyp
    @Override
    public final void deserialize(us.ihmc.idl.InterchangeSerializer ser, ihmc_hands_ros2.msg.dds.AbilityHandCommand data)
    {
-      ser.read_type_d("serial_number", data.getSerialNumber());
+      ser.read_type_d("identifier", data.getIdentifier());
       data.setControlMode(ser.read_type_9("control_mode"));
       data.setGrip(ser.read_type_9("grip"));
       ser.read_type_f("goal_positions", data.getGoalPositions());
