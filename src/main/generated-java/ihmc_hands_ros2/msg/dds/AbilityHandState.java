@@ -29,7 +29,7 @@ public class AbilityHandState extends Packet<AbilityHandState> implements Settab
 
    public AbilityHandState()
    {
-      identifier_ = new java.lang.StringBuilder(8);
+      identifier_ = new java.lang.StringBuilder(32);
       actuator_positions_ = new float[6];
 
       touch_sensor_readings_ = new float[30];

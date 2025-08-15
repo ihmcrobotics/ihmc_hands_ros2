@@ -15,7 +15,7 @@ public class EZGripperStatePubSubType implements us.ihmc.pubsub.TopicDataType<ih
    @Override
    public final java.lang.String getDefinitionChecksum()
    {
-   		return "81a7ab908facd7a2179af3cf1ddb2bccc0a931a90df6d4ee06feafa37911a9cf";
+   		return "cf194705df2cb77834dc5412bb48220e4f80ae6f8074fe1b0d2c7ea65a2fba2d";
    }
    
    @Override
@@ -52,7 +52,7 @@ public class EZGripperStatePubSubType implements us.ihmc.pubsub.TopicDataType<ih
    {
       int initial_alignment = current_alignment;
 
-      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4) + 8 + 1;
+      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4) + 32 + 1;
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
 
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
@@ -114,9 +114,9 @@ public class EZGripperStatePubSubType implements us.ihmc.pubsub.TopicDataType<ih
 
    public static void write(ihmc_hands_ros2.msg.dds.EZGripperState data, us.ihmc.idl.CDR cdr)
    {
-      if(data.getIdentifier().length() <= 8)
+      if(data.getIdentifier().length() <= 32)
       cdr.write_type_d(data.getIdentifier());else
-          throw new RuntimeException("identifier field exceeds the maximum length: %d > %d".formatted(data.getIdentifier().length(), 8));
+          throw new RuntimeException("identifier field exceeds the maximum length: %d > %d".formatted(data.getIdentifier().length(), 32));
 
       cdr.write_type_9(data.getRobotSide());
 

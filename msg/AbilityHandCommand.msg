@@ -1,5 +1,5 @@
 # The hand's serial number. E.g. 24ABH265
-string<=8 identifier
+string<=32 identifier
 
 byte POSITION_CONTROL=0
 byte VELOCITY_CONTROL=1

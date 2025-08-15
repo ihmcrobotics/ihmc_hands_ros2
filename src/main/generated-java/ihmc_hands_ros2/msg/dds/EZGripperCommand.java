@@ -44,7 +44,7 @@ public class EZGripperCommand extends Packet<EZGripperCommand> implements Settab
 
    public EZGripperCommand()
    {
-      identifier_ = new java.lang.StringBuilder(8);
+      identifier_ = new java.lang.StringBuilder(32);
    }
 
    public EZGripperCommand(EZGripperCommand other)

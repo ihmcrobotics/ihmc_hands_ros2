@@ -1,5 +1,5 @@
 # An identifier for the hand. Up to 8 characters long
-string<=8 identifier
+string<=32 identifier
 
 byte POSITION_CONTROL=0
 byte CALIBRATION=1

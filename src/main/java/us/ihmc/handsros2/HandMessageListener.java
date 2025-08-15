@@ -45,6 +45,19 @@ public class HandMessageListener<T extends Packet<T>> implements NewMessageListe
          return;
       }
 
+      for (int i = 0; i < handMessageList.size(); i++)
+      {
+         if (identifier.compareTo(handMessageList.first(i)) == 0)
+         {
+            synchronized (handMessageList.second(i))
+            {
+               handMessageList.second(i).set(message);
+            }
+
+            return;
+         }
+      }
+
       StringBuilder identifierCopy = new StringBuilder(identifier);
       T messageCopy = newMessageSupplier.get();
       messageCopy.set(message);
@@ -98,8 +111,8 @@ public class HandMessageListener<T extends Packet<T>> implements NewMessageListe
       return false;
    }
 
-   public void onNewHandRegistered(Consumer<StringBuilder> serialNumberConsumer)
+   public void onNewHandRegistered(Consumer<StringBuilder> identifierConsumer)
    {
-      onNewHandRegisteredConsumers.add(serialNumberConsumer);
+      onNewHandRegisteredConsumers.add(identifierConsumer);
    }
 }

@@ -15,7 +15,7 @@ public class AbilityHandCommandPubSubType implements us.ihmc.pubsub.TopicDataTyp
    @Override
    public final java.lang.String getDefinitionChecksum()
    {
-   		return "c59919eca6cd172bcb32df3db4e8fcbbd7223e8909efa682d14efba250d4f2f3";
+   		return "769a7a65742e2e249ca3dd5c3bee025f6aff2cb2c7f7ecfa3111be48a7c47275";
    }
    
    @Override
@@ -52,7 +52,7 @@ public class AbilityHandCommandPubSubType implements us.ihmc.pubsub.TopicDataTyp
    {
       int initial_alignment = current_alignment;
 
-      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4) + 8 + 1;
+      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4) + 32 + 1;
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
 
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
@@ -90,9 +90,9 @@ public class AbilityHandCommandPubSubType implements us.ihmc.pubsub.TopicDataTyp
 
    public static void write(ihmc_hands_ros2.msg.dds.AbilityHandCommand data, us.ihmc.idl.CDR cdr)
    {
-      if(data.getIdentifier().length() <= 8)
+      if(data.getIdentifier().length() <= 32)
       cdr.write_type_d(data.getIdentifier());else
-          throw new RuntimeException("identifier field exceeds the maximum length: %d > %d".formatted(data.getIdentifier().length(), 8));
+          throw new RuntimeException("identifier field exceeds the maximum length: %d > %d".formatted(data.getIdentifier().length(), 32));
 
       cdr.write_type_9(data.getControlMode());
 

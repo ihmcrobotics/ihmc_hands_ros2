@@ -36,7 +36,7 @@ public class AbilityHandCommand extends Packet<AbilityHandCommand> implements Se
 
    public AbilityHandCommand()
    {
-      identifier_ = new java.lang.StringBuilder(8);
+      identifier_ = new java.lang.StringBuilder(32);
       goal_positions_ = new float[6];
 
       goal_velocities_ = new float[6];

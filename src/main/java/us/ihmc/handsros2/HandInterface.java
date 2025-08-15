@@ -53,7 +53,7 @@ public interface HandInterface
     * @param handType The hand's type.
     * @return A simple identifier.
     */
-   static String generateIdentifier(String prefix, RobotSide handSide, HandType handType)
+   static String getSimpleIdentifier(String prefix, RobotSide handSide, HandType handType)
    {
       return prefix + "_" + handSide.getLowerCaseName() + "_" + handType.name().toLowerCase();
    }

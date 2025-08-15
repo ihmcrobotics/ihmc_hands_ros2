@@ -57,7 +57,7 @@ public class EZGripperState extends Packet<EZGripperState> implements Settable<E
 
    public EZGripperState()
    {
-      identifier_ = new java.lang.StringBuilder(8);
+      identifier_ = new java.lang.StringBuilder(32);
    }
 
    public EZGripperState(EZGripperState other)
