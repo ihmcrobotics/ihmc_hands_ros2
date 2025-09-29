@@ -21,7 +21,7 @@
       <visual name="wrist_mesh">
          <origin rpy="0 0 0" xyz="0 0 0" />
          <geometry>
-            <mesh filename="models/wristmesh.STL" />
+            <mesh filename="package://ihmc_hands_ros2/meshes/abilityHand/wristmesh.STL" />
          </geometry>
       </visual>
       <inertial>
@@ -32,13 +32,13 @@
       <visual name="palm_mesh">
          <origin rpy="3.14148426 0.08848813 3.14036612" xyz="24.0476665e-3 3.78124745e-3 32.32964923e-3" />
          <geometry>
-            <mesh filename="models/FB_palm_ref.STL" />
+            <mesh filename="package://ihmc_hands_ros2/meshes/abilityHand/FB_palm_ref.STL" />
          </geometry>
       </visual>
       <collision name="palm_mesh_coll">
          <origin rpy="3.14148426 0.08848813 3.14036612" xyz="24.0476665e-3 3.78124745e-3 32.32964923e-3" />
          <geometry>
-            <mesh filename="models/palm_hull.STL" />
+            <mesh filename="package://ihmc_hands_ros2/meshes/abilityHand/palm_hull.STL" />
          </geometry>
       </collision>
    </link>
@@ -52,13 +52,13 @@
       <visual name="index_mesh_1">
          <origin xyz="0 0 0" rpy="0 0 0" />
          <geometry>
-            <mesh filename="models/idx-F1.STL" />
+            <mesh filename="package://ihmc_hands_ros2/meshes/abilityHand/idx-F1.STL" />
          </geometry>
       </visual>
       <collision name="index_mesh_coll_1">
          <origin rpy="0 0 0.0844739" xyz="0.0384727 0.0032577 0" />
          <geometry>
-            <mesh filename="models/idx-F1-hull.STL" />
+            <mesh filename="package://ihmc_hands_ros2/meshes/abilityHand/idx-F1-hull.STL" />
          </geometry>
       </collision>
    </link>
@@ -71,13 +71,13 @@
       <visual name="index_mesh_2">
          <origin rpy="0 0 0" xyz="0 0 0" />
          <geometry>
-            <mesh filename="models/idx-F2-Lg.STL" />
+            <mesh filename="package://ihmc_hands_ros2/meshes/abilityHand/idx-F2-Lg.STL" />
          </geometry>
       </visual>
       <collision name="index_mesh_coll_2">
          <origin rpy="0 0 0" xyz="0.0091241 0 0" />
          <geometry>
-            <mesh filename="models/idx-F2-Lg-hull.STL" />
+            <mesh filename="package://ihmc_hands_ros2/meshes/abilityHand/idx-F2-Lg-hull.STL" />
          </geometry>
       </collision>
    </link>
@@ -108,7 +108,7 @@
       <child link="index_anchor" />
       <origin rpy="0 0 0" xyz="31.5541e-3  -10.44e-3 0.14e-3" />
    </joint>
-   <link name="fsr0" />
+   <!-- <link name="fsr0" />
    <joint name="fsr0" type="fixed">
       <parent link="index_L2" />
       <child link="fsr0" />
@@ -143,7 +143,7 @@
       <parent link="index_L2" />
       <child link="fsr5" />
       <origin rpy="-2.66907 -1.57080 0.00000" xyz="0.03704 -0.01785 0.00000" />
-   </joint>
+   </joint> -->
    <link name="middle_L1">
       <inertial>
          <mass value="0.00636000" />
@@ -153,13 +153,13 @@
       <visual name="middle_mesh_1">
          <origin rpy="0 0 0" xyz="0 0 0" />
          <geometry>
-            <mesh filename="models/idx-F1.STL" />
+            <mesh filename="package://ihmc_hands_ros2/meshes/abilityHand/idx-F1.STL" />
          </geometry>
       </visual>
       <collision name="middle_mesh_coll_1">
          <origin rpy="0 0 0.0844739" xyz="0.0384727 0.0032577 0" />
          <geometry>
-            <mesh filename="models/idx-F1-hull.STL" />
+            <mesh filename="package://ihmc_hands_ros2/meshes/abilityHand/idx-F1-hull.STL" />
          </geometry>
       </collision>
    </link>
@@ -172,13 +172,13 @@
       <visual name="middle_mesh_2">
          <origin rpy="0 0 0" xyz="0 0 0" />
          <geometry>
-            <mesh filename="models/idx-F2-Lg.STL" />
+            <mesh filename="package://ihmc_hands_ros2/meshes/abilityHand/idx-F2-Lg.STL" />
          </geometry>
       </visual>
       <collision name="middle_mesh_coll_2">
          <origin rpy="0 0 0" xyz="0.0091241 0 0" />
          <geometry>
-            <mesh filename="models/idx-F2-Lg-hull.STL" />
+            <mesh filename="package://ihmc_hands_ros2/meshes/abilityHand/idx-F2-Lg-hull.STL" />
          </geometry>
       </collision>
    </link>
@@ -209,7 +209,7 @@
       <child link="middle_anchor" />
       <origin rpy="0 0 0" xyz="31.5541e-3  -10.44e-3 0.14e-3" />
    </joint>
-   <link name="fsr6" />
+   <-- <link name="fsr6" />
    <joint name="fsr6" type="fixed">
       <parent link="middle_L2" />
       <child link="fsr6" />
@@ -244,7 +244,7 @@
       <parent link="middle_L2" />
       <child link="fsr11" />
       <origin rpy="-2.66907 -1.57080 0.00000" xyz="0.03704 -0.01785 0.00000" />
-   </joint>
+   </joint> -->
    <link name="ring_L1">
       <inertial>
          <mass value="0.00636000" />
@@ -254,13 +254,13 @@
       <visual name="ring_mesh_1">
          <origin rpy="0 0 0" xyz="0 0 0" />
          <geometry>
-            <mesh filename="models/idx-F1.STL" />
+            <mesh filename="package://ihmc_hands_ros2/meshes/abilityHand/idx-F1.STL" />
          </geometry>
       </visual>
       <collision name="ring_mesh_coll_1">
          <origin rpy="0 0 0.0844739" xyz="0.0384727 0.0032577 0" />
          <geometry>
-            <mesh filename="models/idx-F1-hull.STL" />
+            <mesh filename="package://ihmc_hands_ros2/meshes/abilityHand/idx-F1-hull.STL" />
          </geometry>
       </collision>
    </link>
@@ -273,13 +273,13 @@
       <visual name="ring_mesh_2">
          <origin rpy="0 0 0" xyz="0 0 0" />
          <geometry>
-            <mesh filename="models/idx-F2-Lg.STL" />
+            <mesh filename="package://ihmc_hands_ros2/meshes/abilityHand/idx-F2-Lg.STL" />
          </geometry>
       </visual>
       <collision name="ring_mesh_coll_2">
          <origin rpy="0 0 0" xyz="0.0091241 0 0" />
          <geometry>
-            <mesh filename="models/idx-F2-Lg-hull.STL" />
+            <mesh filename="package://ihmc_hands_ros2/meshes/abilityHand/idx-F2-Lg-hull.STL" />
          </geometry>
       </collision>
    </link>
@@ -310,7 +310,7 @@
       <child link="ring_anchor" />
       <origin rpy="0 0 0" xyz="31.5541e-3  -10.44e-3 0.14e-3" />
    </joint>
-   <link name="fsr12" />
+   <!-- <link name="fsr12" />
    <joint name="fsr12" type="fixed">
       <parent link="ring_L2" />
       <child link="fsr12" />
@@ -345,7 +345,7 @@
       <parent link="ring_L2" />
       <child link="fsr17" />
       <origin rpy="-2.66907 -1.57080 0.00000" xyz="0.03704 -0.01785 0.00000" />
-   </joint>
+   </joint> -->
    <link name="pinky_L1">
       <inertial>
          <mass value="0.00636000" />
@@ -355,13 +355,13 @@
       <visual name="pinky_mesh_1">
          <origin rpy="0 0 0" xyz="0 0 0" />
          <geometry>
-            <mesh filename="models/idx-F1.STL" />
+            <mesh filename="package://ihmc_hands_ros2/meshes/abilityHand/idx-F1.STL" />
          </geometry>
       </visual>
       <collision name="pinky_mesh_coll_1">
          <origin rpy="0 0 0.0844739" xyz="0.0384727 0.0032577 0" />
          <geometry>
-            <mesh filename="models/idx-F1-hull.STL" />
+            <mesh filename="package://ihmc_hands_ros2/meshes/abilityHand/idx-F1-hull.STL" />
          </geometry>
       </collision>
    </link>
@@ -374,13 +374,13 @@
       <visual name="pinky_mesh_2">
          <origin rpy="0 0 0" xyz="0 0 0" />
          <geometry>
-            <mesh filename="models/idx-F2-Lg.STL" />
+            <mesh filename="package://ihmc_hands_ros2/meshes/abilityHand/idx-F2-Lg.STL" />
          </geometry>
       </visual>
       <collision name="pinky_mesh_coll_2">
          <origin rpy="0 0 0" xyz="0.0091241 0 0" />
          <geometry>
-            <mesh filename="models/idx-F2-hull.STL" />
+            <mesh filename="package://ihmc_hands_ros2/meshes/abilityHand/idx-F2-hull.STL" />
          </geometry>
       </collision>
    </link>
@@ -411,7 +411,7 @@
       <child link="pinky_anchor" />
       <origin rpy="0 0 0" xyz="31.5541e-3  -10.44e-3 0.14e-3" />
    </joint>
-   <link name="fsr18" />
+   <!-- <link name="fsr18" />
    <joint name="fsr18" type="fixed">
       <parent link="pinky_L2" />
       <child link="fsr18" />
@@ -446,7 +446,7 @@
       <parent link="pinky_L2" />
       <child link="fsr23" />
       <origin rpy="-2.66907 -1.57080 0.00000" xyz="0.03142 -0.01438 0.00000" />
-   </joint>
+   </joint> -->
    <link name="thumb_L1">
       <inertial>
          <mass value="0.00200000" />
@@ -456,13 +456,13 @@
       <visual name="thumb_mesh_1">
          <origin rpy="0 0 0" xyz="0 0 0" />
          <geometry>
-            <mesh filename="models/thumb-F1.STL" />
+            <mesh filename="package://ihmc_hands_ros2/meshes/abilityHand/thumb-F1.STL" />
          </geometry>
       </visual>
       <collision name="thumb_coll_mesh_1">
          <origin rpy="-1.83260 0 0" xyz="0.02783 0 -0.01475" />
          <geometry>
-            <mesh filename="models/thumb-F1-hull.STL" />
+            <mesh filename="package://ihmc_hands_ros2/meshes/abilityHand/thumb-F1-hull.STL" />
          </geometry>
       </collision>
    </link>
@@ -475,13 +475,13 @@
       <visual name="thumb_mesh_2">
          <origin rpy="0 0 0" xyz="0 0 0" />
          <geometry>
-            <mesh filename="models/thumb-F2-left.STL" />
+            <mesh filename="package://ihmc_hands_ros2/meshes/abilityHand/thumb-F2-left.STL" />
          </geometry>
       </visual>
       <collision name="thumb_hull_mesh_2">
          <origin rpy="3.14159 0 0.34383" xyz="0.06519 0.02334 -0.00393" />
          <geometry>
-            <mesh filename="models/thumb-F2-hull.STL" />
+            <mesh filename="package://ihmc_hands_ros2/meshes/abilityHand/thumb-F2-hull.STL" />
          </geometry>
       </collision>
    </link>
@@ -511,7 +511,7 @@
       <child link="thumb_anchor" />
       <origin rpy="0 0 0" xyz="52.0012259e-3  28.0086971e-3 -.884835778e-3" />
    </joint>
-   <link name="fsr24" />
+   <!-- <link name="fsr24" />
    <joint name="fsr24" type="fixed">
       <parent link="thumb_L2" />
       <child link="fsr24" />
@@ -546,5 +546,5 @@
       <parent link="thumb_L2" />
       <child link="fsr29" />
       <origin rrpy="-1.39339 0.19354 -0.40280" xyz="0.05591 0.02160 -0.00192" />
-   </joint>
+   </joint> -->
 </robot>
