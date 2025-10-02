@@ -16,9 +16,7 @@ ihmc {
    javaDirectory("main", "generated-java")
 
    // Other resources
-   resourceDirectory("main", "../../msg")
-   resourceDirectory("main", "../../meshes")
-   resourceDirectory("main", "../../urdf")
+   resourceDirectory("main", "../../hand-models")
 }
 
 mainDependencies {
