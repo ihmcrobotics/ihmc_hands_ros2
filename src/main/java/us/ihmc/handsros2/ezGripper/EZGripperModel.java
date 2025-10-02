@@ -10,13 +10,13 @@ public class EZGripperModel implements HandModel
 {
    public enum EZGripperJointName implements HandJointName
    {
-      // The sdf for the gripper does not mirror the fingers; X1 is the left finger and X2 is the right finger on both hands.
+      // The urdf for the gripper does not mirror the fingers; 1 is the left finger and 2 is the right finger on both hands.
       // The inner finger is the thumb, and the outer finger is the index.
       // There is no functional difference to any of these angles since the angles of each joint are always identical.
-      GRIPPER_X1, GRIPPER_X1_TIP, GRIPPER_X2, GRIPPER_X2_TIP;
+      KNUCKLE_PALM_L1_1, KNUCKLE_PALM_L1_2, KNUCKLE_L1_L2_1, KNUCKLE_L1_L2_2;
 
       public static final EZGripperJointName[] values = EZGripperJointName.values();
-      public static final EZGripperJointName[] nonFingertipValues = new EZGripperJointName[] {GRIPPER_X1, GRIPPER_X2};
+      public static final EZGripperJointName[] nonFingertipValues = new EZGripperJointName[] {KNUCKLE_PALM_L1_1, KNUCKLE_PALM_L1_2};
 
       // Taken from the EZGripper URDF
       public static final double JOINT_RANGE = 1.94;
@@ -24,13 +24,7 @@ public class EZGripperModel implements HandModel
       @Override
       public int getIndex(RobotSide robotSide)
       {
-         return switch (this)
-         {
-            case GRIPPER_X1 -> robotSide == RobotSide.LEFT ? 1 : 0;
-            case GRIPPER_X2 -> robotSide == RobotSide.LEFT ? 0 : 1;
-            case GRIPPER_X1_TIP -> robotSide == RobotSide.LEFT ? 3 : 2;
-            case GRIPPER_X2_TIP -> robotSide == RobotSide.LEFT ? 2 : 3;
-         };
+         return ordinal();
       }
 
       @Override
@@ -38,16 +32,15 @@ public class EZGripperModel implements HandModel
       {
          return switch (this)
          {
-            case GRIPPER_X1 -> robotSide == RobotSide.LEFT ? FingerName.INDEX : FingerName.THUMB;
-            case GRIPPER_X2 -> robotSide == RobotSide.LEFT ? FingerName.THUMB : FingerName.INDEX;
-            default -> null;
+            case KNUCKLE_PALM_L1_1, KNUCKLE_L1_L2_1 -> robotSide == RobotSide.LEFT ? FingerName.INDEX : FingerName.THUMB;
+            case KNUCKLE_PALM_L1_2, KNUCKLE_L1_L2_2 -> robotSide == RobotSide.LEFT ? FingerName.THUMB : FingerName.INDEX;
          };
       }
 
       @Override
       public String getJointName(RobotSide robotSide)
       {
-         return robotSide.getSideNameInAllCaps() + "_" + this;
+         return robotSide.getLowerCaseName() + "_ezgripper_" + name().toLowerCase();
       }
 
       @Override

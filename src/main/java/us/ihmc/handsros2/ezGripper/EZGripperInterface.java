@@ -86,13 +86,13 @@ public interface EZGripperInterface extends HandInterface
    /** {@inheritDoc} */
    default void readJointAngles(double[] jointAngles)
    {
-      double angle = getCurrentPosition() * JOINT_RANGE;
-      jointAngles[GRIPPER_X1.getIndex(getSide())] = angle;
-      jointAngles[GRIPPER_X2.getIndex(getSide())] = angle;
+      double angle = JOINT_RANGE * (1.0f - getCurrentPosition());
+      jointAngles[KNUCKLE_PALM_L1_1.getIndex(getSide())] = angle;
+      jointAngles[KNUCKLE_PALM_L1_2.getIndex(getSide())] = angle;
 
-      // We can't know the
-      jointAngles[GRIPPER_X1_TIP.getIndex(getSide())] = 0.0;
-      jointAngles[GRIPPER_X2_TIP.getIndex(getSide())] = 0.0;
+      // We can't know the angle of the fingertips
+      jointAngles[KNUCKLE_L1_L2_1.getIndex(getSide())] = 0.0;
+      jointAngles[KNUCKLE_L1_L2_2.getIndex(getSide())] = 0.0;
    }
 
    /** {@inheritDoc} */
