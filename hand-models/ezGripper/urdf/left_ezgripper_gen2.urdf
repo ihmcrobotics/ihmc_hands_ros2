@@ -4,12 +4,12 @@
     <link name="left_ezgripper_palm_link">
         <visual>
             <geometry>
-                <mesh filename="package://ezGripper/meshes/ezgripper_gen2/SAKE_Palm_Dual_Gen2.stl"/>
+                <mesh filename="package://ezGripper/meshes/ezgripper_gen2/SAKE_Palm_Dual_Gen2.obj"/>
             </geometry>
         </visual>
         <collision>
             <geometry>
-                <mesh filename="package://ezGripper/meshes/ezgripper_gen2/SAKE_Palm_Dual_Gen2.stl"/>
+                <mesh filename="package://ezGripper/meshes/ezgripper_gen2/SAKE_Palm_Dual_Gen2.obj"/>
             </geometry>
         </collision>
         <inertial>
@@ -21,12 +21,12 @@
     <link name="left_ezgripper_finger_l1_1">
         <visual>
             <geometry>
-                <mesh filename="package://ezGripper/meshes/ezgripper_gen2/SAKE_Finger_L1_Gen2.stl"/>
+                <mesh filename="package://ezGripper/meshes/ezgripper_gen2/SAKE_Finger_L1_Gen2.obj"/>
             </geometry>
         </visual>
         <collision>
             <geometry>
-                <mesh filename="package://ezGripper/meshes/ezgripper_gen2/SAKE_Finger_L1_Gen2.stl"/>
+                <mesh filename="package://ezGripper/meshes/ezgripper_gen2/SAKE_Finger_L1_Gen2.obj"/>
             </geometry>
         </collision>
         <inertial>
@@ -38,12 +38,12 @@
     <link name="left_ezgripper_finger_l1_2">
         <visual>
             <geometry>
-                <mesh filename="package://ezGripper/meshes/ezgripper_gen2/SAKE_Finger_L1_Gen2.stl"/>
+                <mesh filename="package://ezGripper/meshes/ezgripper_gen2/SAKE_Finger_L1_Gen2.obj"/>
             </geometry>
         </visual>
         <collision>
             <geometry>
-                <mesh filename="package://ezGripper/meshes/ezgripper_gen2/SAKE_Finger_L1_Gen2.stl"/>
+                <mesh filename="package://ezGripper/meshes/ezgripper_gen2/SAKE_Finger_L1_Gen2.obj"/>
             </geometry>
         </collision>
         <inertial>
@@ -55,13 +55,13 @@
     <link name="left_ezgripper_finger_l2_1">
         <visual>
             <geometry>
-                <mesh filename="package://ezGripper/meshes/ezgripper_gen2/SAKE_Finger_L2_Gen2.stl"/>
+                <mesh filename="package://ezGripper/meshes/ezgripper_gen2/SAKE_Finger_L2_Gen2.obj"/>
             </geometry>
         </visual>
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="package://ezGripper/meshes/ezgripper_gen2/SAKE_Finger_L2_Gen2.stl"/>
+                <mesh filename="package://ezGripper/meshes/ezgripper_gen2/SAKE_Finger_L2_Gen2.obj"/>
             </geometry>
         </collision>
         <inertial>
@@ -73,13 +73,13 @@
     <link name="left_ezgripper_finger_l2_2">
         <visual>
             <geometry>
-                <mesh filename="package://ezGripper/meshes/ezgripper_gen2/SAKE_Finger_L2_Gen2.stl"/>
+                <mesh filename="package://ezGripper/meshes/ezgripper_gen2/SAKE_Finger_L2_Gen2.obj"/>
             </geometry>
         </visual>
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="package://ezGripper/meshes/ezgripper_gen2/SAKE_Finger_L2_Gen2.stl"/>
+                <mesh filename="package://ezGripper/meshes/ezgripper_gen2/SAKE_Finger_L2_Gen2.obj"/>
             </geometry>
         </collision>
         <inertial>
