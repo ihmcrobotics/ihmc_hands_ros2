@@ -17,7 +17,8 @@ ihmc {
 
    // Other resources
    resourceDirectory("main", "../../msg")
-   resourceDirectory("main", "../../hand-models")
+   resourceDirectory("main", "../../urdf")
+   resourceDirectory("main", "../../meshes")
 }
 
 mainDependencies {

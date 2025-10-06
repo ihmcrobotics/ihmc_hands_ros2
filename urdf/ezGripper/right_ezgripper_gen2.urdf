@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<robot name="left_ezgripper_gen2">
+<robot name="right_ezgripper_gen2">
     <!-- links -->
-    <link name="left_ezgripper_palm_link">
+    <link name="right_ezgripper_palm_link">
         <visual>
             <geometry>
-                <mesh filename="package://ezGripper/meshes/ezgripper_gen2/SAKE_Palm_Dual_Gen2.obj"/>
+                <mesh filename="package://ezGripper/ezgripper_gen2/SAKE_Palm_Dual_Gen2.obj"/>
             </geometry>
         </visual>
         <collision>
             <geometry>
-                <mesh filename="package://ezGripper/meshes/ezgripper_gen2/SAKE_Palm_Dual_Gen2.obj"/>
+                <mesh filename="package://ezGripper/ezgripper_gen2/SAKE_Palm_Dual_Gen2.obj"/>
             </geometry>
         </collision>
         <inertial>
@@ -18,15 +18,15 @@
         </inertial>
     </link>
 
-    <link name="left_ezgripper_finger_l1_1">
+    <link name="right_ezgripper_finger_l1_1">
         <visual>
             <geometry>
-                <mesh filename="package://ezGripper/meshes/ezgripper_gen2/SAKE_Finger_L1_Gen2.obj"/>
+                <mesh filename="package://ezGripper/ezgripper_gen2/SAKE_Finger_L1_Gen2.obj"/>
             </geometry>
         </visual>
         <collision>
             <geometry>
-                <mesh filename="package://ezGripper/meshes/ezgripper_gen2/SAKE_Finger_L1_Gen2.obj"/>
+                <mesh filename="package://ezGripper/ezgripper_gen2/SAKE_Finger_L1_Gen2.obj"/>
             </geometry>
         </collision>
         <inertial>
@@ -35,15 +35,15 @@
         </inertial>
     </link>
 
-    <link name="left_ezgripper_finger_l1_2">
+    <link name="right_ezgripper_finger_l1_2">
         <visual>
             <geometry>
-                <mesh filename="package://ezGripper/meshes/ezgripper_gen2/SAKE_Finger_L1_Gen2.obj"/>
+                <mesh filename="package://ezGripper/ezgripper_gen2/SAKE_Finger_L1_Gen2.obj"/>
             </geometry>
         </visual>
         <collision>
             <geometry>
-                <mesh filename="package://ezGripper/meshes/ezgripper_gen2/SAKE_Finger_L1_Gen2.obj"/>
+                <mesh filename="package://ezGripper/ezgripper_gen2/SAKE_Finger_L1_Gen2.obj"/>
             </geometry>
         </collision>
         <inertial>
@@ -52,16 +52,16 @@
         </inertial>
     </link>
 
-    <link name="left_ezgripper_finger_l2_1">
+    <link name="right_ezgripper_finger_l2_1">
         <visual>
             <geometry>
-                <mesh filename="package://ezGripper/meshes/ezgripper_gen2/SAKE_Finger_L2_Gen2.obj"/>
+                <mesh filename="package://ezGripper/ezgripper_gen2/SAKE_Finger_L2_Gen2.obj"/>
             </geometry>
         </visual>
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="package://ezGripper/meshes/ezgripper_gen2/SAKE_Finger_L2_Gen2.obj"/>
+                <mesh filename="package://ezGripper/ezgripper_gen2/SAKE_Finger_L2_Gen2.obj"/>
             </geometry>
         </collision>
         <inertial>
@@ -70,16 +70,16 @@
         </inertial>
     </link>
 
-    <link name="left_ezgripper_finger_l2_2">
+    <link name="right_ezgripper_finger_l2_2">
         <visual>
             <geometry>
-                <mesh filename="package://ezGripper/meshes/ezgripper_gen2/SAKE_Finger_L2_Gen2.obj"/>
+                <mesh filename="package://ezGripper/ezgripper_gen2/SAKE_Finger_L2_Gen2.obj"/>
             </geometry>
         </visual>
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="package://ezGripper/meshes/ezgripper_gen2/SAKE_Finger_L2_Gen2.obj"/>
+                <mesh filename="package://ezGripper/ezgripper_gen2/SAKE_Finger_L2_Gen2.obj"/>
             </geometry>
         </collision>
         <inertial>
@@ -89,49 +89,49 @@
     </link>
 
     <!-- joints -->
-    <joint name="left_ezgripper_knuckle_palm_l1_1" type="revolute">
-        <parent link="left_ezgripper_palm_link"/>
-        <child link="left_ezgripper_finger_l1_1"/>
+    <joint name="right_ezgripper_knuckle_palm_l1_1" type="revolute">
+        <parent link="right_ezgripper_palm_link"/>
+        <child link="right_ezgripper_finger_l1_1"/>
         <origin xyz="0.072569 0.03 0" rpy="-1.5708 0 1.57075"/>
         <axis xyz="0 1 0"/>
         <limit lower="0" upper="1.94" effort="1" velocity="3.67"/>
     </joint>
 
-    <joint name="left_ezgripper_knuckle_palm_l1_2" type="revolute">
-        <parent link="left_ezgripper_palm_link"/>
-        <child link="left_ezgripper_finger_l1_2"/>
+    <joint name="right_ezgripper_knuckle_palm_l1_2" type="revolute">
+        <parent link="right_ezgripper_palm_link"/>
+        <child link="right_ezgripper_finger_l1_2"/>
         <origin xyz="0.072569 -0.03 0" rpy="1.5708 0 -1.57075"/>
         <axis xyz="0 1 0"/>
         <limit lower="0" upper="1.94" effort="1" velocity="3.67"/>
-        <mimic joint="left_ezgripper_knuckle_palm_l1_1"/>
+        <mimic joint="right_ezgripper_knuckle_palm_l1_1"/>
     </joint>
 
-    <joint name="left_ezgripper_knuckle_l1_l2_1" type="revolute">
-        <parent link="left_ezgripper_finger_l1_1"/>
-        <child link="left_ezgripper_finger_l2_1"/>
+    <joint name="right_ezgripper_knuckle_l1_l2_1" type="revolute">
+        <parent link="right_ezgripper_finger_l1_1"/>
+        <child link="right_ezgripper_finger_l2_1"/>
         <origin xyz="0.052 0 0" rpy="0 0 0"/>
         <!-- origin xyz="0.06 0 0" rpy="${3.14159 * reflectR} 0 0"/-->
         <axis xyz="0 1 0"/>
         <limit lower="0" upper="1.94" effort="1" velocity="3.67"/>
     </joint>
 
-    <joint name="left_ezgripper_knuckle_l1_l2_2" type="revolute">
-        <parent link="left_ezgripper_finger_l1_2"/>
-        <child link="left_ezgripper_finger_l2_2"/>
+    <joint name="right_ezgripper_knuckle_l1_l2_2" type="revolute">
+        <parent link="right_ezgripper_finger_l1_2"/>
+        <child link="right_ezgripper_finger_l2_2"/>
         <origin xyz="0.052 0 0" rpy="0 0 0"/>
         <!-- origin xyz="0.06 0 0" rpy="${3.14159 * reflectR} 0 0"/-->
         <axis xyz="0 1 0"/>
         <limit lower="0" upper="1.94" effort="1" velocity="3.67"/>
-        <mimic joint="left_ezgripper_knuckle_l1_l2_1"/>
+        <mimic joint="right_ezgripper_knuckle_l1_l2_1"/>
     </joint>
 
     <!-- transmissions for Gazebo -->
-    <transmission name="left_ezgripper_trans_l1_l2_1">
+    <transmission name="right_ezgripper_trans_l1_l2_1">
         <type>transmission_interface/SimpleTransmission</type>
-        <joint name="left_ezgripper_knuckle_l1_l2_1">
+        <joint name="right_ezgripper_knuckle_l1_l2_1">
             <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
         </joint>
-        <actuator name="left_ezgripper_motorl1_l2_1">
+        <actuator name="right_ezgripper_motorl1_l2_1">
             <mechanicalReduction>1</mechanicalReduction>
             <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
         </actuator>
@@ -139,7 +139,7 @@
 
     <gazebo>
         <plugin name="joint_state_publisher" filename="libgazebo_ros_joint_state_publisher.so">
-            <jointName>left_ezgripper_knuckle_l1_l2_1,left_ezgripper_knuckle_l1_l2_2</jointName>
+            <jointName>right_ezgripper_knuckle_l1_l2_1,right_ezgripper_knuckle_l1_l2_2</jointName>
         </plugin>
     </gazebo>
 

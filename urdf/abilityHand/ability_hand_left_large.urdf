@@ -21,7 +21,7 @@
       <visual name="wrist_mesh">
          <origin rpy="0 0 0" xyz="0 0 0" />
          <geometry>
-            <mesh filename="package://abilityHand/meshes/wristmesh.obj" />
+            <mesh filename="package://abilityHand/wristmesh.obj" />
          </geometry>
       </visual>
       <inertial>
@@ -32,13 +32,13 @@
       <visual name="palm_mesh">
          <origin rpy="3.14148426 0.08848813 3.14036612" xyz="24.0476665e-3 3.78124745e-3 32.32964923e-3" />
          <geometry>
-            <mesh filename="package://abilityHand/meshes/FB_palm_ref.obj" />
+            <mesh filename="package://abilityHand/FB_palm_ref.obj" />
          </geometry>
       </visual>
       <collision name="palm_mesh_coll">
          <origin rpy="3.14148426 0.08848813 3.14036612" xyz="24.0476665e-3 3.78124745e-3 32.32964923e-3" />
          <geometry>
-            <mesh filename="package://abilityHand/meshes/palm_hull.obj" />
+            <mesh filename="package://abilityHand/palm_hull.obj" />
          </geometry>
       </collision>
    </link>
@@ -52,13 +52,13 @@
       <visual name="index_mesh_1">
          <origin xyz="0 0 0" rpy="0 0 0" />
          <geometry>
-            <mesh filename="package://abilityHand/meshes/idx-F1.obj" />
+            <mesh filename="package://abilityHand/idx-F1.obj" />
          </geometry>
       </visual>
       <collision name="index_mesh_coll_1">
          <origin rpy="0 0 0.0844739" xyz="0.0384727 0.0032577 0" />
          <geometry>
-            <mesh filename="package://abilityHand/meshes/idx-F1-hull.obj" />
+            <mesh filename="package://abilityHand/idx-F1-hull.obj" />
          </geometry>
       </collision>
    </link>
@@ -71,13 +71,13 @@
       <visual name="index_mesh_2">
          <origin rpy="0 0 0" xyz="0 0 0" />
          <geometry>
-            <mesh filename="package://abilityHand/meshes/idx-F2-Lg.obj" />
+            <mesh filename="package://abilityHand/idx-F2-Lg.obj" />
          </geometry>
       </visual>
       <collision name="index_mesh_coll_2">
          <origin rpy="0 0 0" xyz="0.0091241 0 0" />
          <geometry>
-            <mesh filename="package://abilityHand/meshes/idx-F2-Lg-hull.obj" />
+            <mesh filename="package://abilityHand/idx-F2-Lg-hull.obj" />
          </geometry>
       </collision>
    </link>
@@ -153,13 +153,13 @@
       <visual name="middle_mesh_1">
          <origin rpy="0 0 0" xyz="0 0 0" />
          <geometry>
-            <mesh filename="package://abilityHand/meshes/idx-F1.obj" />
+            <mesh filename="package://abilityHand/idx-F1.obj" />
          </geometry>
       </visual>
       <collision name="middle_mesh_coll_1">
          <origin rpy="0 0 0.0844739" xyz="0.0384727 0.0032577 0" />
          <geometry>
-            <mesh filename="package://abilityHand/meshes/idx-F1-hull.obj" />
+            <mesh filename="package://abilityHand/idx-F1-hull.obj" />
          </geometry>
       </collision>
    </link>
@@ -172,13 +172,13 @@
       <visual name="middle_mesh_2">
          <origin rpy="0 0 0" xyz="0 0 0" />
          <geometry>
-            <mesh filename="package://abilityHand/meshes/idx-F2-Lg.obj" />
+            <mesh filename="package://abilityHand/idx-F2-Lg.obj" />
          </geometry>
       </visual>
       <collision name="middle_mesh_coll_2">
          <origin rpy="0 0 0" xyz="0.0091241 0 0" />
          <geometry>
-            <mesh filename="package://abilityHand/meshes/idx-F2-Lg-hull.obj" />
+            <mesh filename="package://abilityHand/idx-F2-Lg-hull.obj" />
          </geometry>
       </collision>
    </link>
@@ -254,13 +254,13 @@
       <visual name="ring_mesh_1">
          <origin rpy="0 0 0" xyz="0 0 0" />
          <geometry>
-            <mesh filename="package://abilityHand/meshes/idx-F1.obj" />
+            <mesh filename="package://abilityHand/idx-F1.obj" />
          </geometry>
       </visual>
       <collision name="ring_mesh_coll_1">
          <origin rpy="0 0 0.0844739" xyz="0.0384727 0.0032577 0" />
          <geometry>
-            <mesh filename="package://abilityHand/meshes/idx-F1-hull.obj" />
+            <mesh filename="package://abilityHand/idx-F1-hull.obj" />
          </geometry>
       </collision>
    </link>
@@ -273,13 +273,13 @@
       <visual name="ring_mesh_2">
          <origin rpy="0 0 0" xyz="0 0 0" />
          <geometry>
-            <mesh filename="package://abilityHand/meshes/idx-F2-Lg.obj" />
+            <mesh filename="package://abilityHand/idx-F2-Lg.obj" />
          </geometry>
       </visual>
       <collision name="ring_mesh_coll_2">
          <origin rpy="0 0 0" xyz="0.0091241 0 0" />
          <geometry>
-            <mesh filename="package://abilityHand/meshes/idx-F2-Lg-hull.obj" />
+            <mesh filename="package://abilityHand/idx-F2-Lg-hull.obj" />
          </geometry>
       </collision>
    </link>
@@ -355,13 +355,13 @@
       <visual name="pinky_mesh_1">
          <origin rpy="0 0 0" xyz="0 0 0" />
          <geometry>
-            <mesh filename="package://abilityHand/meshes/idx-F1.obj" />
+            <mesh filename="package://abilityHand/idx-F1.obj" />
          </geometry>
       </visual>
       <collision name="pinky_mesh_coll_1">
          <origin rpy="0 0 0.0844739" xyz="0.0384727 0.0032577 0" />
          <geometry>
-            <mesh filename="package://abilityHand/meshes/idx-F1-hull.obj" />
+            <mesh filename="package://abilityHand/idx-F1-hull.obj" />
          </geometry>
       </collision>
    </link>
@@ -374,13 +374,13 @@
       <visual name="pinky_mesh_2">
          <origin rpy="0 0 0" xyz="0 0 0" />
          <geometry>
-            <mesh filename="package://abilityHand/meshes/idx-F2-Lg.obj" />
+            <mesh filename="package://abilityHand/idx-F2-Lg.obj" />
          </geometry>
       </visual>
       <collision name="pinky_mesh_coll_2">
          <origin rpy="0 0 0" xyz="0.0091241 0 0" />
          <geometry>
-            <mesh filename="package://abilityHand/meshes/idx-F2-hull.obj" />
+            <mesh filename="package://abilityHand/idx-F2-hull.obj" />
          </geometry>
       </collision>
    </link>
@@ -456,13 +456,13 @@
       <visual name="thumb_mesh_1">
          <origin rpy="0 0 0" xyz="0 0 0" />
          <geometry>
-            <mesh filename="package://abilityHand/meshes/thumb-F1.obj" />
+            <mesh filename="package://abilityHand/thumb-F1.obj" />
          </geometry>
       </visual>
       <collision name="thumb_coll_mesh_1">
          <origin rpy="-1.83260 0 0" xyz="0.02783 0 -0.01475" />
          <geometry>
-            <mesh filename="package://abilityHand/meshes/thumb-F1-hull.obj" />
+            <mesh filename="package://abilityHand/thumb-F1-hull.obj" />
          </geometry>
       </collision>
    </link>
@@ -475,13 +475,13 @@
       <visual name="thumb_mesh_2">
          <origin rpy="0 0 0" xyz="0 0 0" />
          <geometry>
-            <mesh filename="package://abilityHand/meshes/thumb-F2-left.obj" />
+            <mesh filename="package://abilityHand/thumb-F2-left.obj" />
          </geometry>
       </visual>
       <collision name="thumb_hull_mesh_2">
          <origin rpy="3.14159 0 0.34383" xyz="0.06519 0.02334 -0.00393" />
          <geometry>
-            <mesh filename="package://abilityHand/meshes/thumb-F2-hull.obj" />
+            <mesh filename="package://abilityHand/thumb-F2-hull.obj" />
          </geometry>
       </collision>
    </link>
