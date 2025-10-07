@@ -49,12 +49,7 @@ public class AbilityHandModel implements HandModel
       @Override
       public String getJointName(RobotSide robotSide)
       {
-         return name().toLowerCase();
-      }
-
-      public static AbilityHandJointName getJoint(int index)
-      {
-         return values[index];
+         return robotSide.getLowerCaseName() + "_ability_hand_" + name().toLowerCase();
       }
    }
 

@@ -17,8 +17,8 @@ ihmc {
 
    // Other resources
    resourceDirectory("main", "../../msg")
-   resourceDirectory("main", "../../meshes")
    resourceDirectory("main", "../../urdf")
+   resourceDirectory("main", "../../meshes")
 }
 
 mainDependencies {
