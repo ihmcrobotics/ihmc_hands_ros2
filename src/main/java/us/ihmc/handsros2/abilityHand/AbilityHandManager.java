@@ -61,6 +61,7 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
 
       final int[][] stages;
       final float[][] positions;
+      final String titleCaseName = name().charAt(0) + name().substring(1).toLowerCase();
 
       /**
        * Constructs a Grip pattern.
@@ -93,6 +94,11 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
       public byte toByte()
       {
          return (byte) this.ordinal();
+      }
+
+      public String getTitleCaseName()
+      {
+         return titleCaseName;
       }
    }
 
