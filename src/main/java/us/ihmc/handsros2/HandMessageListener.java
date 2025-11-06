@@ -26,6 +26,7 @@ public class HandMessageListener<T extends Packet<T>> implements NewMessageListe
    private final T message;
    private final PairList<StringBuilder, T> handMessageList = new PairList<>();
    private final List<Consumer<StringBuilder>> onNewHandRegisteredConsumers = new ArrayList<>();
+   private long lastMessageReceivedTimestamp = -1L;
 
    public HandMessageListener(Supplier<T> newMessageSupplier)
    {
@@ -37,6 +38,7 @@ public class HandMessageListener<T extends Packet<T>> implements NewMessageListe
    public void onNewDataMessage(@SuppressWarnings("deprecation") Subscriber<T> subscriber)
    {
       subscriber.takeNextData(message, null);
+      lastMessageReceivedTimestamp = System.nanoTime();
       StringBuilder identifier = getIdentifier(message);
 
       if (identifier == null)
@@ -114,5 +116,10 @@ public class HandMessageListener<T extends Packet<T>> implements NewMessageListe
    public void onNewHandRegistered(Consumer<StringBuilder> identifierConsumer)
    {
       onNewHandRegisteredConsumers.add(identifierConsumer);
+   }
+
+   public long getLastMessageReceivedTimestamp()
+   {
+      return lastMessageReceivedTimestamp;
    }
 }
