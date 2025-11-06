@@ -88,7 +88,7 @@ public class AbilityHandManagerTest
 
       manager.setGoalVelocities(new float[] {5f, 5f, 5f, 5f, 5f, 5f});
       manager.setControlMode(ControlMode.GRIP);
-      manager.setGrip(Grip.POWER);
+      manager.setGrip(Grip.GRIP);
 
       manager.update();
 

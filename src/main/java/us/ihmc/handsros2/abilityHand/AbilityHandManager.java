@@ -47,21 +47,21 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
     */
    public enum Grip
    {
-      POWER    (new int[][] {{0, 1, 2, 3}, {5}, {4}}, new float[][] {{97.5f, 97.5f, 97.5f, 97.5f}, {-75}, {75}}),
-      KEY      (new int[][] {{0, 1, 2, 3}, {5}, {4}}, new float[][] {{90, 90, 90, 90}, {-20}, {75}}),
-      TRIPOD_O (new int[][] {{0, 1, 2, 3}, {5}, {4}}, new float[][] {{60, 63, 20, 20}, {-76}, {54}}),
-      TRIPOD_C (new int[][] {{0, 1, 2, 3}, {5}, {4}}, new float[][] {{60, 63, 97.5f, 97.5f}, {-76}, {54}}),
-      RELAX    (new int[][] {{4}, {0, 1, 2, 3, 5}},   new float[][] {{30}, {30, 30, 30, 30, -30}}),
-      RUDE     (new int[][] {{0, 1, 2, 3, 4}, {5}},   new float[][] {{100, 10, 100, 100, 20}, {-30}}),
-      HOOK     (new int[][] {{0, 1, 2, 3, 4}, {5}},   new float[][] {{70, 70, 70, 70, 10}, {-10}}),
-      PINCH_O  (new int[][] {{0, 1, 2, 3}, {5}, {4}}, new  float[][] {{61, 20, 20, 20}, {-67}, {53}}),
-      PINCH_C  (new int[][] {{0, 1, 2, 3}, {5}, {4}}, new  float[][] {{61, 97.5f, 97.5f, 97.5f}, {-67}, {53}});
+      OPEN          ("Open", new int[][] {{4}, {0, 1, 2, 3, 5}}, new float[][] {{30}, {30, 30, 30, 30, -30}}),
+      GRIP          ("Grip", new int[][] {{0, 1, 2, 3}, {5}, {4}}, new float[][] {{97.5f, 97.5f, 97.5f, 97.5f}, {-75}, {75}}),
+      HOOK          ("Hook", new int[][] {{0, 1, 2, 3, 4}, {5}},   new float[][] {{70, 70, 70, 70, 10}, {-10}}),
+      TRIPOD_OPEN   ("Tripod Open", new int[][] {{0, 1, 2, 3}, {5}, {4}}, new float[][] {{60, 63, 20, 20}, {-76}, {54}}),
+      TRIPOD_CLOSED ("Tripod Closed", new int[][] {{0, 1, 2, 3}, {5}, {4}}, new float[][] {{60, 63, 97.5f, 97.5f}, {-76}, {54}}),
+      PINCH_OPEN    ("Pinch Open", new int[][] {{0, 1, 2, 3}, {5}, {4}}, new  float[][] {{61, 20, 20, 20}, {-67}, {53}}),
+      PINCH_CLOSED  ("Pinch Closed", new int[][] {{0, 1, 2, 3}, {5}, {4}}, new  float[][] {{61, 97.5f, 97.5f, 97.5f}, {-67}, {53}}),
+      KEY           ("Key", new int[][] {{0, 1, 2, 3}, {5}, {4}}, new float[][] {{90, 90, 90, 90}, {-20}, {75}}),
+      RUDE          ("Rude", new int[][] {{0, 1, 2, 3, 4}, {5}},   new float[][] {{100, 10, 100, 100, 20}, {-30}});
 
       public static final Grip[] values = values();
 
+      final String titleCaseName;
       final int[][] stages;
       final float[][] positions;
-      final String titleCaseName = name().charAt(0) + name().substring(1).toLowerCase();
 
       /**
        * Constructs a Grip pattern.
@@ -69,8 +69,9 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
        * @param stages    finger index stages for sequential movement
        * @param positions target positions for each stage
        */
-      Grip(int[][] stages, float[][] positions)
+      Grip(String titleCaseName, int[][] stages, float[][] positions)
       {
+         this.titleCaseName = titleCaseName;
          this.stages = stages;
          this.positions = positions;
       }
