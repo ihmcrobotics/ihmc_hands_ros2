@@ -34,6 +34,18 @@ module ihmc_hands_ros2
          * The touch sensor pressure readings in Newtons
          */
         float touch_sensor_readings[30];
+        /**
+         * If grip control mode, the current grip stage
+         */
+        long grip_stage;
+        /**
+         * The goal positions in degrees
+         */
+        float goal_positions[6];
+        /**
+         * The goal velocities (units unknown, 30 is slow, 300 is really fast)
+         */
+        float goal_velocities[6];
       };
     };
   };

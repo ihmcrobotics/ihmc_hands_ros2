@@ -66,7 +66,12 @@ public class AbilityHandROS2ControllerCommunication implements HandROS2Controlle
       stateMessage.setIdentifier(managerToPublish.getHand().getIdentifier());
       stateMessage.setHandSide(managerToPublish.getHand().getSide().toByte());
       for (int i = 0; i < AbilityHandInterface.ACTUATOR_COUNT; ++i)
+      {
          stateMessage.getActuatorPositions()[i] = managerToPublish.getHand().getActuatorPosition(i);
+         stateMessage.getGoalPositions()[i] = managerToPublish.getGoalPosition(i);
+         stateMessage.getGoalVelocities()[i] = managerToPublish.getGoalVelocity(i);
+      }
+      stateMessage.setGripStage(managerToPublish.getGripStage());
       for (int i = 0; i < AbilityHandInterface.TOUCH_SENSOR_COUNT; ++i)
          stateMessage.getTouchSensorReadings()[i] = managerToPublish.getHand().getSensedPressure(i);
 
