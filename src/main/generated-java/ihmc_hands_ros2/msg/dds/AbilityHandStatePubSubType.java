@@ -15,7 +15,7 @@ public class AbilityHandStatePubSubType implements us.ihmc.pubsub.TopicDataType<
    @Override
    public final java.lang.String getDefinitionChecksum()
    {
-   		return "fdd4ac6db29d621ea596b6ae512f5fee3a7b64a181181b63fdc77eb1ad8e0d2c";
+   		return "98dd371258934794f8589bdf19cb16186bf6237ec99d566f8e800a21e3d852d9";
    }
    
    @Override
@@ -59,6 +59,12 @@ public class AbilityHandStatePubSubType implements us.ihmc.pubsub.TopicDataType<
 
       current_alignment += ((30) * 4) + us.ihmc.idl.CDR.alignment(current_alignment, 4);
 
+      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);
+
+      current_alignment += ((6) * 4) + us.ihmc.idl.CDR.alignment(current_alignment, 4);
+
+      current_alignment += ((6) * 4) + us.ihmc.idl.CDR.alignment(current_alignment, 4);
+
 
       return current_alignment - initial_alignment;
    }
@@ -79,6 +85,11 @@ public class AbilityHandStatePubSubType implements us.ihmc.pubsub.TopicDataType<
 
       current_alignment += ((6) * 4) + us.ihmc.idl.CDR.alignment(current_alignment, 4);
       current_alignment += ((30) * 4) + us.ihmc.idl.CDR.alignment(current_alignment, 4);
+      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4);
+
+
+      current_alignment += ((6) * 4) + us.ihmc.idl.CDR.alignment(current_alignment, 4);
+      current_alignment += ((6) * 4) + us.ihmc.idl.CDR.alignment(current_alignment, 4);
 
       return current_alignment - initial_alignment;
    }
@@ -101,6 +112,18 @@ public class AbilityHandStatePubSubType implements us.ihmc.pubsub.TopicDataType<
         	cdr.write_type_5(data.getTouchSensorReadings()[i0]);	
       }
 
+      cdr.write_type_2(data.getGripStage());
+
+      for(int i0 = 0; i0 < data.getGoalPositions().length; ++i0)
+      {
+        	cdr.write_type_5(data.getGoalPositions()[i0]);	
+      }
+
+      for(int i0 = 0; i0 < data.getGoalVelocities().length; ++i0)
+      {
+        	cdr.write_type_5(data.getGoalVelocities()[i0]);	
+      }
+
    }
 
    public static void read(ihmc_hands_ros2.msg.dds.AbilityHandState data, us.ihmc.idl.CDR cdr)
@@ -120,6 +143,20 @@ public class AbilityHandStatePubSubType implements us.ihmc.pubsub.TopicDataType<
         	
       }
       	
+      data.setGripStage(cdr.read_type_2());
+      	
+      for(int i0 = 0; i0 < data.getGoalPositions().length; ++i0)
+      {
+        	data.getGoalPositions()[i0] = cdr.read_type_5();
+        	
+      }
+      	
+      for(int i0 = 0; i0 < data.getGoalVelocities().length; ++i0)
+      {
+        	data.getGoalVelocities()[i0] = cdr.read_type_5();
+        	
+      }
+      	
 
    }
 
@@ -130,6 +167,9 @@ public class AbilityHandStatePubSubType implements us.ihmc.pubsub.TopicDataType<
       ser.write_type_9("hand_side", data.getHandSide());
       ser.write_type_f("actuator_positions", data.getActuatorPositions());
       ser.write_type_f("touch_sensor_readings", data.getTouchSensorReadings());
+      ser.write_type_2("grip_stage", data.getGripStage());
+      ser.write_type_f("goal_positions", data.getGoalPositions());
+      ser.write_type_f("goal_velocities", data.getGoalVelocities());
    }
 
    @Override
@@ -139,6 +179,9 @@ public class AbilityHandStatePubSubType implements us.ihmc.pubsub.TopicDataType<
       data.setHandSide(ser.read_type_9("hand_side"));
       ser.read_type_f("actuator_positions", data.getActuatorPositions());
       ser.read_type_f("touch_sensor_readings", data.getTouchSensorReadings());
+      data.setGripStage(ser.read_type_2("grip_stage"));
+      ser.read_type_f("goal_positions", data.getGoalPositions());
+      ser.read_type_f("goal_velocities", data.getGoalVelocities());
    }
 
    public static void staticCopy(ihmc_hands_ros2.msg.dds.AbilityHandState src, ihmc_hands_ros2.msg.dds.AbilityHandState dest)

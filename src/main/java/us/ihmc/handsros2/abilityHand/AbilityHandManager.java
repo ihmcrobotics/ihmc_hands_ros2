@@ -47,15 +47,15 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
     */
    public enum Grip
    {
-      POWER    (new int[][] {{0, 1, 2, 3}, {5}, {4}}, new float[][] {{97.5f, 97.5f, 97.5f, 97.5f}, {-75}, {75}}),
-      KEY      (new int[][] {{0, 1, 2, 3}, {5}, {4}}, new float[][] {{90, 90, 90, 90}, {-20}, {75}}),
-      TRIPOD_O (new int[][] {{0, 1, 2, 3}, {5}, {4}}, new float[][] {{60, 63, 20, 20}, {-76}, {54}}),
-      TRIPOD_C (new int[][] {{0, 1, 2, 3}, {5}, {4}}, new float[][] {{60, 63, 97.5f, 97.5f}, {-76}, {54}}),
-      RELAX    (new int[][] {{4}, {0, 1, 2, 3, 5}},   new float[][] {{30}, {30, 30, 30, 30, -30}}),
-      RUDE     (new int[][] {{0, 1, 2, 3, 4}, {5}},   new float[][] {{100, 10, 100, 100, 20}, {-30}}),
-      HOOK     (new int[][] {{0, 1, 2, 3, 4}, {5}},   new float[][] {{70, 70, 70, 70, 10}, {-10}}),
-      PINCH_O  (new int[][] {{0, 1, 2, 3}, {5}, {4}}, new  float[][] {{61, 20, 20, 20}, {-67}, {53}}),
-      PINCH_C  (new int[][] {{0, 1, 2, 3}, {5}, {4}}, new  float[][] {{61, 97.5f, 97.5f, 97.5f}, {-67}, {53}});
+      POWER(new int[][] {{0, 1, 2, 3}, {5}, {4}}, new float[][] {{97.5f, 97.5f, 97.5f, 97.5f}, {-75}, {75}}),
+      KEY(new int[][] {{0, 1, 2, 3}, {5}, {4}}, new float[][] {{90, 90, 90, 90}, {-20}, {75}}),
+      TRIPOD_O(new int[][] {{0, 1, 2, 3}, {5}, {4}}, new float[][] {{60, 63, 20, 20}, {-76}, {54}}),
+      TRIPOD_C(new int[][] {{0, 1, 2, 3}, {5}, {4}}, new float[][] {{60, 63, 97.5f, 97.5f}, {-76}, {54}}),
+      RELAX(new int[][] {{4}, {0, 1, 2, 3, 5}}, new float[][] {{30}, {30, 30, 30, 30, -30}}),
+      RUDE(new int[][] {{0, 1, 2, 3, 4}, {5}}, new float[][] {{100, 10, 100, 100, 20}, {-30}}),
+      HOOK(new int[][] {{0, 1, 2, 3, 4}, {5}}, new float[][] {{70, 70, 70, 70, 10}, {-10}}),
+      PINCH_O(new int[][] {{0, 1, 2, 3}, {5}, {4}}, new float[][] {{61, 20, 20, 20}, {-67}, {53}}),
+      PINCH_C(new int[][] {{0, 1, 2, 3}, {5}, {4}}, new float[][] {{61, 97.5f, 97.5f, 97.5f}, {-67}, {53}});
 
       public static final Grip[] values = values();
 
@@ -93,6 +93,30 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
       public byte toByte()
       {
          return (byte) this.ordinal();
+      }
+
+      /** Number of stages in this grip sequence. */
+      public int getNumberOfStages()
+      {
+         return stages.length;
+      }
+
+      /** Number of fingers active in this grip stage. */
+      public int getFingersInStage(int stage)
+      {
+         return stages[stage].length;
+      }
+
+      /** Which finger is specified at this index in the grip stage. */
+      public int getStageFingerIndex(int stage, int finger)
+      {
+         return stages[stage][finger];
+      }
+
+      /** The position of the finger which is specified at this index in the grip stage. */
+      public float getStageFingerPosition(int stage, int finger)
+      {
+         return positions[stage][finger];
       }
    }
 
@@ -323,5 +347,37 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
    {
       for (int i = 0; i < ACTUATOR_COUNT; ++i)
          setGoalVelocity(i, goalVelocities[i]);
+   }
+
+   /**
+    * Retrieves the current grip stage.
+    *
+    * @return the current grip stage
+    */
+   public int getGripStage()
+   {
+      return gripStage;
+   }
+
+   /**
+    * Retrieves the current goal position for a specific actuator.
+    *
+    * @param index
+    * @return the current goal position for the specified actuator
+    */
+   public float getGoalPosition(int index)
+   {
+      return goalPositions[index];
+   }
+
+   /**
+    * Retrieves the current goal velocity for a specific actuator.
+    *
+    * @param index
+    * @return the current goal velocity for the specified actuator
+    */
+   public float getGoalVelocity(int index)
+   {
+      return goalVelocities[index];
    }
 }
