@@ -52,12 +52,13 @@ public class EZGripperROS2CommunicationTest
       EZGripperState stateReceived = new EZGripperState();
       ROS2Subscription<EZGripperState> subscription = node.createSubscription2(EZGripperROS2API.STATE_TOPIC, stateMessage ->
       {
+         stateReceived.set(stateMessage);
+
          synchronized (received)
          {
             received.set(true);
             received.notify();
          }
-         stateReceived.set(stateMessage);
       });
 
       // Initialize a test gripper and its manager
@@ -144,12 +145,13 @@ public class EZGripperROS2CommunicationTest
       EZGripperCommand commandReceived = new EZGripperCommand();
       ROS2Subscription<EZGripperCommand> subscription = node.createSubscription2(EZGripperROS2API.COMMAND_TOPIC, commandMessage ->
       {
+         commandReceived.set(commandMessage);
+
          synchronized (received)
          {
             received.set(true);
             received.notify();
          }
-         commandReceived.set(commandMessage);
       });
 
       // Create the communication instance
