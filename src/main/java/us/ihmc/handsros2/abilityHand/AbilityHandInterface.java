@@ -114,6 +114,60 @@ public interface AbilityHandInterface extends HandInterface
    }
 
    /**
+    * Get the velocity of the actuator at the specified index.
+    *
+    * @param index Index to read the velocity from.
+    * @return The velocity value in degrees per second.
+    */
+   float getActuatorVelocity(int index);
+
+   /**
+    * Set the velocity of the actuator at the specified index.
+    *
+    * @param index Index at which to set the velocity value, in degrees per second.
+    * @param value The value to set.
+    */
+   void setActuatorVelocity(int index, float value);
+
+   /**
+    * Set the actuator velocities.
+    *
+    * @param velocities The actuator velocities, in degrees per second.
+    */
+   default void setActuatorVelocities(float[] velocities)
+   {
+      for (int i = 0; i < ACTUATOR_COUNT && i < velocities.length; ++i)
+         setActuatorVelocity(i, velocities[i]);
+   }
+
+   /**
+    * Get the current of the actuator at the specified index.
+    *
+    * @param index Index to read the current from.
+    * @return The current value in amperes.
+    */
+   float getActuatorCurrent(int index);
+
+   /**
+    * Set the current of the actuator at the specified index.
+    *
+    * @param index Index at which to set the current value, in amperes.
+    * @param value The value to set.
+    */
+   void setActuatorCurrent(int index, float value);
+
+   /**
+    * Set the actuator currents.
+    *
+    * @param currents The actuator currents, in amperes.
+    */
+   default void setActuatorCurrents(float[] currents)
+   {
+      for (int i = 0; i < ACTUATOR_COUNT && i < currents.length; ++i)
+         setActuatorCurrent(i, currents[i]);
+   }
+
+   /**
     * Get the raw FSR ADC value measured by the touch sensor at the specified index.
     *
     * @param index Index of the touch sensor.

@@ -10,6 +10,12 @@ byte hand_side 255
 # The actuator positions in degrees
 float32[6] actuator_positions
 
+# The actuator velocities in degrees/second
+float32[6] actuator_velocities
+
+# The actuator currents in milliamps
+float32[6] actuator_currents
+
 # The touch sensor pressure readings in Newtons
 float32[30] touch_sensor_readings
 

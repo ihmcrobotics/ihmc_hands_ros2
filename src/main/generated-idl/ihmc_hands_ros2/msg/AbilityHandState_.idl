@@ -31,6 +31,14 @@ module ihmc_hands_ros2
          */
         float actuator_positions[6];
         /**
+         * The actuator velocities in degrees/second
+         */
+        float actuator_velocities[6];
+        /**
+         * The actuator currents in milliamps
+         */
+        float actuator_currents[6];
+        /**
          * The touch sensor pressure readings in Newtons
          */
         float touch_sensor_readings[30];

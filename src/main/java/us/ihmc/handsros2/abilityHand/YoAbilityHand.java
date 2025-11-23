@@ -18,6 +18,8 @@ public class YoAbilityHand implements AbilityHandInterface
    private final YoEnum<AbilityHandCommandType> commandType;
    private final YoDouble[] commandValues = new YoDouble[ACTUATOR_COUNT];
    private final YoDouble[] actuatorPositions = new YoDouble[ACTUATOR_COUNT];
+   private final YoDouble[] actuatorVelocities = new YoDouble[ACTUATOR_COUNT];
+   private final YoDouble[] actuatorCurrents = new YoDouble[ACTUATOR_COUNT];
    private final YoInteger[] rawFSRReadings = new YoInteger[TOUCH_SENSOR_COUNT];
 
    public YoAbilityHand(YoRegistry registry, String identifier, RobotSide handSide)
@@ -36,6 +38,12 @@ public class YoAbilityHand implements AbilityHandInterface
 
          actuatorPositions[i] = new YoDouble(prefix + "ActuatorPosition" + i, registry);
          actuatorPositions[i].set(0.0);
+
+         actuatorVelocities[i] = new YoDouble(prefix + "ActuatorVelocity" + i, registry);
+         actuatorVelocities[i].set(0.0);
+
+         actuatorCurrents[i] = new YoDouble(prefix + "ActuatorCurrent" + i, registry);
+         actuatorCurrents[i].set(0.0);
       }
 
       for (int i = 0; i < TOUCH_SENSOR_COUNT; ++i)
@@ -91,6 +99,30 @@ public class YoAbilityHand implements AbilityHandInterface
    public void setActuatorPosition(int index, float value)
    {
       actuatorPositions[index].set(value);
+   }
+
+   @Override
+   public float getActuatorVelocity(int index)
+   {
+      return (float) actuatorVelocities[index].getValue();
+   }
+
+   @Override
+   public void setActuatorVelocity(int index, float value)
+   {
+      actuatorVelocities[index].set(value);
+   }
+
+   @Override
+   public float getActuatorCurrent(int index)
+   {
+      return (float) actuatorCurrents[index].getValue();
+   }
+
+   @Override
+   public void setActuatorCurrent(int index, float value)
+   {
+      actuatorCurrents[index].set(value);
    }
 
    @Override

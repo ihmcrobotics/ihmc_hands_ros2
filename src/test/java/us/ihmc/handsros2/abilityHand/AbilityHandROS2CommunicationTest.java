@@ -97,6 +97,8 @@ public class AbilityHandROS2CommunicationTest
       for (int i = 0; i < ACTUATOR_COUNT; ++i)
       {
          assertEquals(testHand.getActuatorPosition(i), stateReceived.getActuatorPositions()[i]);
+         assertEquals(testHand.getActuatorVelocity(i), stateReceived.getActuatorVelocities()[i]);
+         assertEquals(testHand.getActuatorCurrent(i), stateReceived.getActuatorCurrents()[i]);
          assertEquals(COMMAND_VALUES[i], testHand.getCommandValue(i));
       }
       for (int i = 0; i < TOUCH_SENSOR_COUNT; ++i)
@@ -122,6 +124,8 @@ public class AbilityHandROS2CommunicationTest
       final ControlMode CONTROL_MODE = ControlMode.POSITION;
       final float[] GOAL_POSITIONS = new float[] {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, -5.0f};
       final float[] ACTUATOR_POSITIONS = new float[] {5.0f, 4.0f, 3.0f, 2.0f, 1.0f, 0.0f};
+      final float[] ACTUATOR_VELOCITIES = new float[] {1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f};
+      final float[] ACTUATOR_CURRENTS = new float[] {7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f};
       final float[] TOUCH_SENSOR_READINGS = new float[30];
       final String SERIAL_NUMBER = "24ABH001";
 
@@ -136,6 +140,8 @@ public class AbilityHandROS2CommunicationTest
       state.setIdentifier(SERIAL_NUMBER);
       state.setHandSide(HAND_SIDE.toByte());
       System.arraycopy(ACTUATOR_POSITIONS, 0, state.getActuatorPositions(), 0, ACTUATOR_COUNT);
+      System.arraycopy(ACTUATOR_VELOCITIES, 0, state.getActuatorVelocities(), 0, ACTUATOR_COUNT);
+      System.arraycopy(ACTUATOR_CURRENTS, 0, state.getActuatorCurrents(), 0, ACTUATOR_COUNT);
       System.arraycopy(TOUCH_SENSOR_READINGS, 0, state.getTouchSensorReadings(), 0, TOUCH_SENSOR_COUNT);
       ROS2Publisher<AbilityHandState> statePublisher = node.createPublisher(AbilityHandROS2API.STATE_TOPIC);
 
@@ -172,6 +178,8 @@ public class AbilityHandROS2CommunicationTest
       assertEquals(SERIAL_NUMBER, stateReceived.getIdentifierAsString());
       assertEquals(HAND_SIDE, RobotSide.fromByte(stateReceived.getHandSide()));
       assertArrayEquals(ACTUATOR_POSITIONS, stateReceived.getActuatorPositions());
+      assertArrayEquals(ACTUATOR_VELOCITIES, stateReceived.getActuatorVelocities());
+      assertArrayEquals(ACTUATOR_CURRENTS, stateReceived.getActuatorCurrents());
       assertArrayEquals(TOUCH_SENSOR_READINGS, stateReceived.getTouchSensorReadings());
 
       // Make sure the communications created a command message for the hand
