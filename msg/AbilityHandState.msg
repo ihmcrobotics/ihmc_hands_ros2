@@ -10,7 +10,12 @@ byte hand_side 255
 # The actuator positions in degrees
 float32[6] actuator_positions
 
-# The actuator velocities in degrees/second
+# The actuator rotor velocities in radians/second,
+# To convert to degress/second:
+#   gear_ratio * rotor_velocity * (180 / pi)
+# Gear ratios:
+# Index, Middle, Ring, Pinky, Thumb Flexor: 649
+# Thumb Rotator: 162.45
 float32[6] actuator_velocities
 
 # The actuator currents in milliamps

@@ -31,7 +31,12 @@ module ihmc_hands_ros2
          */
         float actuator_positions[6];
         /**
-         * The actuator velocities in degrees/second
+         * The actuator rotor velocities in radians/second,
+         * To convert to degress/second:
+         * gear_ratio * rotor_velocity * (180 / pi)
+         * Gear ratios:
+         * Index, Middle, Ring, Pinky, Thumb Flexor: 649
+         * Thumb Rotator: 162.45
          */
         float actuator_velocities[6];
         /**

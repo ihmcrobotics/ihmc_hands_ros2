@@ -23,7 +23,12 @@ public class AbilityHandState extends Packet<AbilityHandState> implements Settab
             */
    public float[] actuator_positions_;
    /**
-            * The actuator velocities in degrees/second
+            * The actuator rotor velocities in radians/second,
+            * To convert to degress/second:
+            * gear_ratio * rotor_velocity * (180 / pi)
+            * Gear ratios:
+            * Index, Middle, Ring, Pinky, Thumb Flexor: 649
+            * Thumb Rotator: 162.45
             */
    public float[] actuator_velocities_;
    /**
@@ -167,7 +172,12 @@ public class AbilityHandState extends Packet<AbilityHandState> implements Settab
 
 
    /**
-            * The actuator velocities in degrees/second
+            * The actuator rotor velocities in radians/second,
+            * To convert to degress/second:
+            * gear_ratio * rotor_velocity * (180 / pi)
+            * Gear ratios:
+            * Index, Middle, Ring, Pinky, Thumb Flexor: 649
+            * Thumb Rotator: 162.45
             */
    public float[] getActuatorVelocities()
    {
