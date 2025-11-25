@@ -31,7 +31,8 @@ public class AbilityHandManagerTest
       manager.setControlMode(ControlMode.POSITION);
       manager.setGoalPositions(positions);
 
-      manager.update();
+      for (int i = 0; i < 200; i++)
+         manager.update(0.01f);
 
       assertEquals(AbilityHandCommandType.POSITION, hand.getCommandType());
       for (int i = 0; i < positions.length; i++)
@@ -48,7 +49,8 @@ public class AbilityHandManagerTest
       manager.setControlMode(ControlMode.VELOCITY);
       manager.setGoalVelocities(velocities);
 
-      manager.update();
+      for (int i = 0; i < 200; i++)
+         manager.update(0.01f);
 
       assertEquals(AbilityHandCommandType.VELOCITY, hand.getCommandType());
       for (int i = 0; i < velocities.length; i++)
@@ -71,7 +73,8 @@ public class AbilityHandManagerTest
       manager.setGoalPositions(goals);
       manager.setGoalVelocities(speeds);
 
-      manager.update();
+      for (int i = 0; i < 200; i++)
+         manager.update(0.01f);
 
       assertEquals(AbilityHandCommandType.VELOCITY, hand.getCommandType());
       assertTrue(hand.getCommandValue(0) > 0, "Index 0 should move positively");
@@ -90,7 +93,8 @@ public class AbilityHandManagerTest
       manager.setControlMode(ControlMode.GRIP);
       manager.setGrip(Grip.POWER);
 
-      manager.update();
+      for (int i = 0; i < 200; i++)
+         manager.update(0.01f);
 
       assertEquals(AbilityHandCommandType.VELOCITY, hand.getCommandType());
 
