@@ -123,7 +123,7 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
    }
 
    private static final float TOLERANCE = 1.0f;
-   private static final float THUMB_CLEAR_POSITION = 30.0f;
+   static final float THUMB_CLEAR_POSITION = 30.0f;
    /** Trajectory configuration: tune acceleration per joint as needed (deg/s^2) */
    private static final float DEFAULT_MAXIMUM_ACCELERATION = 200.0f;
 
