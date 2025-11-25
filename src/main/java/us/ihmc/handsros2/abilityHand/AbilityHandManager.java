@@ -120,7 +120,6 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
       }
    }
 
-   private static final float TOLERANCE = 2.0f;
    private static final float THUMB_CLEAR_POSITION = 30.0f;
 
    private final AbilityHandInterface hand;
@@ -186,16 +185,28 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
     */
    private float calculateVelocityToPosition(int actuatorIndex, float goalPosition, float goalVelocity)
    {
-      // Get the current position
       float currentPosition = hand.getActuatorPosition(actuatorIndex);
 
-      // If we've reached the goal position, velocity should be 0 (stop moving)
-      if (Math.abs(currentPosition - goalPosition) < TOLERANCE)
+      // Position error (signed)
+      float error = goalPosition - currentPosition;
+      float absError = Math.abs(error);
+
+      // Deadzone of 1 degree
+      final float deadzone = 1.0f;
+
+      // Distance at which we allow full speed (tune as needed)
+      final float fullSpeedError = 10.0f; // degrees
+
+      if (absError <= deadzone)
          return 0.0f;
 
-      // Otherwise velocity should be in the correct direction
-      float speed = Math.abs(goalVelocity);
-      return currentPosition < goalPosition ? speed : -speed;
+      // Compute a scale in (0, 1], linear ramp between deadzone and fullSpeedError
+      float clampedError = Math.min(absError, fullSpeedError);
+      float scale = (clampedError - deadzone) / (fullSpeedError - deadzone);
+
+      // Apply direction
+      float speed = Math.abs(goalVelocity) * scale;
+      return error > 0.0f ? speed : -speed;
    }
 
    /** Updates hand to velocity control that moves toward goalPositions. */
