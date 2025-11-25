@@ -2,6 +2,7 @@ package us.ihmc.handsros2.abilityHand;
 
 import us.ihmc.handsros2.HandManager;
 import us.ihmc.handsros2.TrapezoidalTrajectory1D;
+import us.ihmc.handsros2.VelocityControlTools;
 
 import static us.ihmc.handsros2.abilityHand.AbilityHandInterface.ACTUATOR_COUNT;
 
@@ -243,15 +244,30 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
       return currentPosition < goalPosition ? speed : -speed; // FIXME: This is bang bang control with no velocity smoothing
    }
 
-   /** Updates hand to velocity control that moves toward goalPositions. */
+   /** Updates hand to velocity control that moves toward goalPositions using a trapezoidal-like
+    *  velocity strategy based on the current measured position and velocity. */
    private void updateVelToPosControl()
    {
       hand.setCommandType(AbilityHandCommandType.VELOCITY);
 
-      for (int i = 0; i < ACTUATOR_COUNT; i++)
+      for (int actuatorIndex = 0; actuatorIndex < ACTUATOR_COUNT; actuatorIndex++)
       {
-         float velocity = calculateVelocityToPosition(i, goalPositions[i], goalVelocities[i]);
-         hand.setCommandValue(i, velocity);
+         float currentPosition = hand.getActuatorPosition(actuatorIndex);
+         float currentVelocity = hand.getActuatorVelocity(actuatorIndex);
+         float goalPosition = goalPositions[actuatorIndex];
+         float maximumVelocity = Math.abs(goalVelocities[actuatorIndex]);
+         float maximumAcceleration = DEFAULT_MAXIMUM_ACCELERATION;
+         float deadzone = TOLERANCE;
+
+         float commandedVelocity = VelocityControlTools.computeVelocityCommand(currentPosition,
+                                                                               currentVelocity,
+                                                                               goalPosition,
+                                                                               maximumVelocity,
+                                                                               maximumAcceleration,
+                                                                               dt,
+                                                                               deadzone);
+
+         hand.setCommandValue(actuatorIndex, commandedVelocity);
       }
    }
 
