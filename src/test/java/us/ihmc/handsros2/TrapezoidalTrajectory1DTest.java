@@ -206,6 +206,104 @@ public class TrapezoidalTrajectory1DTest
       asciiPlot(times, velocities, minimumVelocity, maximumVelocity, plotWidth);
    }
 
+   @Test
+   public void testMultipleReplansAcrossRange()
+   {
+      // Start at 0, allow up to 30 units/s velocity, 60 units/s^2 acceleration (tune as needed)
+      TrapezoidalTrajectory1D trajectory = new TrapezoidalTrajectory1D(0.0f, 30.0f, 60.0f);
+
+      float timeStep = 0.01f;
+      int totalSteps = 2000; // enough samples to see several replans
+
+      float[] times = new float[totalSteps];
+      float[] positions = new float[totalSteps];
+      float[] velocities = new float[totalSteps];
+
+      float currentTime = 0.0f;
+
+      // First goal: 80 deg
+      trajectory.setGoal(80.0f, 30.0f);
+
+      // Replan schedule (in steps)
+      int replanStep1 = 400;  // after 4.0 s
+      int replanStep2 = 800;  // after 8.0 s
+      int replanStep3 = 1200; // after 12.0 s
+
+      for (int stepIndex = 0; stepIndex < totalSteps; stepIndex++)
+      {
+         // Replan several times to different targets within [-120, 120]
+         if (stepIndex == replanStep1)
+         {
+            float positionBeforeReplan = trajectory.getCurrentPosition();
+            float velocityBeforeReplan = trajectory.getCurrentVelocity();
+
+            trajectory.setGoal(-50.0f, 30.0f);
+
+            // State continuity at replan
+            assertEquals(positionBeforeReplan, trajectory.getCurrentPosition(), EPSILON);
+            assertEquals(velocityBeforeReplan, trajectory.getCurrentVelocity(), EPSILON);
+         }
+         else if (stepIndex == replanStep2)
+         {
+            float positionBeforeReplan = trajectory.getCurrentPosition();
+            float velocityBeforeReplan = trajectory.getCurrentVelocity();
+
+            trajectory.setGoal(120.0f, 30.0f);
+
+            assertEquals(positionBeforeReplan, trajectory.getCurrentPosition(), EPSILON);
+            assertEquals(velocityBeforeReplan, trajectory.getCurrentVelocity(), EPSILON);
+         }
+         else if (stepIndex == replanStep3)
+         {
+            float positionBeforeReplan = trajectory.getCurrentPosition();
+            float velocityBeforeReplan = trajectory.getCurrentVelocity();
+
+            trajectory.setGoal(-120.0f, 30.0f);
+
+            assertEquals(positionBeforeReplan, trajectory.getCurrentPosition(), EPSILON);
+            assertEquals(velocityBeforeReplan, trajectory.getCurrentVelocity(), EPSILON);
+         }
+
+         float position = trajectory.update(timeStep);
+         float velocity = trajectory.getCurrentVelocity();
+
+         times[stepIndex] = currentTime;
+         positions[stepIndex] = position;
+         velocities[stepIndex] = velocity;
+
+         // Velocity should respect the max (with a small numerical margin)
+         assertTrue(Math.abs(velocity) <= 30.0f + 1e-2f, "Velocity should be bounded by 30");
+
+         currentTime += timeStep;
+      }
+
+      // Final state should be near the last goal (-120) and almost stopped
+      assertEquals(-120.0f, trajectory.getCurrentPosition(), 5e-1f);
+      assertEquals(0.0f, trajectory.getCurrentVelocity(), 5e-1f);
+
+      // ASCII plots
+      float minimumPosition = Float.POSITIVE_INFINITY;
+      float maximumPosition = Float.NEGATIVE_INFINITY;
+      float minimumVelocity = Float.POSITIVE_INFINITY;
+      float maximumVelocity = Float.NEGATIVE_INFINITY;
+
+      for (int stepIndex = 0; stepIndex < totalSteps; stepIndex++)
+      {
+         minimumPosition = Math.min(minimumPosition, positions[stepIndex]);
+         maximumPosition = Math.max(maximumPosition, positions[stepIndex]);
+         minimumVelocity = Math.min(minimumVelocity, velocities[stepIndex]);
+         maximumVelocity = Math.max(maximumVelocity, velocities[stepIndex]);
+      }
+
+      int plotWidth = 60;
+
+      System.out.println("ASCII plot of position (testMultipleReplansAcrossRange):");
+      asciiPlot(times, positions, minimumPosition, maximumPosition, plotWidth);
+
+      System.out.println();
+      System.out.println("ASCII plot of velocity (testMultipleReplansAcrossRange):");
+      asciiPlot(times, velocities, minimumVelocity, maximumVelocity, plotWidth);
+   }
 
    @Test
    public void testAlreadyAtGoal()
