@@ -1,5 +1,28 @@
 package us.ihmc.handsros2;
 
+/**
+ * Generates and follows a 1‑D time‑parametrized motion profile between the current
+ * position and a goal position under maximum velocity and acceleration limits.
+ * <p>
+ * Given the current position/velocity and a new goal, this class plans a
+ * trapezoidal (or, for short moves, triangular) velocity profile with three
+ * phases: acceleration, optional constant‑velocity cruise, and deceleration,
+ * such that the motion starts at the current state and ends at the goal with
+ * zero velocity. The plan is stored as phase durations and distances.
+ * <p>
+ * On each call to {@link #update(float)}, the internal trajectory time is
+ * advanced by the provided time step and the corresponding ideal position and
+ * velocity are computed analytically for the current phase. These values are
+ * transformed back into the original motion direction and exposed as the
+ * current commanded position and velocity. Once the planned total time is
+ * reached, the class snaps exactly to the goal position, zeros the velocity,
+ * and disables further motion until a new goal is set.
+ * <p>
+ * The {@link #reset(float, float)} method allows resynchronizing the internal
+ * state to a measured joint position and velocity and clears any active
+ * trajectory, so subsequent calls to {@link #update(float)} do nothing until
+ * {@link #setGoal(float, float)} is invoked again.
+ */
 public class TrapezoidalTrajectory1D
 {
    // Configuration (tune per joint)
