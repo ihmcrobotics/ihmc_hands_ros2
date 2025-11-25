@@ -1,6 +1,7 @@
 package us.ihmc.handsros2.abilityHand;
 
 import us.ihmc.handsros2.HandManager;
+import us.ihmc.handsros2.TrapezoidalTrajectory1D;
 
 import static us.ihmc.handsros2.abilityHand.AbilityHandInterface.ACTUATOR_COUNT;
 
@@ -122,6 +123,8 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
 
    private static final float TOLERANCE = 2.0f;
    private static final float THUMB_CLEAR_POSITION = 30.0f;
+   /** Trajectory configuration: tune acceleration per joint as needed (deg/s^2) */
+   private static final float DEFAULT_MAXIMUM_ACCELERATION = 200.0f;
 
    private final AbilityHandInterface hand;
 
@@ -135,6 +138,13 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
    private final float[] goalPositions;
    private final float[] goalVelocities;
 
+   /** Per-finger position trajectories used in POSITION mode */
+   private final TrapezoidalTrajectory1D[] fingerTrajectories;
+
+   /** Track previous time for computing dt */
+   private long previousTimeNanos = -1L;
+   private float dt;
+
    /**
     * Creates a new AbilityHandManager with default goal positions and velocities.
     *
@@ -144,32 +154,67 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
    {
       this.hand = hand;
       goalPositions = new float[] {30.0f, 30.0f, 30.0f, 30.0f, 30.0f, -30.0f};
-      goalVelocities = new float[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+      goalVelocities = new float[] {30.0f, 30.0f, 30.0f, 30.0f, 30.0f, 30.0f};
+
+      fingerTrajectories = new TrapezoidalTrajectory1D[ACTUATOR_COUNT];
+      for (int i = 0; i < ACTUATOR_COUNT; i++)
+      {
+         fingerTrajectories[i] = new TrapezoidalTrajectory1D(goalPositions[i], Math.abs(goalVelocities[i]), DEFAULT_MAXIMUM_ACCELERATION);
+         fingerTrajectories[i].reset(hand.getActuatorPosition(i), hand.getActuatorVelocity(i));
+      }
    }
 
    /** {@inheritDoc} */
    @Override
    public void update()
    {
-      switch (controlMode)
+      long nowNanos = System.nanoTime();
+
+      if (previousTimeNanos > 0L)
       {
-         case POSITION -> updatePositionControl();
-         case VELOCITY -> updateVelocityControl();
-         case VEL_TO_POS -> updateVelToPosControl();
-         case GRIP -> updateGripControl();
+         long deltaNanos = nowNanos - previousTimeNanos;
+         dt = deltaNanos * 1.0e-9f;
+
+         if (previousControlMode != ControlMode.POSITION)
+            for (int i = 0; i < ACTUATOR_COUNT; i++)
+               fingerTrajectories[i].reset(hand.getActuatorPosition(i), hand.getActuatorVelocity(i));
+
+         switch (controlMode)
+         {
+            case POSITION -> updatePositionControl();
+            case VELOCITY -> updateVelocityControl();
+            case VEL_TO_POS -> updateVelToPosControl();
+            case GRIP -> updateGripControl();
+         }
       }
 
+      previousTimeNanos = nowNanos;
       previousControlMode = controlMode;
    }
 
-   /** Updates hand to direct position control using goalPositions. */
+   /**
+    * Updates hand in POSITION mode using per-finger trapezoidal trajectories.
+    * goalPositions are the targets; goalVelocities set each finger's max velocity.
+    */
    private void updatePositionControl()
    {
       hand.setCommandType(AbilityHandCommandType.POSITION);
-      hand.setCommandValues(goalPositions);
+
+      for (int actuatorIndex = 0; actuatorIndex < ACTUATOR_COUNT; actuatorIndex++)
+      {
+         TrapezoidalTrajectory1D trajectory = fingerTrajectories[actuatorIndex];
+
+         // Ensure the trajectory goal and max velocity are up to date.
+         // This allows changing goals or max velocities on the fly.
+         trajectory.setGoal(goalPositions[actuatorIndex], Math.abs(goalVelocities[actuatorIndex]));
+
+         // Advance the trajectory and command the resulting position.
+         float commandedPosition = trajectory.update(dt);
+         hand.setCommandValue(actuatorIndex, commandedPosition);
+      }
    }
 
-   /** Updates hand to direct velocity control using goalVelocities. *** */
+   /** Updates hand to direct velocity control using goalVelocities. */
    private void updateVelocityControl()
    {
       hand.setCommandType(AbilityHandCommandType.VELOCITY);
@@ -195,7 +240,7 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
 
       // Otherwise velocity should be in the correct direction
       float speed = Math.abs(goalVelocity);
-      return currentPosition < goalPosition ? speed : -speed;
+      return currentPosition < goalPosition ? speed : -speed; // FIXME: This is bang bang control with no velocity smoothing
    }
 
    /** Updates hand to velocity control that moves toward goalPositions. */
@@ -255,16 +300,16 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
 
       // Get the actuators that need to move during this stage and their goal positions
       int[] actuatorsToMove = grip.stages[gripStage];
-      float[] goalPositions = grip.positions[gripStage];
+      float[] stageGoalPositions = grip.positions[gripStage];
 
       boolean stageComplete = true;
       for (int i = 0; i < actuatorsToMove.length; i++)
       {
          int actuatorIndex = actuatorsToMove[i];
-         float goalPosition = goalPositions[i];
-         float goalVelocity = goalVelocities[actuatorIndex];
+         float stageGoalPosition = stageGoalPositions[i];
+         float stageGoalVelocity = goalVelocities[actuatorIndex];
 
-         float velocity = calculateVelocityToPosition(actuatorIndex, goalPosition, goalVelocity);
+         float velocity = calculateVelocityToPosition(actuatorIndex, stageGoalPosition, stageGoalVelocity);
 
          if (velocity != 0.0f)
             stageComplete = false;

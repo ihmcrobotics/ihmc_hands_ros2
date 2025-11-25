@@ -36,12 +36,38 @@ public class TrapezoidalTrajectory1D
       this.goalPosition = initialPosition;
       this.maximumVelocity = Math.abs(maximumVelocity);
       this.maximumAcceleration = Math.abs(maximumAcceleration);
-      this.motionDirection = 0;
-      this.accelerationPhaseDuration = 0.0f;
-      this.cruisePhaseDuration = 0.0f;
-      this.decelerationPhaseDuration = 0.0f;
-      this.totalTrajectoryTime = 0.0f;
-      this.elapsedTime = 0.0f;
+      resetInternalState();
+   }
+
+   /**
+    * Reset the trajectory to a new measured state without any active motion.
+    * After this, update() will do nothing until setGoal(...) is called.
+    */
+   public void reset(float currentPosition, float currentVelocity)
+   {
+      this.currentPosition = currentPosition;
+      this.currentVelocity = currentVelocity;
+
+      // By default, treat the current state as "at goal"
+      this.goalPosition = currentPosition;
+
+      resetInternalState();
+   }
+
+   private void resetInternalState()
+   {
+      motionDirection = 0;
+      accelerationPhaseDuration = 0.0f;
+      cruisePhaseDuration = 0.0f;
+      decelerationPhaseDuration = 0.0f;
+      totalTrajectoryTime = 0.0f;
+      elapsedTime = 0.0f;
+
+      planStartPosition = currentPosition;
+      velocityAtPlanStart = 0.0f;
+      peakVelocityMagnitude = 0.0f;
+      accelerationEndPositionMagnitude = 0.0f;
+      cruiseDistanceMagnitude = 0.0f;
    }
 
    /**
@@ -149,12 +175,7 @@ public class TrapezoidalTrajectory1D
       if (Math.abs(positionError) < 1e-6f && Math.abs(currentVelocity) < 1e-6f)
       {
          // Already there; no motion
-         motionDirection = 0;
-         accelerationPhaseDuration = 0.0f;
-         cruisePhaseDuration = 0.0f;
-         decelerationPhaseDuration = 0.0f;
-         totalTrajectoryTime = 0.0f;
-         elapsedTime = 0.0f;
+         resetInternalState();
          return;
       }
 
