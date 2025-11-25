@@ -23,8 +23,8 @@ public class TrapezoidalTrajectory1D
 
    // Internal planning data
    private float planStartPosition;
-   private float planStartVelocity;
-   private float velocityAtPlanStart;         // in transformed coordinates
+   // currentVelocity at plan start is implicit in velocityAtPlanStart (transformed)
+   private float velocityAtPlanStart;         // in transformed coordinates (already clamped)
    private float peakVelocityMagnitude;
    private float accelerationEndPositionMagnitude;
    private float cruiseDistanceMagnitude;
@@ -86,8 +86,8 @@ public class TrapezoidalTrajectory1D
       float timeSinceStart = elapsedTime;
 
       // Work in transformed coordinates (x0=0, v0 transformed, positive direction)
-      float positionAlongProfile = 0.0f;
-      float velocityAlongProfile = 0.0f;
+      float positionAlongProfile;
+      float velocityAlongProfile;
 
       if (timeSinceStart <= accelerationPhaseDuration)
       {
@@ -95,7 +95,7 @@ public class TrapezoidalTrajectory1D
          // x(t) = v0*t + 0.5*a*t^2
          // v(t) = v0 + a*t
          float acceleration = maximumAcceleration;
-         float initialVelocityTransformed = motionDirection * velocityAtPlanStart;
+         float initialVelocityTransformed = velocityAtPlanStart;
          positionAlongProfile = initialVelocityTransformed * timeSinceStart
                                 + 0.5f * acceleration * timeSinceStart * timeSinceStart;
          velocityAlongProfile = initialVelocityTransformed + acceleration * timeSinceStart;
@@ -131,6 +131,14 @@ public class TrapezoidalTrajectory1D
       currentPosition = worldStartPosition + motionDirection * positionAlongProfile;
       currentVelocity = motionDirection * velocityAlongProfile;
 
+      // If done, snap to goal and stop
+      if (elapsedTime >= totalTrajectoryTime - 1e-6f)
+      {
+         currentPosition = goalPosition;
+         currentVelocity = 0.0f;
+         motionDirection = 0;
+      }
+
       return currentPosition;
    }
 
@@ -154,28 +162,29 @@ public class TrapezoidalTrajectory1D
 
       // Transform initial state
       planStartPosition = currentPosition;
-      planStartVelocity = currentVelocity;
-      float initialPositionTransformed = 0.0f;
       float finalPositionTransformed = Math.abs(positionError);
       float initialVelocityTransformed = motionDirection * currentVelocity;
-      float finalVelocityTransformed = 0.0f; // want to stop at goal
-
-      velocityAtPlanStart = initialVelocityTransformed;
 
       // Clamp initial velocity to [-maximumVelocity, maximumVelocity]
       if (initialVelocityTransformed > maximumVelocity) initialVelocityTransformed = maximumVelocity;
       if (initialVelocityTransformed < -maximumVelocity) initialVelocityTransformed = -maximumVelocity;
 
+      // Store the (possibly clamped) value for use in update()
+      velocityAtPlanStart = initialVelocityTransformed;
+
       // Compute peak velocity needed if we use full accel/decel
       float velocityLimit = maximumVelocity;
 
       // Distance required for accel to velocityLimit, then decel to 0.
-      float accelerationDurationCandidate = Math.max((velocityLimit - initialVelocityTransformed) / maximumAcceleration, 0.0f);
+      float accelerationDurationCandidate =
+            Math.max((velocityLimit - velocityAtPlanStart) / maximumAcceleration, 0.0f);
       float decelerationDurationCandidate = velocityLimit / maximumAcceleration;
-      float accelerationDistance = initialVelocityTransformed * accelerationDurationCandidate
-                                   + 0.5f * maximumAcceleration * accelerationDurationCandidate * accelerationDurationCandidate;
-      float decelerationDistance = velocityLimit * decelerationDurationCandidate
-                                   - 0.5f * maximumAcceleration * decelerationDurationCandidate * decelerationDurationCandidate;
+      float accelerationDistance =
+            velocityAtPlanStart * accelerationDurationCandidate
+            + 0.5f * maximumAcceleration * accelerationDurationCandidate * accelerationDurationCandidate;
+      float decelerationDistance =
+            velocityLimit * decelerationDurationCandidate
+            - 0.5f * maximumAcceleration * decelerationDurationCandidate * decelerationDurationCandidate;
       float minimumDistanceForTrapezoid = accelerationDistance + decelerationDistance;
 
       if (minimumDistanceForTrapezoid < 0.0f)
@@ -200,22 +209,24 @@ public class TrapezoidalTrajectory1D
       {
          // Triangle profile: accelerate then decelerate without cruise
          // Solve for peak velocity such that distance matches finalPositionTransformed.
-         float term = 2.0f * maximumAcceleration * finalPositionTransformed + initialVelocityTransformed * initialVelocityTransformed;
+         float term =
+               2.0f * maximumAcceleration * finalPositionTransformed
+               + velocityAtPlanStart * velocityAtPlanStart;
          float peakVelocity = (float) Math.sqrt(Math.max(term / 2.0f, 0.0f));
 
          // Limit peakVelocity to velocityLimit just in case
          if (peakVelocity > velocityLimit)
             peakVelocity = velocityLimit;
 
-         accelerationPhaseDuration = Math.max((peakVelocity - initialVelocityTransformed) / maximumAcceleration, 0.0f);
+         accelerationPhaseDuration =
+               Math.max((peakVelocity - velocityAtPlanStart) / maximumAcceleration, 0.0f);
          decelerationPhaseDuration = peakVelocity / maximumAcceleration;
          cruisePhaseDuration = 0.0f;
 
          // Distances
-         float accelerationDistanceTriangle = initialVelocityTransformed * accelerationPhaseDuration
-                                              + 0.5f * maximumAcceleration * accelerationPhaseDuration * accelerationPhaseDuration;
-         float decelerationDistanceTriangle = peakVelocity * decelerationPhaseDuration
-                                              - 0.5f * maximumAcceleration * decelerationPhaseDuration * decelerationPhaseDuration;
+         float accelerationDistanceTriangle =
+               velocityAtPlanStart * accelerationPhaseDuration
+               + 0.5f * maximumAcceleration * accelerationPhaseDuration * accelerationPhaseDuration;
 
          peakVelocityMagnitude = peakVelocity;
          accelerationEndPositionMagnitude = accelerationDistanceTriangle;

@@ -134,10 +134,10 @@ public class TrapezoidalTrajectory1DTest
    public void testReplanningMidFlight()
    {
       TrapezoidalTrajectory1D trajectory = new TrapezoidalTrajectory1D(0.0f, 0.5f, 1.0f);
-      trajectory.setGoal(1.0f, 0.5f);
+      trajectory.setGoal(5.0f, 0.5f);
 
       float timeStep = 0.01f;
-      int totalSteps = 200; // first 100 steps toward 1.0, then 1100 after replanning
+      int totalSteps = 300; // first 100 steps toward 1.0, then 1100 after replanning
 
       float[] times = new float[totalSteps];
       float[] positions = new float[totalSteps];
@@ -161,7 +161,7 @@ public class TrapezoidalTrajectory1DTest
       float positionBeforeReplan = trajectory.getCurrentPosition();
       float velocityBeforeReplan = trajectory.getCurrentVelocity();
 
-      trajectory.setGoal(0.5f, 0.5f);
+      trajectory.setGoal(0.1f, 0.5f);
 
       assertEquals(positionBeforeReplan, trajectory.getCurrentPosition(), EPSILON);
       assertEquals(velocityBeforeReplan, trajectory.getCurrentVelocity(), EPSILON);
@@ -179,7 +179,7 @@ public class TrapezoidalTrajectory1DTest
          currentTime += timeStep;
       }
 
-      assertEquals(0.5f, trajectory.getCurrentPosition(), 5e-2f);
+      assertEquals(0.1f, trajectory.getCurrentPosition(), 5e-2f);
       assertEquals(0.0f, trajectory.getCurrentVelocity(), 5e-2f);
 
       // ASCII plots
@@ -290,7 +290,7 @@ public class TrapezoidalTrajectory1DTest
          valueRange = 1e-6f; // avoid division by zero
 
       StringBuilder headerLine = new StringBuilder();
-      headerLine.append("Time   | ");
+      headerLine.append("Step | Time   | ");
       headerLine.append(" ".repeat(Math.max(0, plotWidth)));
       headerLine.append(" | Value");
       System.out.println(headerLine);
@@ -304,7 +304,7 @@ public class TrapezoidalTrajectory1DTest
          int markerIndex = Math.round(normalized * (plotWidth - 1));
 
          StringBuilder line = new StringBuilder();
-         line.append(String.format("%6.3f | ", time));
+         line.append(String.format("%4d | %6.3f | ", sampleIndex, time));
 
          for (int columnIndex = 0; columnIndex < plotWidth; columnIndex++)
          {
