@@ -68,6 +68,8 @@ public class AbilityHandROS2ControllerCommunication implements HandROS2Controlle
       for (int i = 0; i < AbilityHandInterface.ACTUATOR_COUNT; ++i)
       {
          stateMessage.getActuatorPositions()[i] = managerToPublish.getHand().getActuatorPosition(i);
+         stateMessage.getActuatorVelocities()[i] = managerToPublish.getHand().getActuatorVelocity(i);
+         stateMessage.getActuatorCurrents()[i] = managerToPublish.getHand().getActuatorCurrent(i);
          stateMessage.getGoalPositions()[i] = managerToPublish.getGoalPosition(i);
          stateMessage.getGoalVelocities()[i] = managerToPublish.getGoalVelocity(i);
       }

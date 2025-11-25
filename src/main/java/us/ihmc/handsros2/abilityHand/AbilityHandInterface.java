@@ -24,6 +24,14 @@ import static us.ihmc.handsros2.abilityHand.AbilityHandModel.AbilityHandJointNam
  * where 0 = index finger, 1 = middle finger, and so on for the ring, pinky, and thumb fingers.
  * </p>
  * <p>
+ * The hand reports actuator velocities as radians per second.
+ * These can be converted into degrees/sec using:
+ *     <code>finger_velocity_deg = gear_ratio * rotor_velocity_rad * (180 / pi)</code>
+ * using the following gear ratios:
+ * Index, Middle, Ring, Pinky, Thumb Flexor: 649
+ * Thumb Rotator: 162.45
+ * </p>
+ * <p>
  * Ability Hands can be optionally equipped with touch sensors.
  * Force sensitive resistors (FSRs) are used to sense pressure exerted on the fingers.
  * Each finger will have 6 sensors, making 30 total.
@@ -111,6 +119,60 @@ public interface AbilityHandInterface extends HandInterface
    {
       for (int i = 0; i < ACTUATOR_COUNT && i < positions.length; ++i)
          setActuatorPosition(i, positions[i]);
+   }
+
+   /**
+    * Get the velocity of the actuator at the specified index.
+    *
+    * @param index Index to read the velocity from.
+    * @return The velocity value in radians per second.
+    */
+   float getActuatorVelocity(int index);
+
+   /**
+    * Set the velocity of the actuator at the specified index.
+    *
+    * @param index Index at which to set the velocity value, in radians per second.
+    * @param value The value to set.
+    */
+   void setActuatorVelocity(int index, float value);
+
+   /**
+    * Set the actuator velocities.
+    *
+    * @param velocities The actuator velocities, in radians per second.
+    */
+   default void setActuatorVelocities(float[] velocities)
+   {
+      for (int i = 0; i < ACTUATOR_COUNT && i < velocities.length; ++i)
+         setActuatorVelocity(i, velocities[i]);
+   }
+
+   /**
+    * Get the current of the actuator at the specified index.
+    *
+    * @param index Index to read the current from.
+    * @return The current value in amperes.
+    */
+   float getActuatorCurrent(int index);
+
+   /**
+    * Set the current of the actuator at the specified index.
+    *
+    * @param index Index at which to set the current value, in amperes.
+    * @param value The value to set.
+    */
+   void setActuatorCurrent(int index, float value);
+
+   /**
+    * Set the actuator currents.
+    *
+    * @param currents The actuator currents, in amperes.
+    */
+   default void setActuatorCurrents(float[] currents)
+   {
+      for (int i = 0; i < ACTUATOR_COUNT && i < currents.length; ++i)
+         setActuatorCurrent(i, currents[i]);
    }
 
    /**

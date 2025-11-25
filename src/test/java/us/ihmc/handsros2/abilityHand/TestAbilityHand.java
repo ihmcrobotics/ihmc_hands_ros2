@@ -8,6 +8,8 @@ class TestAbilityHand implements AbilityHandInterface
    private AbilityHandCommandType commandType;
    private final float[] commandValues = new float[ACTUATOR_COUNT];
    private final float[] fingerPositions = new float[ACTUATOR_COUNT];
+   private final float[] fingetVelocities = new float[ACTUATOR_COUNT];
+   private final float[] fingerCurrents = new float[ACTUATOR_COUNT];
    private final int[] rawFSRReadings = new int[TOUCH_SENSOR_COUNT];
 
    public TestAbilityHand(String serialNumber, RobotSide handSide)
@@ -62,6 +64,30 @@ class TestAbilityHand implements AbilityHandInterface
    public void setActuatorPosition(int index, float value)
    {
       fingerPositions[index] = value;
+   }
+
+   @Override
+   public float getActuatorVelocity(int index)
+   {
+      return fingetVelocities[index];
+   }
+
+   @Override
+   public void setActuatorVelocity(int index, float value)
+   {
+      fingetVelocities[index] = value;
+   }
+
+   @Override
+   public float getActuatorCurrent(int index)
+   {
+      return fingerCurrents[index];
+   }
+
+   @Override
+   public void setActuatorCurrent(int index, float value)
+   {
+      fingerCurrents[index] = value;
    }
 
    @Override
