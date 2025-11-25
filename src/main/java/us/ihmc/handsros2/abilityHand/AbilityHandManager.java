@@ -173,9 +173,9 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
       if (previousTimeNanos > 0L)
       {
          long deltaNanos = nowNanos - previousTimeNanos;
-         dt = deltaNanos * 1.0e-9f;
+         dt = Math.min(0.1f, Math.max(deltaNanos * 1.0e-9f, 0.001f));
 
-         if (previousControlMode != ControlMode.POSITION)
+         if (controlMode == ControlMode.POSITION && previousControlMode != ControlMode.POSITION)
             for (int i = 0; i < ACTUATOR_COUNT; i++)
                fingerTrajectories[i].reset(hand.getActuatorPosition(i), hand.getActuatorVelocity(i));
 
