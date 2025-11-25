@@ -350,6 +350,80 @@ public class AbilityHandManagerTest
                    "Expected POSITION command type but got " + hand.getCommandType());
    }
 
+   @ParameterizedTest
+   @MethodSource("getControllers")
+   public void testMultipleGripsSequence(AbilityHandManager manager, AbilityHandInterface hand)
+   {
+      // Start from some nontrivial configuration
+      float[] initialPositions = {0f, 10f, 20f, 30f, 0f, 0f};
+      hand.setActuatorPositions(initialPositions);
+
+      manager.setGoalVelocities(new float[] {80f, 80f, 80f, 80f, 80f, 80f});
+      manager.setControlMode(ControlMode.GRIP);
+
+      // Sequence of grips to test
+      Grip[] gripSequence = new Grip[] {Grip.POWER, Grip.RELAX, Grip.HOOK, Grip.PINCH_O};
+      int[] gripSwitchSteps = new int[] {0, 200, 400, 600}; // when to switch grips
+
+      int numberOfSteps = 1000;
+      float timeStep = 0.01f;
+
+      float[] times = new float[numberOfSteps];
+      float[][] fingerPositions = new float[ACTUATOR_COUNT][numberOfSteps];
+
+      float currentTime = 0.0f;
+
+      for (int stepIndex = 0; stepIndex < numberOfSteps; stepIndex++)
+      {
+         // Choose grip based on schedule
+         for (int seqIndex = gripSequence.length - 1; seqIndex >= 0; seqIndex--)
+         {
+            if (stepIndex >= gripSwitchSteps[seqIndex])
+            {
+               manager.setGrip(gripSequence[seqIndex]);
+               break;
+            }
+         }
+
+         // Run controller in GRIP mode
+         manager.update(timeStep);
+
+         times[stepIndex] = currentTime;
+
+         // Treat commanded positions as actual positions for this test
+         for (int fingerIndex = 0; fingerIndex < ACTUATOR_COUNT; fingerIndex++)
+         {
+            float commandedPosition = hand.getCommandValue(fingerIndex);
+            fingerPositions[fingerIndex][stepIndex] = commandedPosition;
+         }
+
+         currentTime += timeStep;
+      }
+
+      // Normalize for plotting
+      float globalMin = Float.POSITIVE_INFINITY;
+      float globalMax = Float.NEGATIVE_INFINITY;
+      for (int fingerIndex = 0; fingerIndex < ACTUATOR_COUNT; fingerIndex++)
+      {
+         for (int stepIndex = 0; stepIndex < numberOfSteps; stepIndex++)
+         {
+            float value = fingerPositions[fingerIndex][stepIndex];
+            globalMin = Math.min(globalMin, value);
+            globalMax = Math.max(globalMax, value);
+         }
+      }
+
+      int plotWidth = 60;
+
+      System.out.println("ASCII plot of all finger positions across multiple grips:");
+      asciiPlotAllFingers(times, fingerPositions, null, globalMin, globalMax, plotWidth);
+
+      // GRIP mode should be issuing POSITION commands at the end
+      assertEquals(AbilityHandCommandType.POSITION, hand.getCommandType(),
+                   "Expected POSITION command type but got " + hand.getCommandType());
+   }
+
+
    /**
     * ASCII plot for 6 fingers at once.
     * Each time step is a line; each finger is plotted with a different marker,
