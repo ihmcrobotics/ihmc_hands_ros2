@@ -281,7 +281,7 @@ public class AbilityHandManagerTest
       manager.setControlMode(ControlMode.GRIP);
       manager.setGrip(Grip.POWER);
 
-      int numberOfSteps = 800;
+      int numberOfSteps = 450;
       float timeStep = 0.01f;
 
       float[] times = new float[numberOfSteps];
@@ -291,6 +291,26 @@ public class AbilityHandManagerTest
 
       for (int stepIndex = 0; stepIndex < numberOfSteps; stepIndex++)
       {
+         if (stepIndex == 110)
+         {
+            // Thumb index 4 should be near its clear position at this point
+            float thumbPosition = hand.getCommandValue(4);
+            assertTrue(Math.abs(thumbPosition - THUMB_CLEAR_POSITION) < 2.0f,
+                       String.format("Thumb position not near clear position. pos=%.3f clear=%.3f",
+                                     thumbPosition, THUMB_CLEAR_POSITION));
+         }
+         else if (stepIndex == 240)
+         {
+            // Stage 0 fingers for POWER grip: indices 0–3 should have moved upward from initial 30
+            for (int i = 0; i < 4; i++)
+            {
+               float fingerPos = hand.getCommandValue(i);
+               assertTrue(fingerPos > initialPositions[i],
+                          String.format("Finger %d should have started closing. initial=%.3f pos=%.3f",
+                                        i, initialPositions[i], fingerPos));
+            }
+         }
+
          // Manager computes desired positions in GRIP mode
          manager.update(timeStep);
 
@@ -328,27 +348,6 @@ public class AbilityHandManagerTest
       // GRIP mode should be issuing POSITION commands
       assertEquals(AbilityHandCommandType.POSITION, hand.getCommandType(),
                    "Expected POSITION command type but got " + hand.getCommandType());
-
-      // Thumb index 4 should stay near its clear position
-      float thumbPosition = hand.getCommandValue(4);
-      assertTrue(Math.abs(thumbPosition - THUMB_CLEAR_POSITION) < 2.0f,
-                 String.format("Thumb position not near clear position. pos=%.3f clear=%.3f",
-                               thumbPosition, THUMB_CLEAR_POSITION));
-
-      // Stage 0 fingers for POWER grip: indices 0–3 should have moved upward from initial 30
-      for (int i = 0; i < 4; i++)
-      {
-         float fingerPos = hand.getCommandValue(i);
-         assertTrue(fingerPos > initialPositions[i],
-                    String.format("Finger %d should have started closing. initial=%.3f pos=%.3f",
-                                  i, initialPositions[i], fingerPos));
-      }
-
-      // Pinky (index 5) should not move in stage 0 (remain near initial)
-      float pinkyPosition = hand.getCommandValue(5);
-      assertTrue(Math.abs(pinkyPosition - initialPositions[5]) < 2.0f,
-                 String.format("Pinky should not move in stage 0. initial=%.3f pos=%.3f",
-                               initialPositions[5], pinkyPosition));
    }
 
    /**

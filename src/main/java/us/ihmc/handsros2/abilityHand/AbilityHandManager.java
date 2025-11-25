@@ -260,13 +260,12 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
    /** Performs multi-stage grip control, moving fingers sequentially through grip.stages. */
    private void updateGripControl()
    {
-      // If goal grip changed, reset grip stage
+      // If goal grip changed, reset grip stage and re-sync all trajectories
       if (previousGrip != grip || previousControlMode != ControlMode.GRIP)
       {
          gripStage = -1;
          previousGrip = grip;
 
-         // Re-sync trajectories to the current hand state when entering GRIP
          for (int actuatorIndex = 0; actuatorIndex < ACTUATOR_COUNT; actuatorIndex++)
          {
             fingerTrajectories[actuatorIndex].reset(hand.getActuatorPosition(actuatorIndex),
@@ -278,7 +277,6 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
       if (gripStage >= grip.stages.length)
          return;
 
-      // GRIP uses POSITION commands driven by per-finger trajectories
       hand.setCommandType(AbilityHandCommandType.POSITION);
 
       // Stage -1: move the thumb to a clear position before any grip
@@ -287,20 +285,28 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
          int thumbIndex = 4;
 
          // Set thumb trajectory goal; use thumb’s goalVelocity as max velocity
-         fingerTrajectories[thumbIndex].setGoal(THUMB_CLEAR_POSITION, Math.abs(goalVelocities[thumbIndex]));
+         TrapezoidalTrajectory1D thumbTrajectory = fingerTrajectories[thumbIndex];
+         thumbTrajectory.setGoal(THUMB_CLEAR_POSITION, Math.abs(goalVelocities[thumbIndex]));
 
-         float commandedThumbPosition = fingerTrajectories[thumbIndex].update(dt);
-         hand.setCommandValue(thumbIndex, commandedThumbPosition);
-
-         // Hold other fingers at their current actuator positions (no motion yet)
+         // For all fingers, advance their trajectories and command positions
          for (int actuatorIndex = 0; actuatorIndex < ACTUATOR_COUNT; actuatorIndex++)
          {
+            TrapezoidalTrajectory1D trajectory = fingerTrajectories[actuatorIndex];
+
             if (actuatorIndex != thumbIndex)
-               hand.setCommandValue(actuatorIndex, hand.getActuatorPosition(actuatorIndex));
+            {
+               // Hold non-thumb fingers at their current actuator positions
+               float holdPosition = hand.getActuatorPosition(actuatorIndex);
+               trajectory.setGoal(holdPosition, Math.abs(goalVelocities[actuatorIndex]));
+            }
+
+            float commandedPosition = trajectory.update(dt);
+            hand.setCommandValue(actuatorIndex, commandedPosition);
          }
 
          // Check if thumb trajectory has effectively reached its goal
-         if (Math.abs(commandedThumbPosition - THUMB_CLEAR_POSITION) < TOLERANCE)
+         float thumbCommand = hand.getCommandValue(thumbIndex);
+         if (Math.abs(thumbCommand - THUMB_CLEAR_POSITION) < TOLERANCE)
          {
             // Thumb is clear. Start normal grip stages.
             gripStage = 0;
@@ -309,46 +315,50 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
          return;
       }
 
-      // Normal grip stages: move only the fingers in this stage toward their stage goals
+      // Normal grip stages: move only the fingers in this stage toward their stage goals,
+      // but update all trajectories every tick.
       int[] actuatorsToMove = grip.stages[gripStage];
       float[] stageGoalPositions = grip.positions[gripStage];
 
       boolean stageComplete = true;
 
-      // First, advance trajectories and command positions for the active fingers
-      for (int i = 0; i < actuatorsToMove.length; i++)
-      {
-         int actuatorIndex = actuatorsToMove[i];
-         float stageGoalPosition = stageGoalPositions[i];
-         float maximumVelocity = Math.abs(goalVelocities[actuatorIndex]);
-
-         TrapezoidalTrajectory1D trajectory = fingerTrajectories[actuatorIndex];
-         trajectory.setGoal(stageGoalPosition, maximumVelocity);
-
-         float commandedPosition = trajectory.update(dt);
-         hand.setCommandValue(actuatorIndex, commandedPosition);
-
-         if (Math.abs(commandedPosition - stageGoalPosition) >= TOLERANCE)
-            stageComplete = false;
-      }
-
-      // For fingers not active in this stage, hold their current positions
       for (int actuatorIndex = 0; actuatorIndex < ACTUATOR_COUNT; actuatorIndex++)
       {
          boolean isActive = false;
-         for (int j = 0; j < actuatorsToMove.length; j++)
+         float desiredPosition;
+
+         // Check if this finger is active in the current stage
+         for (int i = 0; i < actuatorsToMove.length; i++)
          {
-            if (actuatorIndex == actuatorsToMove[j])
+            if (actuatorIndex == actuatorsToMove[i])
             {
                isActive = true;
+               desiredPosition = stageGoalPositions[i];
+
+               TrapezoidalTrajectory1D trajectory = fingerTrajectories[actuatorIndex];
+               float maximumVelocity = Math.abs(goalVelocities[actuatorIndex]);
+               trajectory.setGoal(desiredPosition, maximumVelocity);
+
+               float commandedPosition = trajectory.update(dt);
+               hand.setCommandValue(actuatorIndex, commandedPosition);
+
+               if (Math.abs(commandedPosition - desiredPosition) >= TOLERANCE)
+                  stageComplete = false;
+
                break;
             }
          }
 
          if (!isActive)
          {
-            // Keep them where they are (or you could track with their own trajectories if desired)
-            hand.setCommandValue(actuatorIndex, hand.getActuatorPosition(actuatorIndex));
+            // Not active in this stage: hold current actuator position via its own trajectory
+            float holdPosition = hand.getActuatorPosition(actuatorIndex);
+            TrapezoidalTrajectory1D trajectory = fingerTrajectories[actuatorIndex];
+            float maximumVelocity = Math.abs(goalVelocities[actuatorIndex]);
+            trajectory.setGoal(holdPosition, maximumVelocity);
+
+            float commandedPosition = trajectory.update(dt);
+            hand.setCommandValue(actuatorIndex, commandedPosition);
          }
       }
 
