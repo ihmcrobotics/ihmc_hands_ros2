@@ -152,14 +152,14 @@ public interface AbilityHandInterface extends HandInterface
     * Get the current of the actuator at the specified index.
     *
     * @param index Index to read the current from.
-    * @return The current value in milliamperes.
+    * @return The current value in amperes.
     */
    float getActuatorCurrent(int index);
 
    /**
     * Set the current of the actuator at the specified index.
     *
-    * @param index Index at which to set the current value, in milliamperes.
+    * @param index Index at which to set the current value, in amperes.
     * @param value The value to set.
     */
    void setActuatorCurrent(int index, float value);
@@ -167,7 +167,7 @@ public interface AbilityHandInterface extends HandInterface
    /**
     * Set the actuator currents.
     *
-    * @param currents The actuator currents, in milliamperes.
+    * @param currents The actuator currents, in amperes.
     */
    default void setActuatorCurrents(float[] currents)
    {
