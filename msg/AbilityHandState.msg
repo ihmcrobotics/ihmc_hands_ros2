@@ -18,7 +18,7 @@ float32[6] actuator_positions
 # Thumb Rotator: 162.45
 float32[6] actuator_velocities
 
-# The actuator currents in milliamps
+# The actuator currents in amps
 float32[6] actuator_currents
 
 # The touch sensor pressure readings in Newtons

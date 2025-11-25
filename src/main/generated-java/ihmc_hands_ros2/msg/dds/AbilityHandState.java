@@ -32,7 +32,7 @@ public class AbilityHandState extends Packet<AbilityHandState> implements Settab
             */
    public float[] actuator_velocities_;
    /**
-            * The actuator currents in milliamps
+            * The actuator currents in amps
             */
    public float[] actuator_currents_;
    /**
@@ -186,7 +186,7 @@ public class AbilityHandState extends Packet<AbilityHandState> implements Settab
 
 
    /**
-            * The actuator currents in milliamps
+            * The actuator currents in amps
             */
    public float[] getActuatorCurrents()
    {

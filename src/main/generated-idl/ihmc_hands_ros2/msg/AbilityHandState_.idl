@@ -40,7 +40,7 @@ module ihmc_hands_ros2
          */
         float actuator_velocities[6];
         /**
-         * The actuator currents in milliamps
+         * The actuator currents in amps
          */
         float actuator_currents[6];
         /**
