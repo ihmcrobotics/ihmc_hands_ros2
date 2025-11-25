@@ -6,133 +6,222 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class TrapezoidalTrajectory1DTest
 {
-   private static final float EPS = 1e-4f;
+   private static final float EPSILON = 1e-4f;
 
    @Test
    public void testSimpleMoveFromRest()
    {
-      TrapezoidalTrajectory1D traj = new TrapezoidalTrajectory1D(0.0f, 0.5f, 1.0f);
-      traj.setGoal(1.0f, 0.5f);
+      TrapezoidalTrajectory1D trajectory = new TrapezoidalTrajectory1D(0.0f, 0.5f, 1.0f);
+      trajectory.setGoal(1.0f, 0.5f);
 
-      float dt = 0.02f;
-      int steps = 200;
+      float timeStep = 0.02f;
+      int numberOfSteps = 200;
 
-      float[] times = new float[steps];
-      float[] positions = new float[steps];
-      float[] velocities = new float[steps];
+      float[] times = new float[numberOfSteps];
+      float[] positions = new float[numberOfSteps];
+      float[] velocities = new float[numberOfSteps];
 
-      float t = 0.0f;
-      float lastPos = traj.getCurrentPos();
+      float currentTime = 0.0f;
+      float lastPosition = trajectory.getCurrentPosition();
 
-      for (int i = 0; i < steps; i++)
+      for (int stepIndex = 0; stepIndex < numberOfSteps; stepIndex++)
       {
-         float pos = traj.update(dt);
-         float vel = traj.getCurrentVel();
+         float position = trajectory.update(timeStep);
+         float velocity = trajectory.getCurrentVelocity();
 
          // Basic correctness checks
-         assertTrue(pos >= lastPos - 1e-5f, "Position should be non-decreasing for positive move");
-         assertTrue(Math.abs(vel) <= 0.5f + 1e-3f, "Velocity should be bounded by maxVel");
+         assertTrue(position >= lastPosition - 1e-5f, "Position should be non-decreasing for positive move");
+         assertTrue(Math.abs(velocity) <= 0.5f + 1e-3f, "Velocity should be bounded by maximum velocity");
 
-         times[i] = t;
-         positions[i] = pos;
-         velocities[i] = vel;
+         times[stepIndex] = currentTime;
+         positions[stepIndex] = position;
+         velocities[stepIndex] = velocity;
 
-         lastPos = pos;
-         t += dt;
+         lastPosition = position;
+         currentTime += timeStep;
       }
 
       // End-state checks
-      assertEquals(1.0f, traj.getCurrentPos(), 5e-2f);
-      assertEquals(0.0f, traj.getCurrentVel(), 5e-2f);
+      assertEquals(1.0f, trajectory.getCurrentPosition(), 5e-2f);
+      assertEquals(0.0f, trajectory.getCurrentVelocity(), 5e-2f);
 
       // ASCII plots
-      float minPos = Float.POSITIVE_INFINITY, maxPos = Float.NEGATIVE_INFINITY;
-      float minVel = Float.POSITIVE_INFINITY, maxVel = Float.NEGATIVE_INFINITY;
+      float minimumPosition = Float.POSITIVE_INFINITY;
+      float maximumPosition = Float.NEGATIVE_INFINITY;
+      float minimumVelocity = Float.POSITIVE_INFINITY;
+      float maximumVelocity = Float.NEGATIVE_INFINITY;
 
-      for (int i = 0; i < steps; i++)
+      for (int stepIndex = 0; stepIndex < numberOfSteps; stepIndex++)
       {
-         minPos = Math.min(minPos, positions[i]);
-         maxPos = Math.max(maxPos, positions[i]);
-         minVel = Math.min(minVel, velocities[i]);
-         maxVel = Math.max(maxVel, velocities[i]);
+         minimumPosition = Math.min(minimumPosition, positions[stepIndex]);
+         maximumPosition = Math.max(maximumPosition, positions[stepIndex]);
+         minimumVelocity = Math.min(minimumVelocity, velocities[stepIndex]);
+         maximumVelocity = Math.max(maximumVelocity, velocities[stepIndex]);
       }
 
-      int width = 60;
+      int plotWidth = 60;
 
       System.out.println("ASCII plot of position (testSimpleMoveFromRest):");
-      asciiPlot(times, positions, minPos, maxPos, width);
+      asciiPlot(times, positions, minimumPosition, maximumPosition, plotWidth);
 
       System.out.println();
       System.out.println("ASCII plot of velocity (testSimpleMoveFromRest):");
-      asciiPlot(times, velocities, minVel, maxVel, width);
+      asciiPlot(times, velocities, minimumVelocity, maximumVelocity, plotWidth);
    }
 
    @Test
    public void testReverseDirectionMove()
    {
-      TrapezoidalTrajectory1D traj = new TrapezoidalTrajectory1D(1.0f, 1.0f, 2.0f);
-      traj.setGoal(0.0f, 1.0f);
+      TrapezoidalTrajectory1D trajectory = new TrapezoidalTrajectory1D(1.0f, 1.0f, 2.0f);
+      trajectory.setGoal(0.0f, 1.0f);
 
-      float dt = 0.01f;
-      float lastPos = traj.getCurrentPos();
+      float timeStep = 0.01f;
+      int numberOfSteps = 170;
 
-      for (int i = 0; i < 1000; i++)
+      float[] times = new float[numberOfSteps];
+      float[] positions = new float[numberOfSteps];
+      float[] velocities = new float[numberOfSteps];
+
+      float currentTime = 0.0f;
+      float lastPosition = trajectory.getCurrentPosition();
+
+      for (int stepIndex = 0; stepIndex < numberOfSteps; stepIndex++)
       {
-         float pos = traj.update(dt);
-         float vel = traj.getCurrentVel();
+         float position = trajectory.update(timeStep);
+         float velocity = trajectory.getCurrentVelocity();
 
-         assertTrue(pos <= lastPos + 1e-5f, "Position should be non-increasing for negative move");
-         if (Math.abs(vel) > EPS)
-            assertTrue(vel < 0.0f, "Velocity should be negative while moving toward smaller goal");
+         // Assertions
+         assertTrue(position <= lastPosition + 1e-5f, "Position should be non-increasing for negative move");
+         if (Math.abs(velocity) > EPSILON)
+            assertTrue(velocity < 0.0f, "Velocity should be negative while moving toward smaller goal");
 
-         lastPos = pos;
+         times[stepIndex] = currentTime;
+         positions[stepIndex] = position;
+         velocities[stepIndex] = velocity;
+
+         lastPosition = position;
+         currentTime += timeStep;
       }
 
-      assertEquals(0.0f, traj.getCurrentPos(), 5e-2f);
-      assertEquals(0.0f, traj.getCurrentVel(), 5e-2f);
+      assertEquals(0.0f, trajectory.getCurrentPosition(), 5e-2f);
+      assertEquals(0.0f, trajectory.getCurrentVelocity(), 5e-2f);
+
+      // ASCII plots
+      float minimumPosition = Float.POSITIVE_INFINITY;
+      float maximumPosition = Float.NEGATIVE_INFINITY;
+      float minimumVelocity = Float.POSITIVE_INFINITY;
+      float maximumVelocity = Float.NEGATIVE_INFINITY;
+
+      for (int stepIndex = 0; stepIndex < numberOfSteps; stepIndex++)
+      {
+         minimumPosition = Math.min(minimumPosition, positions[stepIndex]);
+         maximumPosition = Math.max(maximumPosition, positions[stepIndex]);
+         minimumVelocity = Math.min(minimumVelocity, velocities[stepIndex]);
+         maximumVelocity = Math.max(maximumVelocity, velocities[stepIndex]);
+      }
+
+      int plotWidth = 60;
+
+      System.out.println("ASCII plot of position (testReverseDirectionMove):");
+      asciiPlot(times, positions, minimumPosition, maximumPosition, plotWidth);
+
+      System.out.println();
+      System.out.println("ASCII plot of velocity (testReverseDirectionMove):");
+      asciiPlot(times, velocities, minimumVelocity, maximumVelocity, plotWidth);
    }
 
    @Test
    public void testReplanningMidFlight()
    {
-      TrapezoidalTrajectory1D traj = new TrapezoidalTrajectory1D(0.0f, 0.5f, 1.0f);
-      traj.setGoal(1.0f, 0.5f);
+      TrapezoidalTrajectory1D trajectory = new TrapezoidalTrajectory1D(0.0f, 0.5f, 1.0f);
+      trajectory.setGoal(1.0f, 0.5f);
 
-      float dt = 0.01f;
+      float timeStep = 0.01f;
+      int totalSteps = 200; // first 100 steps toward 1.0, then 1100 after replanning
 
-      for (int i = 0; i < 100; i++)
-         traj.update(dt);
+      float[] times = new float[totalSteps];
+      float[] positions = new float[totalSteps];
+      float[] velocities = new float[totalSteps];
 
-      float posBeforeReplan = traj.getCurrentPos();
-      float velBeforeReplan = traj.getCurrentVel();
+      float currentTime = 0.0f;
 
-      traj.setGoal(0.5f, 0.5f);
+      // Run for some time toward 1.0
+      for (int stepIndex = 0; stepIndex < 100; stepIndex++)
+      {
+         float position = trajectory.update(timeStep);
+         float velocity = trajectory.getCurrentVelocity();
 
-      assertEquals(posBeforeReplan, traj.getCurrentPos(), EPS);
-      assertEquals(velBeforeReplan, traj.getCurrentVel(), EPS);
+         times[stepIndex] = currentTime;
+         positions[stepIndex] = position;
+         velocities[stepIndex] = velocity;
 
-      for (int i = 0; i < 1000; i++)
-         traj.update(dt);
+         currentTime += timeStep;
+      }
 
-      assertEquals(0.5f, traj.getCurrentPos(), 5e-2f);
-      assertEquals(0.0f, traj.getCurrentVel(), 5e-2f);
+      float positionBeforeReplan = trajectory.getCurrentPosition();
+      float velocityBeforeReplan = trajectory.getCurrentVelocity();
+
+      trajectory.setGoal(0.5f, 0.5f);
+
+      assertEquals(positionBeforeReplan, trajectory.getCurrentPosition(), EPSILON);
+      assertEquals(velocityBeforeReplan, trajectory.getCurrentVelocity(), EPSILON);
+
+      // Continue after replanning
+      for (int stepIndex = 100; stepIndex < totalSteps; stepIndex++)
+      {
+         float position = trajectory.update(timeStep);
+         float velocity = trajectory.getCurrentVelocity();
+
+         times[stepIndex] = currentTime;
+         positions[stepIndex] = position;
+         velocities[stepIndex] = velocity;
+
+         currentTime += timeStep;
+      }
+
+      assertEquals(0.5f, trajectory.getCurrentPosition(), 5e-2f);
+      assertEquals(0.0f, trajectory.getCurrentVelocity(), 5e-2f);
+
+      // ASCII plots
+      float minimumPosition = Float.POSITIVE_INFINITY;
+      float maximumPosition = Float.NEGATIVE_INFINITY;
+      float minimumVelocity = Float.POSITIVE_INFINITY;
+      float maximumVelocity = Float.NEGATIVE_INFINITY;
+
+      for (int stepIndex = 0; stepIndex < totalSteps; stepIndex++)
+      {
+         minimumPosition = Math.min(minimumPosition, positions[stepIndex]);
+         maximumPosition = Math.max(maximumPosition, positions[stepIndex]);
+         minimumVelocity = Math.min(minimumVelocity, velocities[stepIndex]);
+         maximumVelocity = Math.max(maximumVelocity, velocities[stepIndex]);
+      }
+
+      int plotWidth = 60;
+
+      System.out.println("ASCII plot of position (testReplanningMidFlight):");
+      asciiPlot(times, positions, minimumPosition, maximumPosition, plotWidth);
+
+      System.out.println();
+      System.out.println("ASCII plot of velocity (testReplanningMidFlight):");
+      asciiPlot(times, velocities, minimumVelocity, maximumVelocity, plotWidth);
    }
+
 
    @Test
    public void testAlreadyAtGoal()
    {
-      TrapezoidalTrajectory1D traj = new TrapezoidalTrajectory1D(0.0f, 1.0f, 1.0f);
-      traj.setGoal(0.0f, 1.0f);
+      TrapezoidalTrajectory1D trajectory = new TrapezoidalTrajectory1D(0.0f, 1.0f, 1.0f);
+      trajectory.setGoal(0.0f, 1.0f);
 
-      float dt = 0.01f;
+      float timeStep = 0.01f;
 
-      for (int i = 0; i < 100; i++)
+      for (int stepIndex = 0; stepIndex < 100; stepIndex++)
       {
-         float pos = traj.update(dt);
-         float vel = traj.getCurrentVel();
+         float position = trajectory.update(timeStep);
+         float velocity = trajectory.getCurrentVelocity();
 
-         assertEquals(0.0f, pos, EPS);
-         assertEquals(0.0f, vel, EPS);
+         assertEquals(0.0f, position, EPSILON);
+         assertEquals(0.0f, velocity, EPSILON);
       }
    }
 
@@ -143,82 +232,89 @@ public class TrapezoidalTrajectory1DTest
    @Test
    public void asciiPlotSimpleTrajectory()
    {
-      TrapezoidalTrajectory1D traj = new TrapezoidalTrajectory1D(0.0f, 0.5f, 1.0f);
-      traj.setGoal(1.0f, 0.5f);
+      TrapezoidalTrajectory1D trajectory = new TrapezoidalTrajectory1D(0.0f, 0.5f, 1.0f);
+      trajectory.setGoal(1.0f, 0.5f);
 
-      float dt = 0.02f;
-      int steps = 200;
+      float timeStep = 0.02f;
+      int numberOfSteps = 200;
 
-      float[] times = new float[steps];
-      float[] positions = new float[steps];
-      float[] velocities = new float[steps];
+      float[] times = new float[numberOfSteps];
+      float[] positions = new float[numberOfSteps];
+      float[] velocities = new float[numberOfSteps];
 
-      float t = 0.0f;
-      for (int i = 0; i < steps; i++)
+      float currentTime = 0.0f;
+      for (int stepIndex = 0; stepIndex < numberOfSteps; stepIndex++)
       {
-         float pos = traj.update(dt);
-         float vel = traj.getCurrentVel();
+         float position = trajectory.update(timeStep);
+         float velocity = trajectory.getCurrentVelocity();
 
-         times[i] = t;
-         positions[i] = pos;
-         velocities[i] = vel;
+         times[stepIndex] = currentTime;
+         positions[stepIndex] = position;
+         velocities[stepIndex] = velocity;
 
-         t += dt;
+         currentTime += timeStep;
       }
 
       // Find ranges for normalization
-      float minPos = Float.POSITIVE_INFINITY, maxPos = Float.NEGATIVE_INFINITY;
-      float minVel = Float.POSITIVE_INFINITY, maxVel = Float.NEGATIVE_INFINITY;
+      float minimumPosition = Float.POSITIVE_INFINITY;
+      float maximumPosition = Float.NEGATIVE_INFINITY;
+      float minimumVelocity = Float.POSITIVE_INFINITY;
+      float maximumVelocity = Float.NEGATIVE_INFINITY;
 
-      for (int i = 0; i < steps; i++)
+      for (int stepIndex = 0; stepIndex < numberOfSteps; stepIndex++)
       {
-         minPos = Math.min(minPos, positions[i]);
-         maxPos = Math.max(maxPos, positions[i]);
-         minVel = Math.min(minVel, velocities[i]);
-         maxVel = Math.max(maxVel, velocities[i]);
+         minimumPosition = Math.min(minimumPosition, positions[stepIndex]);
+         maximumPosition = Math.max(maximumPosition, positions[stepIndex]);
+         minimumVelocity = Math.min(minimumVelocity, velocities[stepIndex]);
+         maximumVelocity = Math.max(maximumVelocity, velocities[stepIndex]);
       }
 
-      int width = 60; // characters per line for each plot
+      int plotWidth = 60; // characters per line for each plot
 
       System.out.println("ASCII plot of position:");
-      asciiPlot(times, positions, minPos, maxPos, width);
+      asciiPlot(times, positions, minimumPosition, maximumPosition, plotWidth);
 
       System.out.println();
       System.out.println("ASCII plot of velocity:");
-      asciiPlot(times, velocities, minVel, maxVel, width);
+      asciiPlot(times, velocities, minimumVelocity, maximumVelocity, plotWidth);
    }
 
-   private void asciiPlot(float[] times, float[] values, float vMin, float vMax, int width)
+   private void asciiPlot(float[] times,
+                          float[] values,
+                          float minimumValue,
+                          float maximumValue,
+                          int plotWidth)
    {
-      float range = vMax - vMin;
-      if (range < 1e-6f)
-         range = 1e-6f; // avoid div by zero
+      float valueRange = maximumValue - minimumValue;
+      if (valueRange < 1e-6f)
+         valueRange = 1e-6f; // avoid division by zero
 
-      StringBuilder line0 = new StringBuilder();
-      line0.append("Time | ");
-      line0.append(" ".repeat(Math.max(0, width)));
-      line0.append(" | ");
-      System.out.println(line0);
-      for (int i = 0; i < times.length; i++)
+      StringBuilder headerLine = new StringBuilder();
+      headerLine.append("Time   | ");
+      headerLine.append(" ".repeat(Math.max(0, plotWidth)));
+      headerLine.append(" | Value");
+      System.out.println(headerLine);
+
+      for (int sampleIndex = 0; sampleIndex < times.length; sampleIndex++)
       {
-         float t = times[i];
-         float v = values[i];
+         float time = times[sampleIndex];
+         float value = values[sampleIndex];
 
-         float normalized = (v - vMin) / range; // 0..1
-         int idx = Math.round(normalized * (width - 1));
+         float normalized = (value - minimumValue) / valueRange; // 0..1
+         int markerIndex = Math.round(normalized * (plotWidth - 1));
 
          StringBuilder line = new StringBuilder();
-         line.append(String.format("%6.3f | ", t));
+         line.append(String.format("%6.3f | ", time));
 
-         for (int j = 0; j < width; j++)
+         for (int columnIndex = 0; columnIndex < plotWidth; columnIndex++)
          {
-            if (j == idx)
+            if (columnIndex == markerIndex)
                line.append('*');
             else
                line.append(' ');
          }
 
-         line.append(String.format(" | %.5f", v));
+         line.append(String.format(" | %.5f", value));
          System.out.println(line);
       }
    }
