@@ -126,7 +126,6 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
    }
 
    private static final float TOLERANCE = 1.0f;
-   static final float THUMB_CLEAR_POSITION = 30.0f;
    /** Trajectory configuration: tune acceleration per joint as needed (deg/s^2) */
    private static final float DEFAULT_MAXIMUM_ACCELERATION = 200.0f;
 
@@ -167,6 +166,7 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
 
    public void initialize()
    {
+      initialized = true;
       for (int i = 0; i < ACTUATOR_COUNT; i++)
       {
          goalPositions[i] = hand.getActuatorPosition(i);
@@ -200,25 +200,25 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
       this.dt = dt;
 
       if (!initialized && hand.getActuatorPosition(0) != 0.0f)
-      {
-         initialized = true;
          initialize();
-      }
 
-      // Only reset trajectories when entering POSITION from another mode
-      if (controlMode == ControlMode.POSITION && previousControlMode != ControlMode.POSITION)
-         for (int i = 0; i < ACTUATOR_COUNT; i++)
-            fingerTrajectories[i].reset(hand.getActuatorPosition(i), hand.getActuatorVelocity(i));
-
-      switch (controlMode)
+      if (initialized)
       {
-         case POSITION -> updatePositionControl();
-         case VELOCITY -> updateVelocityControl();
-         case VEL_TO_POS -> updateVelToPosControl();
-         case GRIP -> updateGripControl();
-      }
+         // Only reset trajectories when entering POSITION from another mode
+         if (controlMode == ControlMode.POSITION && previousControlMode != ControlMode.POSITION)
+            for (int i = 0; i < ACTUATOR_COUNT; i++)
+               fingerTrajectories[i].reset(hand.getActuatorPosition(i), hand.getActuatorVelocity(i));
 
-      previousControlMode = controlMode;
+         switch (controlMode)
+         {
+            case POSITION -> updatePositionControl();
+            case VELOCITY -> updateVelocityControl();
+            case VEL_TO_POS -> updateVelToPosControl();
+            case GRIP -> updateGripControl();
+         }
+
+         previousControlMode = controlMode;
+      }
    }
 
    /**

@@ -10,17 +10,23 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static us.ihmc.handsros2.abilityHand.AbilityHandInterface.ACTUATOR_COUNT;
-import static us.ihmc.handsros2.abilityHand.AbilityHandManager.THUMB_CLEAR_POSITION;
 
 public class AbilityHandManagerTest
 {
    private static Stream<Arguments> getControllers()
    {
       TestAbilityHand abilityHand = new TestAbilityHand("24ABH000", RobotSide.LEFT);
+      abilityHand.setActuatorPositions(new float[] {30f, 30f, 30f, 30f, 30f, -30f});
       AbilityHandManager manager = new AbilityHandManager(abilityHand);
+      manager.setGoalVelocities(new float[] {30f, 30f, 30f, 30f, 30f, 30f});
+      manager.initialize();
 
       YoAbilityHand yoAbilityHand = new YoAbilityHand(null, "24ABH001", RobotSide.RIGHT);
+      yoAbilityHand.setActuatorPositions(new float[] {30f, 30f, 30f, 30f, 30f, -30f});
+      yoAbilityHand.setActuatorVelocities(new float[] {30f, 30f, 30f, 30f, 30f, 30f});
       YoAbilityHandManager yoManager = new YoAbilityHandManager(null, yoAbilityHand);
+      yoManager.setGoalVelocities(new float[] {30f, 30f, 30f, 30f, 30f, 30f});
+      yoManager.initialize();
 
       return Stream.of(Arguments.of(manager, abilityHand), Arguments.of(yoManager, yoAbilityHand));
    }
@@ -291,15 +297,7 @@ public class AbilityHandManagerTest
 
       for (int stepIndex = 0; stepIndex < numberOfSteps; stepIndex++)
       {
-         if (stepIndex == 110)
-         {
-            // Thumb index 4 should be near its clear position at this point
-            float thumbPosition = hand.getCommandValue(4);
-            assertTrue(Math.abs(thumbPosition - THUMB_CLEAR_POSITION) < 2.0f,
-                       String.format("Thumb position not near clear position. pos=%.3f clear=%.3f",
-                                     thumbPosition, THUMB_CLEAR_POSITION));
-         }
-         else if (stepIndex == 240)
+         if (stepIndex == 130)
          {
             // Stage 0 fingers for POWER grip: indices 0–3 should have moved upward from initial 30
             for (int i = 0; i < 4; i++)

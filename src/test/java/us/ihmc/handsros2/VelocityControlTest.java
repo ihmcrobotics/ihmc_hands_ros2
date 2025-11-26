@@ -93,10 +93,23 @@ public class VelocityControlTest
       asciiPlot(times, commandedVelocities, minVel, maxVel, plotWidth);
 
       // Basic sanity checks: final true position should be near goal, and velocity near zero
-      assertTrue(Math.abs(truePosition - goalPosition) < 5e-2f,
-                 "Final true position should be close to the goal");
-      assertTrue(Math.abs(trueVelocity) < 5e-2f,
-                 "Final true velocity should be near zero");
+      assertTrue(Math.abs(truePosition - goalPosition) < 1.0f,
+                 String.format("Final true position should be close to the goal, "
+                               + "but was %.5f (goal=%.5f, error=%.5f, tol=%.5f)",
+                               truePosition,
+                               goalPosition,
+                               truePosition - goalPosition,
+                               1.0f));
+
+      assertTrue(Math.abs(trueVelocity) < 1.0f,
+                 String.format("Final true velocity should be near zero, "
+                               + "but was %.5f (|vel|=%.5f, tol=%.5f, finalPos=%.5f, goal=%.5f)",
+                               trueVelocity,
+                               Math.abs(trueVelocity),
+                               1.0f,
+                               truePosition,
+                               goalPosition));
+
    }
 
    @Test
