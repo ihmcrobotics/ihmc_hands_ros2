@@ -49,15 +49,22 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
     */
    public enum Grip
    {
+      OPEN(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{1, 1, 1, 1, 1, -93}}),
+      CLOSE(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{65, 65, 65, 65, 42, -93}}),
+      RELAX(new int[][] {{4}, {0, 1, 2, 3, 5}}, new float[][] {{30}, {30, 30, 30, 30, -30}}),
+      FLAT(new int[][] {{0, 1, 2, 3, 4}, {5}}, new float[][] {{1, 1, 1, 1, 1}, {-3}}),
+      DOOR_LEVER_OPEN(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{38, 47, 53, 60, 60, -4}}),
+      DOOR_LEVER_CLOSE(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{65, 71, 78, 81, 60, -4}}),
+      DOOR_LEVER_CRUSH(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{105, 105, 105, 105, 33, -4}}),
+      HOOK(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{70, 70, 70, 70, 10, -10}}),
       POWER(new int[][] {{0, 1, 2, 3}, {5}, {4}}, new float[][] {{97.5f, 97.5f, 97.5f, 97.5f}, {-75}, {75}}),
       KEY(new int[][] {{0, 1, 2, 3}, {5}, {4}}, new float[][] {{90, 90, 90, 90}, {-20}, {75}}),
       TRIPOD_O(new int[][] {{0, 1, 2, 3}, {5}, {4}}, new float[][] {{60, 63, 20, 20}, {-76}, {54}}),
       TRIPOD_C(new int[][] {{0, 1, 2, 3}, {5}, {4}}, new float[][] {{60, 63, 97.5f, 97.5f}, {-76}, {54}}),
-      RELAX(new int[][] {{4}, {0, 1, 2, 3, 5}}, new float[][] {{30}, {30, 30, 30, 30, -30}}),
       RUDE(new int[][] {{0, 1, 2, 3, 4}, {5}}, new float[][] {{100, 10, 100, 100, 20}, {-30}}),
-      HOOK(new int[][] {{0, 1, 2, 3, 4}, {5}}, new float[][] {{70, 70, 70, 70, 10}, {-10}}),
       PINCH_O(new int[][] {{0, 1, 2, 3}, {5}, {4}}, new float[][] {{61, 20, 20, 20}, {-67}, {53}}),
-      PINCH_C(new int[][] {{0, 1, 2, 3}, {5}, {4}}, new float[][] {{61, 97.5f, 97.5f, 97.5f}, {-67}, {53}});
+      PINCH_C(new int[][] {{0, 1, 2, 3}, {5}, {4}}, new float[][] {{61, 97.5f, 97.5f, 97.5f}, {-67}, {53}}),
+      ;
 
       public static final Grip[] values = values();
 
@@ -129,7 +136,7 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
 
    private final AbilityHandInterface hand;
 
-   private ControlMode controlMode = ControlMode.POSITION;
+   private ControlMode controlMode = null;
    private ControlMode previousControlMode = controlMode;
 
    private Grip grip = null;
@@ -145,6 +152,7 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
    /** Track previous time for computing dt */
    private long previousTimeNanos = -1L;
    private float dt;
+   private boolean initialized = false;
 
    /**
     * Creates a new AbilityHandManager with default goal positions and velocities.
@@ -154,12 +162,20 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
    public AbilityHandManager(AbilityHandInterface hand)
    {
       this.hand = hand;
+
       goalPositions = new float[] {30.0f, 30.0f, 30.0f, 30.0f, 30.0f, -30.0f};
-      goalVelocities = new float[] {30.0f, 30.0f, 30.0f, 30.0f, 30.0f, 30.0f};
+      goalVelocities = new float[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 
       fingerTrajectories = new TrapezoidalTrajectory1D[ACTUATOR_COUNT];
+   }
+
+   public void initialize()
+   {
       for (int i = 0; i < ACTUATOR_COUNT; i++)
       {
+         goalPositions[i] = hand.getActuatorPosition(i);
+         goalVelocities[i] = 30.0f;
+
          fingerTrajectories[i] = new TrapezoidalTrajectory1D(goalPositions[i], Math.abs(goalVelocities[i]), DEFAULT_MAXIMUM_ACCELERATION);
          fingerTrajectories[i].reset(hand.getActuatorPosition(i), hand.getActuatorVelocity(i));
       }
@@ -186,6 +202,12 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
    void update(float dt)
    {
       this.dt = dt;
+
+      if (!initialized && hand.getActuatorPosition(0) != 0.0f)
+      {
+         initialized = true;
+         initialize();
+      }
 
       // Only reset trajectories when entering POSITION from another mode
       if (controlMode == ControlMode.POSITION && previousControlMode != ControlMode.POSITION)
@@ -258,7 +280,7 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
       // Handle entering GRIP mode vs switching grips while already in GRIP
       if (previousControlMode != ControlMode.GRIP)
       {
-         gripStage = -1;
+         gripStage = 0;
          previousGrip = grip;
 
          // Re-sync trajectories to current hand state once when entering GRIP
@@ -271,7 +293,7 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
       else if (previousGrip != grip)
       {
          // New grip while already in GRIP: restart stage sequence but keep trajectories continuous
-         gripStage = -1;
+         gripStage = 0;
          previousGrip = grip;
       }
 
@@ -280,40 +302,6 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
          return;
 
       hand.setCommandType(AbilityHandCommandType.POSITION);
-
-      // Stage -1: move the thumb to a clear position before any grip
-      if (gripStage == -1)
-      {
-         int thumbIndex = 4;
-
-         TrapezoidalTrajectory1D thumbTrajectory = fingerTrajectories[thumbIndex];
-         thumbTrajectory.setGoal(THUMB_CLEAR_POSITION, Math.abs(goalVelocities[thumbIndex]));
-
-         // Advance all trajectories; thumb moves toward clear, others hold via their trajectories
-         for (int actuatorIndex = 0; actuatorIndex < ACTUATOR_COUNT; actuatorIndex++)
-         {
-            TrapezoidalTrajectory1D trajectory = fingerTrajectories[actuatorIndex];
-
-            if (actuatorIndex != thumbIndex)
-            {
-               // Hold non-thumb fingers at their current trajectory position
-               float holdPosition = trajectory.getCurrentPosition();
-               trajectory.setGoal(holdPosition, Math.abs(goalVelocities[actuatorIndex]));
-            }
-
-            float commandedPosition = trajectory.update(dt);
-            hand.setCommandValue(actuatorIndex, commandedPosition);
-         }
-
-         float thumbCommand = hand.getCommandValue(thumbIndex);
-         if (Math.abs(thumbCommand - THUMB_CLEAR_POSITION) < TOLERANCE)
-         {
-            // Thumb is clear. Start normal grip stages.
-            gripStage = 0;
-         }
-
-         return;
-      }
 
       // Normal grip stages: move only the fingers in this stage toward their stage goals,
       // but update all trajectories every tick.
