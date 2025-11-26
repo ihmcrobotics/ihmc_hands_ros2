@@ -279,7 +279,7 @@ public class AbilityHandManagerTest
 
       manager.setGoalVelocities(new float[] {80f, 80f, 80f, 80f, 80f, 80f});
       manager.setControlMode(ControlMode.GRIP);
-      manager.setGrip(Grip.POWER);
+      manager.setGrip(Grip.CLOSE);
 
       int numberOfSteps = 450;
       float timeStep = 0.01f;
@@ -362,7 +362,7 @@ public class AbilityHandManagerTest
       manager.setControlMode(ControlMode.GRIP);
 
       // Sequence of grips to test
-      Grip[] gripSequence = new Grip[] {Grip.POWER, Grip.RELAX, Grip.HOOK, Grip.PINCH_O};
+      Grip[] gripSequence = new Grip[] {Grip.OPEN, Grip.RELAX, Grip.HOOK, Grip.CLOSE};
       int[] gripSwitchSteps = new int[] {0, 200, 400, 600}; // when to switch grips
 
       int numberOfSteps = 1000;
