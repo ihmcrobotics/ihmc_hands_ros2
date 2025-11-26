@@ -1,6 +1,5 @@
 package us.ihmc.handsros2.abilityHand;
 
-import us.ihmc.handsros2.abilityHand.AbilityHandManager.Grip;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
