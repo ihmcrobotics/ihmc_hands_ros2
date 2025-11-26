@@ -34,7 +34,7 @@ public class YoAbilityHand implements AbilityHandInterface
       for (int i = 0; i < ACTUATOR_COUNT; ++i)
       {
          commandValues[i] = new YoDouble(prefix + "Command" + i, registry);
-         commandValues[i].set(i == 5 ? -30.0f : 30.0f);
+         commandValues[i].set(0.0f);
 
          actuatorPositions[i] = new YoDouble(prefix + "ActuatorPosition" + i, registry);
          actuatorPositions[i].set(0.0);

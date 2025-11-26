@@ -2,7 +2,6 @@ package us.ihmc.handsros2.abilityHand;
 
 import us.ihmc.handsros2.HandManager;
 import us.ihmc.handsros2.TrapezoidalTrajectory1D;
-import us.ihmc.handsros2.VelocityControlTools;
 
 import static us.ihmc.handsros2.abilityHand.AbilityHandInterface.ACTUATOR_COUNT;
 
@@ -17,7 +16,7 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
     */
    public enum ControlMode
    {
-      POSITION, VELOCITY, VEL_TO_POS, GRIP;
+      POSITION, VELOCITY, GRIP;
 
       public static final ControlMode[] values = values();
 
@@ -164,7 +163,7 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
       fingerTrajectories = new TrapezoidalTrajectory1D[ACTUATOR_COUNT];
    }
 
-   public void initialize()
+   void initialize()
    {
       initialized = true;
       for (int i = 0; i < ACTUATOR_COUNT; i++)
@@ -213,7 +212,6 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
          {
             case POSITION -> updatePositionControl();
             case VELOCITY -> updateVelocityControl();
-            case VEL_TO_POS -> updateVelToPosControl();
             case GRIP -> updateGripControl();
          }
 
@@ -243,31 +241,6 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
    {
       hand.setCommandType(AbilityHandCommandType.VELOCITY);
       hand.setCommandValues(goalVelocities);
-   }
-
-   /** Velocity control toward goalPositions using trapezoidal-like velocity strategy. */
-   private void updateVelToPosControl()
-   {
-      hand.setCommandType(AbilityHandCommandType.VELOCITY);
-
-      for (int actuatorIndex = 0; actuatorIndex < ACTUATOR_COUNT; actuatorIndex++)
-      {
-         float currentPosition = hand.getActuatorPosition(actuatorIndex);
-         float currentVelocity = hand.getActuatorVelocity(actuatorIndex);
-         float goalPosition = goalPositions[actuatorIndex];
-         float maximumVelocity = Math.abs(goalVelocities[actuatorIndex]);
-         float maximumAcceleration = DEFAULT_MAXIMUM_ACCELERATION;
-         float deadzone = TOLERANCE;
-
-         float commandedVelocity = VelocityControlTools.computeVelocityCommand(currentPosition,
-                                                                               currentVelocity,
-                                                                               goalPosition,
-                                                                               maximumVelocity,
-                                                                               maximumAcceleration,
-                                                                               dt,
-                                                                               deadzone);
-         hand.setCommandValue(actuatorIndex, commandedVelocity);
-      }
    }
 
    /** Performs multi-stage grip control, moving fingers sequentially through grip.stages. */
@@ -345,7 +318,7 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
 
       if (stageComplete)
       {
-         // Optionally snap active fingers to exact stage goal to avoid tiny residuals
+         // Snap active fingers to exact stage goal to avoid tiny residuals
          for (int i = 0; i < actuatorsToMove.length; i++)
          {
             int actuatorIndex = actuatorsToMove[i];
