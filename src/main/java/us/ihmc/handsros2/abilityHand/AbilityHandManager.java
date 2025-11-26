@@ -186,7 +186,7 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
       if (previousTimeNanos > 0L)
       {
          long deltaNanos = nowNanos - previousTimeNanos;
-         float dt = Math.min(0.1f, Math.max(deltaNanos * 1.0e-9f, 0.001f));
+         float dt = Math.min(0.1f, deltaNanos * 1.0e-9f);
 
          update(dt);
       }
