@@ -29,12 +29,12 @@ public class YoAbilityHand implements AbilityHandInterface
 
       String prefix = handSide.name() + "AbilityHand_" + identifier + "_";
       commandType = new YoEnum<>(prefix + "CommandType", registry, AbilityHandCommandType.class);
-      commandType.set(AbilityHandCommandType.POSITION);
+      commandType.set(AbilityHandCommandType.VELOCITY);
 
       for (int i = 0; i < ACTUATOR_COUNT; ++i)
       {
          commandValues[i] = new YoDouble(prefix + "Command" + i, registry);
-         commandValues[i].set(0.0);
+         commandValues[i].set(0.0f);
 
          actuatorPositions[i] = new YoDouble(prefix + "ActuatorPosition" + i, registry);
          actuatorPositions[i].set(0.0);

@@ -43,6 +43,8 @@ public class AbilityHandROS2CommunicationTest
       command.setIdentifier(SERIAL_NUMBER);
       command.setControlMode(ControlMode.POSITION.toByte());
       System.arraycopy(COMMAND_VALUES, 0, command.getGoalPositions(), 0, ACTUATOR_COUNT);
+      for (int i = 0; i < 6; ++i)
+         command.getGoalVelocities()[i] = 30.0f;
       ROS2Publisher<AbilityHandCommand> publisher = node.createPublisher(AbilityHandROS2API.COMMAND_TOPIC);
 
       // Create a stats subscription
@@ -64,6 +66,7 @@ public class AbilityHandROS2CommunicationTest
       AbilityHandManager manager = new AbilityHandManager(testHand);
       testHand.setActuatorPositions(ACTUATOR_POSITIONS); // Set the state of the hand
       testHand.setRawFSRValues(TOUCH_SENSOR_READINGS);
+      manager.initialize();
 
       // Create an instance of the communication class
       AbilityHandROS2ControllerCommunication controllerCommunication = new AbilityHandROS2ControllerCommunication("test_controller_comm", domainId);
@@ -90,7 +93,8 @@ public class AbilityHandROS2CommunicationTest
 
       // Read values
       controllerCommunication.readCommand(manager);
-      manager.update();
+      for (int i = 0; i < 100; ++i)
+         manager.update(0.01f);
 
       // Assert that the messages were received
       assertTrue(received.get());

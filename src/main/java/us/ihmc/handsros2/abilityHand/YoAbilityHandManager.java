@@ -26,14 +26,14 @@ public class YoAbilityHandManager extends AbilityHandManager
       for (int i = 0; i < ACTUATOR_COUNT; ++i)
       {
          goalPositions[i] = new YoDouble(prefix + "GoalPosition" + i, registry);
-         goalPositions[i].set(30.0);
+         goalPositions[i].set(getGoalPosition(i));
          goalVelocities[i] = new YoDouble(prefix + "GoalVelocity" + i, registry);
+         goalVelocities[i].set(getGoalVelocity(i));
       }
-      goalPositions[ACTUATOR_COUNT - 1].set(-30.0);
    }
 
    @Override
-   public void update()
+   void update(float dt)
    {
       super.setControlMode(controlMode.getValue());
       super.setGrip(grip.getValue());
@@ -43,7 +43,7 @@ public class YoAbilityHandManager extends AbilityHandManager
          super.setGoalVelocity(i, (float) goalVelocities[i].getValue());
       }
 
-      super.update();
+      super.update(dt);
    }
 
    @Override

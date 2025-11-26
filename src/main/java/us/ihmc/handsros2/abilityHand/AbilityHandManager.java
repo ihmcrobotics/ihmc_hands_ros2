@@ -1,6 +1,7 @@
 package us.ihmc.handsros2.abilityHand;
 
 import us.ihmc.handsros2.HandManager;
+import us.ihmc.handsros2.TrapezoidalTrajectory1D;
 
 import static us.ihmc.handsros2.abilityHand.AbilityHandInterface.ACTUATOR_COUNT;
 
@@ -15,7 +16,7 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
     */
    public enum ControlMode
    {
-      POSITION, VELOCITY, VEL_TO_POS, GRIP;
+      POSITION, VELOCITY, GRIP;
 
       public static final ControlMode[] values = values();
 
@@ -47,15 +48,18 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
     */
    public enum Grip
    {
-      POWER(new int[][] {{0, 1, 2, 3}, {5}, {4}}, new float[][] {{97.5f, 97.5f, 97.5f, 97.5f}, {-75}, {75}}),
-      KEY(new int[][] {{0, 1, 2, 3}, {5}, {4}}, new float[][] {{90, 90, 90, 90}, {-20}, {75}}),
-      TRIPOD_O(new int[][] {{0, 1, 2, 3}, {5}, {4}}, new float[][] {{60, 63, 20, 20}, {-76}, {54}}),
-      TRIPOD_C(new int[][] {{0, 1, 2, 3}, {5}, {4}}, new float[][] {{60, 63, 97.5f, 97.5f}, {-76}, {54}}),
+      OPEN(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{1, 1, 1, 1, 1, -93}}),
+      CLOSE(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{65, 65, 65, 65, 42, -93}}),
+      PINCH(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{61, 64, 1, 1, 53, -76}}),
+      FLAT(new int[][] {{0, 1, 2, 3, 4}, {5}}, new float[][] {{1, 1, 1, 1, 1}, {-3}}),
+      HOOK(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{70, 70, 70, 70, 10, -10}}),
       RELAX(new int[][] {{4}, {0, 1, 2, 3, 5}}, new float[][] {{30}, {30, 30, 30, 30, -30}}),
-      RUDE(new int[][] {{0, 1, 2, 3, 4}, {5}}, new float[][] {{100, 10, 100, 100, 20}, {-30}}),
-      HOOK(new int[][] {{0, 1, 2, 3, 4}, {5}}, new float[][] {{70, 70, 70, 70, 10}, {-10}}),
-      PINCH_O(new int[][] {{0, 1, 2, 3}, {5}, {4}}, new float[][] {{61, 20, 20, 20}, {-67}, {53}}),
-      PINCH_C(new int[][] {{0, 1, 2, 3}, {5}, {4}}, new float[][] {{61, 97.5f, 97.5f, 97.5f}, {-67}, {53}});
+      DOOR_LEVER_OPEN(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{38, 47, 53, 60, 60, -4}}),
+      DOOR_LEVER_CLOSE(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{65, 71, 78, 81, 60, -4}}),
+      DOOR_LEVER_CRUSH(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{105, 105, 105, 105, 33, -4}}),
+      KEY_OPEN(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{90, 90, 90, 90, 0, -20}}),
+      KEY_CLOSE(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{90, 90, 90, 90, 80, -20}}),
+      ;
 
       public static final Grip[] values = values();
 
@@ -120,12 +124,13 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
       }
    }
 
-   private static final float TOLERANCE = 2.0f;
-   private static final float THUMB_CLEAR_POSITION = 30.0f;
+   private static final float TOLERANCE = 1.0f;
+   /** Trajectory configuration: tune acceleration per joint as needed (deg/s^2) */
+   private static final float DEFAULT_MAXIMUM_ACCELERATION = 200.0f;
 
    private final AbilityHandInterface hand;
 
-   private ControlMode controlMode = ControlMode.POSITION;
+   private ControlMode controlMode = null;
    private ControlMode previousControlMode = controlMode;
 
    private Grip grip = null;
@@ -135,6 +140,14 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
    private final float[] goalPositions;
    private final float[] goalVelocities;
 
+   /** Per-finger position trajectories used in POSITION, VEL_TO_POS, and GRIP modes */
+   private final TrapezoidalTrajectory1D[] fingerTrajectories;
+
+   /** Track previous time for computing dt */
+   private long previousTimeNanos = -1L;
+   private float dt;
+   private boolean initialized = false;
+
    /**
     * Creates a new AbilityHandManager with default goal positions and velocities.
     *
@@ -143,80 +156,113 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
    public AbilityHandManager(AbilityHandInterface hand)
    {
       this.hand = hand;
+
       goalPositions = new float[] {30.0f, 30.0f, 30.0f, 30.0f, 30.0f, -30.0f};
       goalVelocities = new float[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+
+      fingerTrajectories = new TrapezoidalTrajectory1D[ACTUATOR_COUNT];
+   }
+
+   void initialize()
+   {
+      initialized = true;
+      for (int i = 0; i < ACTUATOR_COUNT; i++)
+      {
+         goalPositions[i] = hand.getActuatorPosition(i);
+         goalVelocities[i] = 30.0f;
+
+         fingerTrajectories[i] = new TrapezoidalTrajectory1D(goalPositions[i], Math.abs(goalVelocities[i]), DEFAULT_MAXIMUM_ACCELERATION);
+         fingerTrajectories[i].reset(hand.getActuatorPosition(i), hand.getActuatorVelocity(i));
+      }
    }
 
    /** {@inheritDoc} */
    @Override
    public void update()
    {
-      switch (controlMode)
+      long nowNanos = System.nanoTime();
+
+      if (previousTimeNanos > 0L)
       {
-         case POSITION -> updatePositionControl();
-         case VELOCITY -> updateVelocityControl();
-         case VEL_TO_POS -> updateVelToPosControl();
-         case GRIP -> updateGripControl();
+         long deltaNanos = nowNanos - previousTimeNanos;
+         float dt = Math.min(0.1f, deltaNanos * 1.0e-9f);
+
+         update(dt);
       }
 
-      previousControlMode = controlMode;
+      previousTimeNanos = nowNanos;
    }
 
-   /** Updates hand to direct position control using goalPositions. */
+   /** Need to supply virtual dt in tests. */
+   void update(float dt)
+   {
+      this.dt = dt;
+
+      if (!initialized && hand.getActuatorPosition(0) != 0.0f)
+         initialize();
+
+      if (initialized)
+      {
+         // Only reset trajectories when entering POSITION from another mode
+         if (controlMode == ControlMode.POSITION && previousControlMode != ControlMode.POSITION)
+            for (int i = 0; i < ACTUATOR_COUNT; i++)
+               fingerTrajectories[i].reset(hand.getActuatorPosition(i), hand.getActuatorVelocity(i));
+
+         switch (controlMode)
+         {
+            case POSITION -> updatePositionControl();
+            case VELOCITY -> updateVelocityControl();
+            case GRIP -> updateGripControl();
+         }
+
+         previousControlMode = controlMode;
+      }
+   }
+
+   /**
+    * Updates hand in POSITION mode using per-finger trapezoidal trajectories.
+    * goalPositions are the targets; goalVelocities set each finger's max velocity.
+    */
    private void updatePositionControl()
    {
       hand.setCommandType(AbilityHandCommandType.POSITION);
-      hand.setCommandValues(goalPositions);
+
+      for (int actuatorIndex = 0; actuatorIndex < ACTUATOR_COUNT; actuatorIndex++)
+      {
+         TrapezoidalTrajectory1D trajectory = fingerTrajectories[actuatorIndex];
+         trajectory.setGoal(goalPositions[actuatorIndex], Math.abs(goalVelocities[actuatorIndex]));
+         float commandedPosition = trajectory.update(dt);
+         hand.setCommandValue(actuatorIndex, commandedPosition);
+      }
    }
 
-   /** Updates hand to direct velocity control using goalVelocities. *** */
+   /** Updates hand to direct velocity control using goalVelocities. */
    private void updateVelocityControl()
    {
       hand.setCommandType(AbilityHandCommandType.VELOCITY);
       hand.setCommandValues(goalVelocities);
    }
 
-   /**
-    * Calculates the velocity needed to move an actuator toward a goal position.
-    *
-    * @param actuatorIndex index of the actuator
-    * @param goalPosition  target position
-    * @param goalVelocity  desired speed magnitude
-    * @return computed velocity (positive or negative) or zero if within tolerance
-    */
-   private float calculateVelocityToPosition(int actuatorIndex, float goalPosition, float goalVelocity)
-   {
-      // Get the current position
-      float currentPosition = hand.getActuatorPosition(actuatorIndex);
-
-      // If we've reached the goal position, velocity should be 0 (stop moving)
-      if (Math.abs(currentPosition - goalPosition) < TOLERANCE)
-         return 0.0f;
-
-      // Otherwise velocity should be in the correct direction
-      float speed = Math.abs(goalVelocity);
-      return currentPosition < goalPosition ? speed : -speed;
-   }
-
-   /** Updates hand to velocity control that moves toward goalPositions. */
-   private void updateVelToPosControl()
-   {
-      hand.setCommandType(AbilityHandCommandType.VELOCITY);
-
-      for (int i = 0; i < ACTUATOR_COUNT; i++)
-      {
-         float velocity = calculateVelocityToPosition(i, goalPositions[i], goalVelocities[i]);
-         hand.setCommandValue(i, velocity);
-      }
-   }
-
    /** Performs multi-stage grip control, moving fingers sequentially through grip.stages. */
    private void updateGripControl()
    {
-      // If goal grip changed, reset grip stage
-      if (previousGrip != grip || previousControlMode != ControlMode.GRIP)
+      // Handle entering GRIP mode vs switching grips while already in GRIP
+      if (previousControlMode != ControlMode.GRIP)
       {
-         gripStage = -1;
+         gripStage = 0;
+         previousGrip = grip;
+
+         // Re-sync trajectories to current hand state once when entering GRIP
+         for (int actuatorIndex = 0; actuatorIndex < ACTUATOR_COUNT; actuatorIndex++)
+         {
+            fingerTrajectories[actuatorIndex].reset(hand.getActuatorPosition(actuatorIndex),
+                                                    hand.getActuatorVelocity(actuatorIndex));
+         }
+      }
+      else if (previousGrip != grip)
+      {
+         // New grip while already in GRIP: restart stage sequence but keep trajectories continuous
+         gripStage = 0;
          previousGrip = grip;
       }
 
@@ -224,56 +270,65 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
       if (gripStage >= grip.stages.length)
          return;
 
-      // Using velocity to position control
-      hand.setCommandType(AbilityHandCommandType.VELOCITY);
+      hand.setCommandType(AbilityHandCommandType.POSITION);
 
-      // Move the thumb out of the way before any grip (stage = -1)
-      if (gripStage == -1)
-      {
-         // Calculate the velocity required to read the clear position
-         float thumbVelocity = calculateVelocityToPosition(4, THUMB_CLEAR_POSITION, goalVelocities[4]);
-
-         // If velocity is 0 or positive, thumb is already clear. Only move thumb if velocity is negative.
-         if (thumbVelocity < 0.0f)
-         {
-            // Tell thumb to move out of the way
-            hand.setCommandValue(4, thumbVelocity);
-
-            // Rest of the fingers shouldn't move
-            for (int i = 0; i < ACTUATOR_COUNT; ++i)
-               if (i != 4)
-                  hand.setCommandValue(i, 0.0f);
-
-            return;
-         }
-         for (int i = 0; i < ACTUATOR_COUNT; ++i)
-            hand.setCommandValue(i, 0.0f);
-
-         // Thumb is clear. Start normal grip stages.
-         gripStage = 0;
-      }
-
-      // Get the actuators that need to move during this stage and their goal positions
+      // Normal grip stages: move only the fingers in this stage toward their stage goals,
+      // but update all trajectories every tick.
       int[] actuatorsToMove = grip.stages[gripStage];
-      float[] goalPositions = grip.positions[gripStage];
+      float[] stageGoalPositions = grip.positions[gripStage];
 
       boolean stageComplete = true;
-      for (int i = 0; i < actuatorsToMove.length; i++)
+
+      for (int actuatorIndex = 0; actuatorIndex < ACTUATOR_COUNT; actuatorIndex++)
       {
-         int actuatorIndex = actuatorsToMove[i];
-         float goalPosition = goalPositions[i];
-         float goalVelocity = goalVelocities[actuatorIndex];
+         boolean isActive = false;
+         float desiredPosition = 0.0f;
 
-         float velocity = calculateVelocityToPosition(actuatorIndex, goalPosition, goalVelocity);
+         // Check if this finger is active in the current stage
+         for (int i = 0; i < actuatorsToMove.length; i++)
+         {
+            if (actuatorIndex == actuatorsToMove[i])
+            {
+               isActive = true;
+               desiredPosition = stageGoalPositions[i];
+               break;
+            }
+         }
 
-         if (velocity != 0.0f)
+         TrapezoidalTrajectory1D trajectory = fingerTrajectories[actuatorIndex];
+         float maximumVelocity = Math.abs(goalVelocities[actuatorIndex]);
+
+         if (isActive)
+         {
+            trajectory.setGoal(desiredPosition, maximumVelocity);
+         }
+         else
+         {
+            // Not active: hold current trajectory position
+            float holdPosition = trajectory.getCurrentPosition();
+            trajectory.setGoal(holdPosition, maximumVelocity);
+         }
+
+         float commandedPosition = trajectory.update(dt);
+         hand.setCommandValue(actuatorIndex, commandedPosition);
+
+         if (isActive && Math.abs(commandedPosition - desiredPosition) >= TOLERANCE)
             stageComplete = false;
-
-         hand.setCommandValue(actuatorIndex, velocity);
       }
 
       if (stageComplete)
       {
+         // Snap active fingers to exact stage goal to avoid tiny residuals
+         for (int i = 0; i < actuatorsToMove.length; i++)
+         {
+            int actuatorIndex = actuatorsToMove[i];
+            float stageGoalPosition = stageGoalPositions[i];
+
+            TrapezoidalTrajectory1D trajectory = fingerTrajectories[actuatorIndex];
+            trajectory.reset(stageGoalPosition, 0.0f);
+            hand.setCommandValue(actuatorIndex, stageGoalPosition);
+         }
+
          gripStage++;
       }
    }
