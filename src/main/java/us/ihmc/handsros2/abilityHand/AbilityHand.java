@@ -11,7 +11,7 @@ import us.ihmc.yoVariables.variable.YoInteger;
  * Can be useful in some applications, though it may be necessary to create
  * a custom implementation for other applications.
  */
-public class YoAbilityHand implements AbilityHandInterface
+public class AbilityHand implements AbilityHandInterface
 {
    private final String identifier;
    private final RobotSide handSide;
@@ -22,7 +22,7 @@ public class YoAbilityHand implements AbilityHandInterface
    private final YoDouble[] actuatorCurrents = new YoDouble[ACTUATOR_COUNT];
    private final YoInteger[] rawFSRReadings = new YoInteger[TOUCH_SENSOR_COUNT];
 
-   public YoAbilityHand(YoRegistry registry, String identifier, RobotSide handSide)
+   public AbilityHand(YoRegistry registry, String identifier, RobotSide handSide)
    {
       this.identifier = identifier;
       this.handSide = handSide;
