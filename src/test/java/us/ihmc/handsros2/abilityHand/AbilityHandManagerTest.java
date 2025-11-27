@@ -21,7 +21,7 @@ public class AbilityHandManagerTest
       manager.setGoalVelocities(new float[] {30f, 30f, 30f, 30f, 30f, 30f});
       manager.initialize();
 
-      YoAbilityHand yoAbilityHand = new YoAbilityHand(null, "24ABH001", RobotSide.RIGHT);
+      AbilityHand yoAbilityHand = new AbilityHand(null, "24ABH001", RobotSide.RIGHT);
       yoAbilityHand.setActuatorPositions(new float[] {30f, 30f, 30f, 30f, 30f, -30f});
       yoAbilityHand.setActuatorVelocities(new float[] {30f, 30f, 30f, 30f, 30f, 30f});
       YoAbilityHandManager yoManager = new YoAbilityHandManager(null, yoAbilityHand);
