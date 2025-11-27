@@ -22,7 +22,6 @@ public class FilteredTrapezoidalStep
     * @param currentPosition measured position
     * @param currentVelocity measured velocity
     * @param goalPosition    desired position
-    * @param goalVelocity    desired velocity at goal (usually 0)
     * @param maxVelocity     max velocity
     * @param maxAcceleration max acceleration
     * @param deltaTime       dt in seconds
@@ -31,7 +30,6 @@ public class FilteredTrapezoidalStep
    public float step(float currentPosition,
                      float currentVelocity,
                      float goalPosition,
-                     float goalVelocity,
                      float maxVelocity,
                      float maxAcceleration,
                      float deltaTime)
@@ -52,7 +50,6 @@ public class FilteredTrapezoidalStep
             TrapezoidalStep.step(currentPosition,
                                  currentVelocity,
                                  goalPosition,
-                                 goalVelocity,
                                  maxVelocity,
                                  maxAcceleration,
                                  deltaTime);
