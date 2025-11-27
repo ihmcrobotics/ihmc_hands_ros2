@@ -11,8 +11,8 @@ import static us.ihmc.handsros2.abilityHand.AbilityHandInterface.ACTUATOR_COUNT;
  */
 public class YoAbilityHandManager extends AbilityHandManager
 {
-   private final YoEnum<ControlMode> controlMode;
-   private final YoEnum<Grip> grip;
+   private final YoEnum<AbilityHandControlMode> controlMode;
+   private final YoEnum<AbilityHandGrip> grip;
    private final YoDouble[] goalPositions = new YoDouble[ACTUATOR_COUNT];
    private final YoDouble[] goalVelocities = new YoDouble[ACTUATOR_COUNT];
 
@@ -21,8 +21,8 @@ public class YoAbilityHandManager extends AbilityHandManager
       super(hand);
 
       String prefix = hand.getSide().name() + super.getClass().getSimpleName();
-      controlMode = new YoEnum<>(prefix + "ControlMode", registry, ControlMode.class);
-      grip = new YoEnum<>(prefix + "Grip", registry, Grip.class);
+      controlMode = new YoEnum<>(prefix + "ControlMode", registry, AbilityHandControlMode.class);
+      grip = new YoEnum<>(prefix + "Grip", registry, AbilityHandGrip.class);
       for (int i = 0; i < ACTUATOR_COUNT; ++i)
       {
          goalPositions[i] = new YoDouble(prefix + "GoalPosition" + i, registry);
@@ -47,13 +47,13 @@ public class YoAbilityHandManager extends AbilityHandManager
    }
 
    @Override
-   public void setControlMode(ControlMode controlMode)
+   public void setControlMode(AbilityHandControlMode controlMode)
    {
       this.controlMode.set(controlMode);
    }
 
    @Override
-   public void setGrip(Grip grip)
+   public void setGrip(AbilityHandGrip grip)
    {
       this.grip.set(grip);
    }

@@ -11,130 +11,17 @@ import static us.ihmc.handsros2.abilityHand.AbilityHandInterface.ACTUATOR_COUNT;
  */
 public class AbilityHandManager implements HandManager<AbilityHandInterface>
 {
-   /**
-    * Control modes for the Ability Hand Manager.
-    */
-   public enum ControlMode
-   {
-      POSITION, VELOCITY, GRIP;
-
-      public static final ControlMode[] values = values();
-
-      /**
-       * Retrieves a ControlMode by its byte ordinal.
-       *
-       * @param ordinal the byte ordinal
-       * @return the corresponding ControlMode
-       */
-      public static ControlMode fromByte(byte ordinal)
-      {
-         return values[ordinal];
-      }
-
-      /**
-       * Converts this ControlMode to its byte representation.
-       *
-       * @return the ordinal as a byte
-       */
-      public byte toByte()
-      {
-         return (byte) this.ordinal();
-      }
-   }
-
-   /**
-    * Predefined multi-stage grip patterns with associated finger indices and target positions.
-    * Use Grip Editor in the PSYONIC app to get angles for other grips.
-    */
-   public enum Grip
-   {
-      OPEN(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{1, 1, 1, 1, 1, -93}}),
-      CLOSE(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{65, 65, 65, 65, 42, -93}}),
-      PINCH(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{61, 64, 1, 1, 53, -76}}),
-      FLAT(new int[][] {{0, 1, 2, 3, 4}, {5}}, new float[][] {{1, 1, 1, 1, 1}, {-3}}),
-      HOOK(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{70, 70, 70, 70, 10, -10}}),
-      RELAX(new int[][] {{4}, {0, 1, 2, 3, 5}}, new float[][] {{30}, {30, 30, 30, 30, -30}}),
-      DOOR_LEVER_OPEN(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{38, 47, 53, 60, 60, -4}}),
-      DOOR_LEVER_CLOSE(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{65, 71, 78, 81, 60, -4}}),
-      DOOR_LEVER_CRUSH(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{105, 105, 105, 105, 33, -4}}),
-      KEY_OPEN(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{90, 90, 90, 90, 0, -20}}),
-      KEY_CLOSE(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{90, 90, 90, 90, 80, -20}}),
-      ;
-
-      public static final Grip[] values = values();
-
-      final int[][] stages;
-      final float[][] positions;
-
-      /**
-       * Constructs a Grip pattern.
-       *
-       * @param stages    finger index stages for sequential movement
-       * @param positions target positions for each stage
-       */
-      Grip(int[][] stages, float[][] positions)
-      {
-         this.stages = stages;
-         this.positions = positions;
-      }
-
-      /**
-       * Retrieves a Grip by its byte ordinal.
-       *
-       * @param ordinal the byte ordinal
-       * @return the corresponding Grip
-       */
-      public static Grip fromByte(byte ordinal)
-      {
-         return values[ordinal];
-      }
-
-      /**
-       * Converts this Grip to its byte representation.
-       *
-       * @return the ordinal as a byte
-       */
-      public byte toByte()
-      {
-         return (byte) this.ordinal();
-      }
-
-      /** Number of stages in this grip sequence. */
-      public int getNumberOfStages()
-      {
-         return stages.length;
-      }
-
-      /** Number of fingers active in this grip stage. */
-      public int getFingersInStage(int stage)
-      {
-         return stages[stage].length;
-      }
-
-      /** Which finger is specified at this index in the grip stage. */
-      public int getStageFingerIndex(int stage, int finger)
-      {
-         return stages[stage][finger];
-      }
-
-      /** The position of the finger which is specified at this index in the grip stage. */
-      public float getStageFingerPosition(int stage, int finger)
-      {
-         return positions[stage][finger];
-      }
-   }
-
    private static final float TOLERANCE = 1.0f;
    /** Trajectory configuration: tune acceleration per joint as needed (deg/s^2) */
    private static final float DEFAULT_MAXIMUM_ACCELERATION = 200.0f;
 
    private final AbilityHandInterface hand;
 
-   private ControlMode controlMode = null;
-   private ControlMode previousControlMode = controlMode;
+   private AbilityHandControlMode controlMode = null;
+   private AbilityHandControlMode previousControlMode = controlMode;
 
-   private Grip grip = null;
-   private Grip previousGrip = null;
+   private AbilityHandGrip grip = null;
+   private AbilityHandGrip previousGrip = null;
    private int gripStage = Integer.MAX_VALUE;
 
    private final float[] goalPositions;
@@ -204,7 +91,7 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
       if (initialized)
       {
          // Only reset trajectories when entering POSITION from another mode
-         if (controlMode == ControlMode.POSITION && previousControlMode != ControlMode.POSITION)
+         if (controlMode == AbilityHandControlMode.POSITION && previousControlMode != AbilityHandControlMode.POSITION)
             for (int i = 0; i < ACTUATOR_COUNT; i++)
                fingerTrajectories[i].reset(hand.getActuatorPosition(i), hand.getActuatorVelocity(i));
 
@@ -247,7 +134,7 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
    private void updateGripControl()
    {
       // Handle entering GRIP mode vs switching grips while already in GRIP
-      if (previousControlMode != ControlMode.GRIP)
+      if (previousControlMode != AbilityHandControlMode.GRIP)
       {
          gripStage = 0;
          previousGrip = grip;
@@ -345,7 +232,7 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
     *
     * @param controlMode desired control mode
     */
-   public void setControlMode(ControlMode controlMode)
+   public void setControlMode(AbilityHandControlMode controlMode)
    {
       this.controlMode = controlMode;
    }
@@ -355,7 +242,7 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
     *
     * @param grip desired Grip pattern
     */
-   public void setGrip(Grip grip)
+   public void setGrip(AbilityHandGrip grip)
    {
       this.grip = grip;
    }

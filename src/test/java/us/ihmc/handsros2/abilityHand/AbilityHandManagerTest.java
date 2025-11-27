@@ -2,8 +2,6 @@ package us.ihmc.handsros2.abilityHand;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import us.ihmc.handsros2.abilityHand.AbilityHandManager.ControlMode;
-import us.ihmc.handsros2.abilityHand.AbilityHandManager.Grip;
 import us.ihmc.robotics.robotSide.RobotSide;
 
 import java.util.stream.Stream;
@@ -36,7 +34,7 @@ public class AbilityHandManagerTest
    public void testPositionControl(AbilityHandManager manager, AbilityHandInterface hand)
    {
       float[] targetPositions = {10f, 20f, 30f, 40f, 50f, -10f};
-      manager.setControlMode(ControlMode.POSITION);
+      manager.setControlMode(AbilityHandControlMode.POSITION);
       manager.setGoalPositions(targetPositions);
 
       int numberOfSteps = 200;
@@ -93,7 +91,7 @@ public class AbilityHandManagerTest
    public void testVelocityControl(AbilityHandManager manager, AbilityHandInterface hand)
    {
       float[] targetVelocities = {1f, 2f, 3f, 4f, 5f, -5f};
-      manager.setControlMode(ControlMode.VELOCITY);
+      manager.setControlMode(AbilityHandControlMode.VELOCITY);
       manager.setGoalVelocities(targetVelocities);
 
       int numberOfSteps = 200;
@@ -172,8 +170,8 @@ public class AbilityHandManagerTest
       hand.setActuatorPositions(initialPositions);
 
       manager.setGoalVelocities(new float[] {80f, 80f, 80f, 80f, 80f, 80f});
-      manager.setControlMode(ControlMode.GRIP);
-      manager.setGrip(Grip.CLOSE);
+      manager.setControlMode(AbilityHandControlMode.GRIP);
+      manager.setGrip(AbilityHandGrip.CLOSE);
 
       int numberOfSteps = 450;
       float timeStep = 0.01f;
@@ -245,10 +243,10 @@ public class AbilityHandManagerTest
       hand.setActuatorPositions(initialPositions);
 
       manager.setGoalVelocities(new float[] {80f, 80f, 80f, 80f, 80f, 80f});
-      manager.setControlMode(ControlMode.GRIP);
+      manager.setControlMode(AbilityHandControlMode.GRIP);
 
       // Sequence of grips to test
-      Grip[] gripSequence = new Grip[] {Grip.OPEN, Grip.RELAX, Grip.HOOK, Grip.CLOSE};
+      AbilityHandGrip[] gripSequence = new AbilityHandGrip[] {AbilityHandGrip.OPEN, AbilityHandGrip.RELAX, AbilityHandGrip.HOOK, AbilityHandGrip.CLOSE};
       int[] gripSwitchSteps = new int[] {0, 200, 400, 600}; // when to switch grips
 
       int numberOfSteps = 1000;

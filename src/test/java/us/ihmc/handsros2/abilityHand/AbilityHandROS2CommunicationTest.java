@@ -2,7 +2,6 @@ package us.ihmc.handsros2.abilityHand;
 import ihmc_hands_ros2.msg.dds.AbilityHandCommand;
 import ihmc_hands_ros2.msg.dds.AbilityHandState;
 import org.junit.jupiter.api.Test;
-import us.ihmc.handsros2.abilityHand.AbilityHandManager.ControlMode;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.ros2.ROS2Node;
 import us.ihmc.ros2.ROS2NodeBuilder;
@@ -41,7 +40,7 @@ public class AbilityHandROS2CommunicationTest
       // Create a command message and its publisher
       AbilityHandCommand command = new AbilityHandCommand();
       command.setIdentifier(SERIAL_NUMBER);
-      command.setControlMode(ControlMode.POSITION.toByte());
+      command.setControlMode(AbilityHandControlMode.POSITION.toByte());
       System.arraycopy(COMMAND_VALUES, 0, command.getGoalPositions(), 0, ACTUATOR_COUNT);
       for (int i = 0; i < 6; ++i)
          command.getGoalVelocities()[i] = 30.0f;
@@ -125,7 +124,7 @@ public class AbilityHandROS2CommunicationTest
    {
       final int domainId = nextDomainId.getAndIncrement();
       final RobotSide HAND_SIDE = RobotSide.LEFT;
-      final ControlMode CONTROL_MODE = ControlMode.POSITION;
+      final AbilityHandControlMode CONTROL_MODE = AbilityHandControlMode.POSITION;
       final float[] GOAL_POSITIONS = new float[] {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, -5.0f};
       final float[] ACTUATOR_POSITIONS = new float[] {5.0f, 4.0f, 3.0f, 2.0f, 1.0f, 0.0f};
       final float[] ACTUATOR_VELOCITIES = new float[] {1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f};
@@ -205,7 +204,7 @@ public class AbilityHandROS2CommunicationTest
       // Make sure subscription received it correctly
       assertTrue(received.get());
       assertEquals(SERIAL_NUMBER, commandReceived.getIdentifierAsString());
-      assertEquals(CONTROL_MODE, ControlMode.fromByte(commandReceived.getControlMode()));
+      assertEquals(CONTROL_MODE, AbilityHandControlMode.fromByte(commandReceived.getControlMode()));
       assertArrayEquals(GOAL_POSITIONS, commandReceived.getGoalPositions());
 
       // Shut things down

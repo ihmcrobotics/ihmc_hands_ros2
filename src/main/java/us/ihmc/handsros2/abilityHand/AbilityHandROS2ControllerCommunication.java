@@ -4,8 +4,6 @@ import ihmc_hands_ros2.msg.dds.AbilityHandCommand;
 import ihmc_hands_ros2.msg.dds.AbilityHandState;
 import us.ihmc.handsros2.HandMessageListener;
 import us.ihmc.handsros2.HandROS2ControllerCommunication;
-import us.ihmc.handsros2.abilityHand.AbilityHandManager.ControlMode;
-import us.ihmc.handsros2.abilityHand.AbilityHandManager.Grip;
 import us.ihmc.ros2.ROS2NodeBuilder;
 import us.ihmc.ros2.ROS2Publisher;
 import us.ihmc.ros2.ROS2Subscription;
@@ -52,8 +50,8 @@ public class AbilityHandROS2ControllerCommunication implements HandROS2Controlle
    {
       if (commandListener.readLatestMessage(managerToUpdate.getHand().getIdentifier(), commandMessage))
       {
-         managerToUpdate.setControlMode(ControlMode.fromByte(commandMessage.getControlMode()));
-         managerToUpdate.setGrip(Grip.fromByte(commandMessage.getGrip()));
+         managerToUpdate.setControlMode(AbilityHandControlMode.fromByte(commandMessage.getControlMode()));
+         managerToUpdate.setGrip(AbilityHandGrip.fromByte(commandMessage.getGrip()));
          managerToUpdate.setGoalPositions(commandMessage.getGoalPositions());
          managerToUpdate.setGoalVelocities(commandMessage.getGoalVelocities());
       }
