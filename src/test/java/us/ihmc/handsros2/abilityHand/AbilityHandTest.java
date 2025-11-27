@@ -22,14 +22,7 @@ public class AbilityHandTest
       manager.setGoalVelocities(new float[] {30f, 30f, 30f, 30f, 30f, 30f});
       manager.initialize();
 
-      AbilityHand yoAbilityHand = new AbilityHand("24ABH001", RobotSide.RIGHT);
-      yoAbilityHand.setActuatorPositions(new float[] {30f, 30f, 30f, 30f, 30f, -30f});
-      yoAbilityHand.setActuatorVelocities(new float[] {30f, 30f, 30f, 30f, 30f, 30f});
-      YoAbilityHandManager yoManager = new YoAbilityHandManager(null, yoAbilityHand);
-      yoManager.setGoalVelocities(new float[] {30f, 30f, 30f, 30f, 30f, 30f});
-      yoManager.initialize();
-
-      return Stream.of(Arguments.of(manager, abilityHand), Arguments.of(yoManager, yoAbilityHand));
+      return Stream.of(Arguments.of(manager, abilityHand));
    }
 
    @ParameterizedTest
