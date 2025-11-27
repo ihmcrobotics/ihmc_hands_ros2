@@ -1,25 +1,28 @@
 package us.ihmc.handsros2.abilityHand;
+
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import us.ihmc.handsros2.HandType;
 import us.ihmc.robotics.robotSide.RobotSide;
 
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static us.ihmc.handsros2.abilityHand.AbilityHandInterface.ACTUATOR_COUNT;
+import static us.ihmc.handsros2.abilityHand.AbilityHand.ACTUATOR_COUNT;
 
-public class AbilityHandManagerTest
+public class AbilityHandTest
 {
    private static Stream<Arguments> getControllers()
    {
-      TestAbilityHand abilityHand = new TestAbilityHand("24ABH000", RobotSide.LEFT);
+      AbilityHand abilityHand = new AbilityHand("24ABH000", RobotSide.LEFT);
       abilityHand.setActuatorPositions(new float[] {30f, 30f, 30f, 30f, 30f, -30f});
       AbilityHandManager manager = new AbilityHandManager(abilityHand);
       manager.setGoalVelocities(new float[] {30f, 30f, 30f, 30f, 30f, 30f});
       manager.initialize();
 
-      AbilityHand yoAbilityHand = new AbilityHand(null, "24ABH001", RobotSide.RIGHT);
+      AbilityHand yoAbilityHand = new AbilityHand("24ABH001", RobotSide.RIGHT);
       yoAbilityHand.setActuatorPositions(new float[] {30f, 30f, 30f, 30f, 30f, -30f});
       yoAbilityHand.setActuatorVelocities(new float[] {30f, 30f, 30f, 30f, 30f, 30f});
       YoAbilityHandManager yoManager = new YoAbilityHandManager(null, yoAbilityHand);
@@ -31,7 +34,7 @@ public class AbilityHandManagerTest
 
    @ParameterizedTest
    @MethodSource("getControllers")
-   public void testPositionControl(AbilityHandManager manager, AbilityHandInterface hand)
+   public void testPositionControl(AbilityHandManager manager, AbilityHand hand)
    {
       float[] targetPositions = {10f, 20f, 30f, 40f, 50f, -10f};
       manager.setControlMode(AbilityHandControlMode.POSITION);
@@ -88,7 +91,7 @@ public class AbilityHandManagerTest
 
    @ParameterizedTest
    @MethodSource("getControllers")
-   public void testVelocityControl(AbilityHandManager manager, AbilityHandInterface hand)
+   public void testVelocityControl(AbilityHandManager manager, AbilityHand hand)
    {
       float[] targetVelocities = {1f, 2f, 3f, 4f, 5f, -5f};
       manager.setControlMode(AbilityHandControlMode.VELOCITY);
@@ -163,7 +166,7 @@ public class AbilityHandManagerTest
 
    @ParameterizedTest
    @MethodSource("getControllers")
-   public void testPowerGripWithInitialThumbStage(AbilityHandManager manager, AbilityHandInterface hand)
+   public void testPowerGripWithInitialThumbStage(AbilityHandManager manager, AbilityHand hand)
    {
       // Thumb (index 4) must clear first: simulate it at the clear position already
       float[] initialPositions = {0f, 2f, 7f, 15f, 90f, 10f};
@@ -236,7 +239,7 @@ public class AbilityHandManagerTest
 
    @ParameterizedTest
    @MethodSource("getControllers")
-   public void testMultipleGripsSequence(AbilityHandManager manager, AbilityHandInterface hand)
+   public void testMultipleGripsSequence(AbilityHandManager manager, AbilityHand hand)
    {
       // Start from some nontrivial configuration
       float[] initialPositions = {0f, 10f, 20f, 30f, 0f, 0f};
@@ -385,4 +388,11 @@ public class AbilityHandManagerTest
       }
    }
 
+
+   @Test
+   public void testType()
+   {
+      AbilityHand testEZGripper = new AbilityHand("24ABH001", RobotSide.LEFT);
+      assertEquals(HandType.ABILITY_HAND, testEZGripper.getType());
+   }
 }

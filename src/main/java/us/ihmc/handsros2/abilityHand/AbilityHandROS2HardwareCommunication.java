@@ -17,7 +17,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * <p>High level ROS 2 communication for the {@link AbilityHandInterface}. Communicates with low-level hardware control process.</p>
+ * <p>High level ROS 2 communication for the {@link AbilityHand}. Communicates with low-level hardware control process.</p>
  * <p>Subscribes to {@link AbilityHandState} messages and publishes {@link AbilityHandCommand} messages.</p>
  */
 public class AbilityHandROS2HardwareCommunication implements HandROS2HardwareCommunication<AbilityHandCommand, AbilityHandState>

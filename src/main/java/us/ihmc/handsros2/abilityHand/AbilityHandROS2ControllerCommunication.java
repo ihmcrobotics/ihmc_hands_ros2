@@ -10,7 +10,7 @@ import us.ihmc.ros2.ROS2Subscription;
 import us.ihmc.ros2.RealtimeROS2Node;
 
 /**
- * <p>Hardware side ROS 2 communication for the {@link AbilityHandInterface}. Communicates with external controller.</p>
+ * <p>Hardware side ROS 2 communication for the {@link AbilityHand}. Communicates with external controller.</p>
  * <p>Subscribes to {@link AbilityHandCommand} messages and publishes {@link AbilityHandState} messages.</p>
  */
 public class AbilityHandROS2ControllerCommunication implements HandROS2ControllerCommunication<AbilityHandManager>
@@ -63,7 +63,7 @@ public class AbilityHandROS2ControllerCommunication implements HandROS2Controlle
    {
       stateMessage.setIdentifier(managerToPublish.getHand().getIdentifier());
       stateMessage.setHandSide(managerToPublish.getHand().getSide().toByte());
-      for (int i = 0; i < AbilityHandInterface.ACTUATOR_COUNT; ++i)
+      for (int i = 0; i < AbilityHand.ACTUATOR_COUNT; ++i)
       {
          stateMessage.getActuatorPositions()[i] = managerToPublish.getHand().getActuatorPosition(i);
          stateMessage.getActuatorVelocities()[i] = managerToPublish.getHand().getActuatorVelocity(i);
@@ -72,7 +72,7 @@ public class AbilityHandROS2ControllerCommunication implements HandROS2Controlle
          stateMessage.getGoalVelocities()[i] = managerToPublish.getGoalVelocity(i);
       }
       stateMessage.setGripStage(managerToPublish.getGripStage());
-      for (int i = 0; i < AbilityHandInterface.TOUCH_SENSOR_COUNT; ++i)
+      for (int i = 0; i < AbilityHand.TOUCH_SENSOR_COUNT; ++i)
          stateMessage.getTouchSensorReadings()[i] = managerToPublish.getHand().getSensedPressure(i);
 
       statePublisher.publish(stateMessage);

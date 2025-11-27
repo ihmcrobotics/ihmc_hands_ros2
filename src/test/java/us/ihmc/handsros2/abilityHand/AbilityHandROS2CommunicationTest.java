@@ -13,8 +13,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static us.ihmc.handsros2.abilityHand.AbilityHandInterface.ACTUATOR_COUNT;
-import static us.ihmc.handsros2.abilityHand.AbilityHandInterface.TOUCH_SENSOR_COUNT;
+import static us.ihmc.handsros2.abilityHand.AbilityHand.ACTUATOR_COUNT;
+import static us.ihmc.handsros2.abilityHand.AbilityHand.TOUCH_SENSOR_COUNT;
 
 public class AbilityHandROS2CommunicationTest
 {
@@ -61,7 +61,7 @@ public class AbilityHandROS2CommunicationTest
       });
 
       // Initialize a test hand and its manager
-      TestAbilityHand testHand = new TestAbilityHand(SERIAL_NUMBER, HAND_SIDE);
+      AbilityHand testHand = new AbilityHand(SERIAL_NUMBER, HAND_SIDE);
       AbilityHandManager manager = new AbilityHandManager(testHand);
       testHand.setActuatorPositions(ACTUATOR_POSITIONS); // Set the state of the hand
       testHand.setRawFSRValues(TOUCH_SENSOR_READINGS);

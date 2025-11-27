@@ -4,7 +4,7 @@ import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoEnum;
 
-import static us.ihmc.handsros2.abilityHand.AbilityHandInterface.ACTUATOR_COUNT;
+import static us.ihmc.handsros2.abilityHand.AbilityHand.ACTUATOR_COUNT;
 
 /**
  * A YoVariable-ized version of the {@link AbilityHandManager}.
@@ -16,7 +16,7 @@ public class YoAbilityHandManager extends AbilityHandManager
    private final YoDouble[] goalPositions = new YoDouble[ACTUATOR_COUNT];
    private final YoDouble[] goalVelocities = new YoDouble[ACTUATOR_COUNT];
 
-   public YoAbilityHandManager(YoRegistry registry, AbilityHandInterface hand)
+   public YoAbilityHandManager(YoRegistry registry, AbilityHand hand)
    {
       super(hand);
 

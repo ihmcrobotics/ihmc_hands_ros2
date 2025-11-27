@@ -3,19 +3,19 @@ package us.ihmc.handsros2.abilityHand;
 import us.ihmc.handsros2.HandManager;
 import us.ihmc.handsros2.TrapezoidalTrajectory1D;
 
-import static us.ihmc.handsros2.abilityHand.AbilityHandInterface.ACTUATOR_COUNT;
+import static us.ihmc.handsros2.abilityHand.AbilityHand.ACTUATOR_COUNT;
 
 /**
  * Manages higher-level control of an Ability Hand, including position, velocity,
  * velocity-to-position, and multi-stage grip operations.
  */
-public class AbilityHandManager implements HandManager<AbilityHandInterface>
+public class AbilityHandManager implements HandManager<AbilityHand>
 {
    private static final float TOLERANCE = 1.0f;
    /** Trajectory configuration: tune acceleration per joint as needed (deg/s^2) */
    private static final float DEFAULT_MAXIMUM_ACCELERATION = 200.0f;
 
-   private final AbilityHandInterface hand;
+   private final AbilityHand hand;
 
    private AbilityHandControlMode controlMode = null;
    private AbilityHandControlMode previousControlMode = controlMode;
@@ -38,9 +38,9 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
    /**
     * Creates a new AbilityHandManager with default goal positions and velocities.
     *
-    * @param hand the AbilityHandInterface implementation for low-level control
+    * @param hand the AbilityHand implementation for low-level control
     */
-   public AbilityHandManager(AbilityHandInterface hand)
+   public AbilityHandManager(AbilityHand hand)
    {
       this.hand = hand;
 
@@ -222,7 +222,7 @@ public class AbilityHandManager implements HandManager<AbilityHandInterface>
 
    /** {@inheritDoc} */
    @Override
-   public AbilityHandInterface getHand()
+   public AbilityHand getHand()
    {
       return hand;
    }
