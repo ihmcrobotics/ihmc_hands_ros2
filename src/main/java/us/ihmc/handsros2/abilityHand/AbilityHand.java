@@ -2,12 +2,12 @@ package us.ihmc.handsros2.abilityHand;
 
 import us.ihmc.handsros2.HandInterface;
 import us.ihmc.handsros2.HandType;
+import us.ihmc.handsros2.YoFloatArray;
+import us.ihmc.handsros2.YoIntegerArray;
 import us.ihmc.handsros2.abilityHand.AbilityHandModel.AbilityHandJointName;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.yoVariables.registry.YoRegistry;
-import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoEnum;
-import us.ihmc.yoVariables.variable.YoInteger;
 
 import static us.ihmc.handsros2.abilityHand.AbilityHandModel.AbilityHandJointName.*;
 
@@ -57,11 +57,12 @@ public class AbilityHand implements HandInterface
    private final String identifier;
    private final RobotSide handSide;
    private final YoEnum<AbilityHandCommandType> commandType;
-   private final YoDouble[] commandValues = new YoDouble[ACTUATOR_COUNT];
-   private final YoDouble[] actuatorPositions = new YoDouble[ACTUATOR_COUNT];
-   private final YoDouble[] actuatorVelocities = new YoDouble[ACTUATOR_COUNT];
-   private final YoDouble[] actuatorCurrents = new YoDouble[ACTUATOR_COUNT];
-   private final YoInteger[] rawFSRReadings = new YoInteger[TOUCH_SENSOR_COUNT];
+
+   private final YoFloatArray commandValues;
+   private final YoFloatArray actuatorPositions;
+   private final YoFloatArray actuatorVelocities;
+   private final YoFloatArray actuatorCurrents;
+   private final YoIntegerArray rawFSRReadings;
 
    public AbilityHand(String identifier, RobotSide handSide)
    {
@@ -77,26 +78,15 @@ public class AbilityHand implements HandInterface
       commandType = new YoEnum<>(prefix + "CommandType", registry, AbilityHandCommandType.class);
       commandType.set(AbilityHandCommandType.VELOCITY);
 
-      for (int i = 0; i < ACTUATOR_COUNT; ++i)
-      {
-         commandValues[i] = new YoDouble(prefix + "Command" + i, registry);
-         commandValues[i].set(0.0f);
+      // Initialize all float YoVariable arrays with zeros
+      commandValues = new YoFloatArray(prefix + "Command", registry, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+      actuatorPositions = new YoFloatArray(prefix + "ActuatorPosition", registry, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+      actuatorVelocities = new YoFloatArray(prefix + "ActuatorVelocity", registry, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+      actuatorCurrents = new YoFloatArray(prefix + "ActuatorCurrent", registry, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
 
-         actuatorPositions[i] = new YoDouble(prefix + "ActuatorPosition" + i, registry);
-         actuatorPositions[i].set(0.0);
-
-         actuatorVelocities[i] = new YoDouble(prefix + "ActuatorVelocity" + i, registry);
-         actuatorVelocities[i].set(0.0);
-
-         actuatorCurrents[i] = new YoDouble(prefix + "ActuatorCurrent" + i, registry);
-         actuatorCurrents[i].set(0.0);
-      }
-
-      for (int i = 0; i < TOUCH_SENSOR_COUNT; ++i)
-      {
-         rawFSRReadings[i] = new YoInteger(prefix + "RawFSR" + i, registry);
-         rawFSRReadings[i].set(0);
-      }
+      // Initialize integer YoVariable array with zeros
+      int[] fsrInitial = new int[TOUCH_SENSOR_COUNT];
+      rawFSRReadings = new YoIntegerArray(prefix + "RawFSR", registry, fsrInitial);
    }
 
    @Override
@@ -144,7 +134,7 @@ public class AbilityHand implements HandInterface
     */
    public float getCommandValue(int index)
    {
-      return (float) commandValues[index].getValue();
+      return commandValues.get(index);
    }
 
    /**
@@ -155,7 +145,7 @@ public class AbilityHand implements HandInterface
     */
    public void setCommandValue(int index, float value)
    {
-      commandValues[index].set(value);
+      commandValues.set(index, value);
    }
 
    /**
@@ -165,8 +155,7 @@ public class AbilityHand implements HandInterface
     */
    public void setCommandValues(float[] values)
    {
-      for (int i = 0; i < ACTUATOR_COUNT && i < values.length; ++i)
-         setCommandValue(i, values[i]);
+      commandValues.setAll(values);
    }
 
    /**
@@ -177,7 +166,7 @@ public class AbilityHand implements HandInterface
     */
    public float getActuatorPosition(int index)
    {
-      return (float) actuatorPositions[index].getValue();
+      return actuatorPositions.get(index);
    }
 
    /**
@@ -188,7 +177,7 @@ public class AbilityHand implements HandInterface
     */
    public void setActuatorPosition(int index, float value)
    {
-      actuatorPositions[index].set(value);
+      actuatorPositions.set(index, value);
    }
 
    /**
@@ -198,8 +187,7 @@ public class AbilityHand implements HandInterface
     */
    public void setActuatorPositions(float[] positions)
    {
-      for (int i = 0; i < ACTUATOR_COUNT && i < positions.length; ++i)
-         setActuatorPosition(i, positions[i]);
+      actuatorPositions.setAll(positions);
    }
 
    /**
@@ -210,7 +198,7 @@ public class AbilityHand implements HandInterface
     */
    public float getActuatorVelocity(int index)
    {
-      return (float) actuatorVelocities[index].getValue();
+      return actuatorVelocities.get(index);
    }
 
    /**
@@ -221,7 +209,7 @@ public class AbilityHand implements HandInterface
     */
    public void setActuatorVelocity(int index, float value)
    {
-      actuatorVelocities[index].set(value);
+      actuatorVelocities.set(index, value);
    }
 
    /**
@@ -231,8 +219,7 @@ public class AbilityHand implements HandInterface
     */
    public void setActuatorVelocities(float[] velocities)
    {
-      for (int i = 0; i < ACTUATOR_COUNT && i < velocities.length; ++i)
-         setActuatorVelocity(i, velocities[i]);
+      actuatorVelocities.setAll(velocities);
    }
 
    /**
@@ -243,7 +230,7 @@ public class AbilityHand implements HandInterface
     */
    public float getActuatorCurrent(int index)
    {
-      return (float) actuatorCurrents[index].getValue();
+      return actuatorCurrents.get(index);
    }
 
    /**
@@ -254,7 +241,7 @@ public class AbilityHand implements HandInterface
     */
    public void setActuatorCurrent(int index, float value)
    {
-      actuatorCurrents[index].set(value);
+      actuatorCurrents.set(index, value);
    }
 
    /**
@@ -264,8 +251,7 @@ public class AbilityHand implements HandInterface
     */
    public void setActuatorCurrents(float[] currents)
    {
-      for (int i = 0; i < ACTUATOR_COUNT && i < currents.length; ++i)
-         setActuatorCurrent(i, currents[i]);
+      actuatorCurrents.setAll(currents);
    }
 
    /**
@@ -276,7 +262,7 @@ public class AbilityHand implements HandInterface
     */
    public int getRawFSRValue(int index)
    {
-      return rawFSRReadings[index].getValue();
+      return rawFSRReadings.get(index);
    }
 
    /**
@@ -287,13 +273,12 @@ public class AbilityHand implements HandInterface
     */
    public void setRawFSRValue(int index, int value)
    {
-      rawFSRReadings[index].set(value);
+      rawFSRReadings.set(index, value);
    }
 
    public void setRawFSRValues(int[] values)
    {
-      for (int i = 0; i < TOUCH_SENSOR_COUNT && i < values.length; ++i)
-         setRawFSRValue(i, values[i]);
+      rawFSRReadings.setAll(values);
    }
 
    /**

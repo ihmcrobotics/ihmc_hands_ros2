@@ -101,4 +101,28 @@ public class YoFloatArray
    {
       return yoDoubles.length;
    }
+
+   /**
+    * Returns a string representation of this YoFloatArray, listing all current values
+    * in order with two decimal places of precision.
+    *
+    * @return a string in the form {@code YoFloatArray[30.00, 15.25, ...]}
+    */
+   @Override
+   public String toString()
+   {
+      StringBuilder builder = new StringBuilder();
+      builder.append("YoFloatArray[");
+
+      for (int i = 0; i < yoDoubles.length; i++)
+      {
+         if (i > 0)
+            builder.append(", ");
+
+         builder.append(String.format("%.2f", (float) yoDoubles[i].getValue()));
+      }
+
+      builder.append("]");
+      return builder.toString();
+   }
 }
