@@ -61,17 +61,16 @@ public class AbilityHandROS2CommunicationTest
       });
 
       // Initialize a test hand and its manager
-      AbilityHand testHand = new AbilityHand(SERIAL_NUMBER, HAND_SIDE);
-      AbilityHandManager manager = new AbilityHandManager(testHand);
-      testHand.setActuatorPositions(ACTUATOR_POSITIONS); // Set the state of the hand
-      testHand.setRawFSRValues(TOUCH_SENSOR_READINGS);
-      manager.initialize();
+      AbilityHand hand = new AbilityHand(SERIAL_NUMBER, HAND_SIDE);
+      hand.setActuatorPositions(ACTUATOR_POSITIONS); // Set the state of the hand
+      hand.setRawFSRValues(TOUCH_SENSOR_READINGS);
+      hand.initialize();
 
       // Create an instance of the communication class
       AbilityHandROS2ControllerCommunication controllerCommunication = new AbilityHandROS2ControllerCommunication("test_controller_comm", domainId);
 
       // Publish before starting. Nothing should happen
-      controllerCommunication.publishState(manager);
+      controllerCommunication.publishState(hand);
 
       // Assert that no messages were received
       assertFalse(received.get());
@@ -81,7 +80,7 @@ public class AbilityHandROS2CommunicationTest
       LockSupport.parkNanos((long) 1E8);
 
       publisher.publish(command);
-      controllerCommunication.publishState(manager);
+      controllerCommunication.publishState(hand);
 
       // Wait for the state message to be received
       synchronized (received)
@@ -91,24 +90,24 @@ public class AbilityHandROS2CommunicationTest
       }
 
       // Read values
-      controllerCommunication.readCommand(manager);
+      controllerCommunication.readCommand(hand);
       for (int i = 0; i < 100; ++i)
-         manager.update(0.01f);
+         hand.update(0.01f);
 
       // Assert that the messages were received
       assertTrue(received.get());
       for (int i = 0; i < ACTUATOR_COUNT; ++i)
       {
-         assertEquals(testHand.getActuatorPosition(i), stateReceived.getActuatorPositions()[i]);
-         assertEquals(testHand.getActuatorVelocity(i), stateReceived.getActuatorVelocities()[i]);
-         assertEquals(testHand.getActuatorCurrent(i), stateReceived.getActuatorCurrents()[i]);
-         assertEquals(COMMAND_VALUES[i], testHand.getCommandValue(i));
+         assertEquals(hand.getActuatorPosition(i), stateReceived.getActuatorPositions()[i]);
+         assertEquals(hand.getActuatorVelocity(i), stateReceived.getActuatorVelocities()[i]);
+         assertEquals(hand.getActuatorCurrent(i), stateReceived.getActuatorCurrents()[i]);
+         assertEquals(COMMAND_VALUES[i], hand.getCommandValue(i));
       }
       for (int i = 0; i < TOUCH_SENSOR_COUNT; ++i)
       {
-         assertEquals(testHand.getSensedPressure(i), stateReceived.getTouchSensorReadings()[i]);
+         assertEquals(hand.getSensedPressure(i), stateReceived.getTouchSensorReadings()[i]);
       }
-      assertEquals(COMMAND_TYPE, testHand.getCommandType());
+      assertEquals(COMMAND_TYPE, hand.getCommandType());
       assertEquals(HAND_SIDE, RobotSide.fromByte(stateReceived.getHandSide()));
       assertEquals(SERIAL_NUMBER, stateReceived.getIdentifierAsString());
 

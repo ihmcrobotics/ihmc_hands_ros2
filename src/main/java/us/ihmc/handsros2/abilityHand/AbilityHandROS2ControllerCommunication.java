@@ -46,39 +46,39 @@ public class AbilityHandROS2ControllerCommunication
    /**
     * Update the hand manager with the latest command.
     *
-    * @param managerToUpdate The hand manager to update.
+    * @param hand The hand manager to update.
     */
-   public void readCommand(AbilityHandManager managerToUpdate)
+   public void readCommand(AbilityHand hand)
    {
-      if (commandListener.readLatestMessage(managerToUpdate.getHand().getIdentifier(), commandMessage))
+      if (commandListener.readLatestMessage(hand.getIdentifier(), commandMessage))
       {
-         managerToUpdate.setControlMode(AbilityHandControlMode.fromByte(commandMessage.getControlMode()));
-         managerToUpdate.setGrip(AbilityHandGrip.fromByte(commandMessage.getGrip()));
-         managerToUpdate.setGoalPositions(commandMessage.getGoalPositions());
-         managerToUpdate.setGoalVelocities(commandMessage.getGoalVelocities());
+         hand.setControlMode(AbilityHandControlMode.fromByte(commandMessage.getControlMode()));
+         hand.setGrip(AbilityHandGrip.fromByte(commandMessage.getGrip()));
+         hand.setGoalPositions(commandMessage.getGoalPositions());
+         hand.setGoalVelocities(commandMessage.getGoalVelocities());
       }
    }
 
    /**
     * Publish the hand's state.
     *
-    * @param managerToPublish Manager of the hand to publish.
+    * @param hand Manager of the hand to publish.
     */
-   public void publishState(AbilityHandManager managerToPublish)
+   public void publishState(AbilityHand hand)
    {
-      stateMessage.setIdentifier(managerToPublish.getHand().getIdentifier());
-      stateMessage.setHandSide(managerToPublish.getHand().getSide().toByte());
+      stateMessage.setIdentifier(hand.getIdentifier());
+      stateMessage.setHandSide(hand.getSide().toByte());
       for (int i = 0; i < AbilityHand.ACTUATOR_COUNT; ++i)
       {
-         stateMessage.getActuatorPositions()[i] = managerToPublish.getHand().getActuatorPosition(i);
-         stateMessage.getActuatorVelocities()[i] = managerToPublish.getHand().getActuatorVelocity(i);
-         stateMessage.getActuatorCurrents()[i] = managerToPublish.getHand().getActuatorCurrent(i);
-         stateMessage.getGoalPositions()[i] = managerToPublish.getGoalPosition(i);
-         stateMessage.getGoalVelocities()[i] = managerToPublish.getGoalVelocity(i);
+         stateMessage.getActuatorPositions()[i] = hand.getActuatorPosition(i);
+         stateMessage.getActuatorVelocities()[i] = hand.getActuatorVelocity(i);
+         stateMessage.getActuatorCurrents()[i] = hand.getActuatorCurrent(i);
+         stateMessage.getGoalPositions()[i] = hand.getGoalPosition(i);
+         stateMessage.getGoalVelocities()[i] = hand.getGoalVelocity(i);
       }
-      stateMessage.setGripStage(managerToPublish.getGripStage());
+      stateMessage.setGripStage(hand.getGripStage());
       for (int i = 0; i < AbilityHand.TOUCH_SENSOR_COUNT; ++i)
-         stateMessage.getTouchSensorReadings()[i] = managerToPublish.getHand().getSensedPressure(i);
+         stateMessage.getTouchSensorReadings()[i] = hand.getSensedPressure(i);
 
       statePublisher.publish(stateMessage);
    }

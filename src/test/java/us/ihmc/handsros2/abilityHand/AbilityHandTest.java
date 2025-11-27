@@ -14,24 +14,23 @@ import static us.ihmc.handsros2.abilityHand.AbilityHand.ACTUATOR_COUNT;
 
 public class AbilityHandTest
 {
-   private static Stream<Arguments> getControllers()
+   private static Stream<Arguments> createHand()
    {
-      AbilityHand abilityHand = new AbilityHand("24ABH000", RobotSide.LEFT);
-      abilityHand.setActuatorPositions(new float[] {30f, 30f, 30f, 30f, 30f, -30f});
-      AbilityHandManager manager = new AbilityHandManager(abilityHand);
-      manager.setGoalVelocities(new float[] {30f, 30f, 30f, 30f, 30f, 30f});
-      manager.initialize();
+      AbilityHand hand = new AbilityHand("24ABH000", RobotSide.LEFT);
+      hand.setActuatorPositions(new float[] {30f, 30f, 30f, 30f, 30f, -30f});
+      hand.setGoalVelocities(new float[] {30f, 30f, 30f, 30f, 30f, 30f});
+      hand.initialize();
 
-      return Stream.of(Arguments.of(manager, abilityHand));
+      return Stream.of(Arguments.of(hand));
    }
 
    @ParameterizedTest
-   @MethodSource("getControllers")
-   public void testPositionControl(AbilityHandManager manager, AbilityHand hand)
+   @MethodSource("createHand")
+   public void testPositionControl(AbilityHand hand)
    {
       float[] targetPositions = {10f, 20f, 30f, 40f, 50f, -10f};
-      manager.setControlMode(AbilityHandControlMode.POSITION);
-      manager.setGoalPositions(targetPositions);
+      hand.setControlMode(AbilityHandControlMode.POSITION);
+      hand.setGoalPositions(targetPositions);
 
       int numberOfSteps = 200;
       float timeStep = 0.01f;
@@ -44,7 +43,7 @@ public class AbilityHandTest
 
       for (int stepIndex = 0; stepIndex < numberOfSteps; stepIndex++)
       {
-         manager.update(timeStep);
+         hand.update(timeStep);
 
          times[stepIndex] = currentTime;
          for (int fingerIndex = 0; fingerIndex < ACTUATOR_COUNT; fingerIndex++)
@@ -83,12 +82,12 @@ public class AbilityHandTest
    }
 
    @ParameterizedTest
-   @MethodSource("getControllers")
-   public void testVelocityControl(AbilityHandManager manager, AbilityHand hand)
+   @MethodSource("createHand")
+   public void testVelocityControl(AbilityHand hand)
    {
       float[] targetVelocities = {1f, 2f, 3f, 4f, 5f, -5f};
-      manager.setControlMode(AbilityHandControlMode.VELOCITY);
-      manager.setGoalVelocities(targetVelocities);
+      hand.setControlMode(AbilityHandControlMode.VELOCITY);
+      hand.setGoalVelocities(targetVelocities);
 
       int numberOfSteps = 200;
       float timeStep = 0.01f;
@@ -110,7 +109,7 @@ public class AbilityHandTest
       for (int stepIndex = 0; stepIndex < numberOfSteps; stepIndex++)
       {
          // Run controller: this sets command velocities in the hand
-         manager.update(timeStep);
+         hand.update(timeStep);
 
          // Integrate commanded velocities into simulated positions with noise
          for (int fingerIndex = 0; fingerIndex < ACTUATOR_COUNT; fingerIndex++)
@@ -158,16 +157,16 @@ public class AbilityHandTest
    }
 
    @ParameterizedTest
-   @MethodSource("getControllers")
-   public void testPowerGripWithInitialThumbStage(AbilityHandManager manager, AbilityHand hand)
+   @MethodSource("createHand")
+   public void testPowerGripWithInitialThumbStage(AbilityHand hand)
    {
       // Thumb (index 4) must clear first: simulate it at the clear position already
       float[] initialPositions = {0f, 2f, 7f, 15f, 90f, 10f};
       hand.setActuatorPositions(initialPositions);
 
-      manager.setGoalVelocities(new float[] {80f, 80f, 80f, 80f, 80f, 80f});
-      manager.setControlMode(AbilityHandControlMode.GRIP);
-      manager.setGrip(AbilityHandGrip.CLOSE);
+      hand.setGoalVelocities(new float[] {80f, 80f, 80f, 80f, 80f, 80f});
+      hand.setControlMode(AbilityHandControlMode.GRIP);
+      hand.setGrip(AbilityHandGrip.CLOSE);
 
       int numberOfSteps = 450;
       float timeStep = 0.01f;
@@ -192,7 +191,7 @@ public class AbilityHandTest
          }
 
          // Manager computes desired positions in GRIP mode
-         manager.update(timeStep);
+         hand.update(timeStep);
 
          times[stepIndex] = currentTime;
 
@@ -231,15 +230,15 @@ public class AbilityHandTest
    }
 
    @ParameterizedTest
-   @MethodSource("getControllers")
-   public void testMultipleGripsSequence(AbilityHandManager manager, AbilityHand hand)
+   @MethodSource("createHand")
+   public void testMultipleGripsSequence(AbilityHand hand)
    {
       // Start from some nontrivial configuration
       float[] initialPositions = {0f, 10f, 20f, 30f, 0f, 0f};
       hand.setActuatorPositions(initialPositions);
 
-      manager.setGoalVelocities(new float[] {80f, 80f, 80f, 80f, 80f, 80f});
-      manager.setControlMode(AbilityHandControlMode.GRIP);
+      hand.setGoalVelocities(new float[] {80f, 80f, 80f, 80f, 80f, 80f});
+      hand.setControlMode(AbilityHandControlMode.GRIP);
 
       // Sequence of grips to test
       AbilityHandGrip[] gripSequence = new AbilityHandGrip[] {AbilityHandGrip.OPEN, AbilityHandGrip.RELAX, AbilityHandGrip.HOOK, AbilityHandGrip.CLOSE};
@@ -260,13 +259,13 @@ public class AbilityHandTest
          {
             if (stepIndex >= gripSwitchSteps[seqIndex])
             {
-               manager.setGrip(gripSequence[seqIndex]);
+               hand.setGrip(gripSequence[seqIndex]);
                break;
             }
          }
 
          // Run controller in GRIP mode
-         manager.update(timeStep);
+         hand.update(timeStep);
 
          times[stepIndex] = currentTime;
 
