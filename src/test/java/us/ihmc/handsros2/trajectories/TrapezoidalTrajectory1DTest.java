@@ -1,4 +1,4 @@
-package us.ihmc.handsros2;
+package us.ihmc.handsros2.trajectories;
 
 import org.junit.jupiter.api.Test;
 

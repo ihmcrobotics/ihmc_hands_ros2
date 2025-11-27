@@ -2,7 +2,7 @@ package us.ihmc.handsros2.abilityHand;
 
 import us.ihmc.handsros2.HandInterface;
 import us.ihmc.handsros2.HandType;
-import us.ihmc.handsros2.TrapezoidalTrajectory1D;
+import us.ihmc.handsros2.trajectories.TrapezoidalTrajectory1D;
 import us.ihmc.handsros2.YoFloatArray;
 import us.ihmc.handsros2.YoIntegerArray;
 import us.ihmc.handsros2.abilityHand.AbilityHandModel.AbilityHandJointName;

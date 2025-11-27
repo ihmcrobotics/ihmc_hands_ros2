@@ -1,4 +1,4 @@
-package us.ihmc.handsros2;
+package us.ihmc.handsros2.trajectories;
 
 /**
  * Generates and follows a 1‑D time‑parametrized motion profile between the current
