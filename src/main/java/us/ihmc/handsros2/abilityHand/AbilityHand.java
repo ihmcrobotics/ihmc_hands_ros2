@@ -2,6 +2,7 @@ package us.ihmc.handsros2.abilityHand;
 
 import us.ihmc.handsros2.HandInterface;
 import us.ihmc.handsros2.HandType;
+import us.ihmc.handsros2.TrapezoidalTrajectory1D;
 import us.ihmc.handsros2.YoFloatArray;
 import us.ihmc.handsros2.YoIntegerArray;
 import us.ihmc.handsros2.abilityHand.AbilityHandModel.AbilityHandJointName;
@@ -33,7 +34,7 @@ import static us.ihmc.handsros2.abilityHand.AbilityHandModel.AbilityHandJointNam
  * <p>
  * The hand reports actuator velocities as radians per second.
  * These can be converted into degrees/sec using:
- *     <code>finger_velocity_deg = gear_ratio * rotor_velocity_rad * (180 / pi)</code>
+ *     de>finger_velocity_deg = gear_ratio * rotor_velocity_rad * (180 / pi)</code>
  * using the following gear ratios:
  * Index, Middle, Ring, Pinky, Thumb Flexor: 649
  * Thumb Rotator: 162.45
@@ -49,61 +50,420 @@ import static us.ihmc.handsros2.abilityHand.AbilityHandModel.AbilityHandJointNam
  * For more information on the Ability Hands, you can read the
  * <a href="https://github.com/psyonicinc/ability-hand-api/blob/master/Documentation/ABILITY-HAND-ICD.pdf">Ability Hand Interface Control Document</a>.
  * </p>
+ *
+ * <p>
+ * Additionally, this class manages higher-level control of an Ability Hand, including position, velocity,
+ * velocity-to-position, and multi-stage grip operations, with YoVariables.
+ * </p>
  */
 public class AbilityHand implements HandInterface
 {
    public static int ACTUATOR_COUNT = 6;
    public static int TOUCH_SENSOR_COUNT = 30;
+
+   private static final float TOLERANCE = 1.0f;
+   /** Trajectory configuration: tune acceleration per joint as needed (deg/s^2) */
+   private static final float DEFAULT_MAXIMUM_ACCELERATION = 200.0f;
+
    private final String identifier;
    private final RobotSide handSide;
+
+   /** Command type used for low-level interface. */
    private final YoEnum<AbilityHandCommandType> commandType;
 
+   /** Low-level command values sent to the hand (position or velocity depending on {@link #commandType}). */
    private final YoFloatArray commandValues;
+   /** Measured actuator positions in degrees. */
    private final YoFloatArray actuatorPositions;
+   /** Measured actuator velocities in radians per second. */
    private final YoFloatArray actuatorVelocities;
+   /** Measured actuator currents in amperes. */
    private final YoFloatArray actuatorCurrents;
+   /** Raw touch sensor FSR readings (ADC counts). */
    private final YoIntegerArray rawFSRReadings;
 
+   /** High-level control mode (POSITION, VELOCITY, GRIP). */
+   private final YoEnum<AbilityHandControlMode> controlMode;
+   private AbilityHandControlMode previousControlMode = null;
+
+   /** High-level multi-stage grip pattern. */
+   private final YoEnum<AbilityHandGrip> grip;
+   private AbilityHandGrip previousGrip = null;
+   private int gripStage = Integer.MAX_VALUE;
+
+   /** Goal positions per actuator, used by POSITION, VEL_TO_POS, and GRIP modes. */
+   private final YoFloatArray goalPositions;
+   /** Goal velocities per actuator, used as maximum velocities in trajectories and velocity mode. */
+   private final YoFloatArray goalVelocities;
+
+   /** Per-finger position trajectories used in POSITION, VEL_TO_POS, and GRIP modes. */
+   private final TrapezoidalTrajectory1D[] fingerTrajectories = new TrapezoidalTrajectory1D[ACTUATOR_COUNT];
+
+   /** Track previous time for computing dt. */
+   private long previousTimeNanos = -1L;
+   private float dt;
+   private boolean initialized = false;
+
+   /**
+    * Creates a new AbilityHand with its own {@link YoRegistry}.
+    *
+    * @param identifier user-facing identifier of this hand
+    * @param handSide   side of the robot this hand is attached to
+    */
    public AbilityHand(String identifier, RobotSide handSide)
    {
       this(new YoRegistry("AbilityHand_" + identifier + "_" + handSide.name()), identifier, handSide);
    }
 
+   /**
+    * Creates a new AbilityHand with YoVariables for state, commands, goals, and modes.
+    *
+    * @param registry   YoRegistry to register YoVariables into
+    * @param identifier user-facing identifier of this hand
+    * @param handSide   side of the robot this hand is attached to
+    */
    public AbilityHand(YoRegistry registry, String identifier, RobotSide handSide)
    {
       this.identifier = identifier;
       this.handSide = handSide;
 
       String prefix = handSide.name() + "AbilityHand_" + identifier + "_";
+
+      // Low-level command type
       commandType = new YoEnum<>(prefix + "CommandType", registry, AbilityHandCommandType.class);
       commandType.set(AbilityHandCommandType.VELOCITY);
 
-      // Initialize all float YoVariable arrays with zeros
-      commandValues = new YoFloatArray(prefix + "Command", registry, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-      actuatorPositions = new YoFloatArray(prefix + "ActuatorPosition", registry, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-      actuatorVelocities = new YoFloatArray(prefix + "ActuatorVelocity", registry, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-      actuatorCurrents = new YoFloatArray(prefix + "ActuatorCurrent", registry, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+      // Low-level arrays (start at zero)
+      commandValues = new YoFloatArray(prefix + "Command", registry, 0, 0, 0, 0, 0, 0);
+      actuatorPositions = new YoFloatArray(prefix + "ActuatorPosition", registry, 0, 0, 0, 0, 0, 0);
+      actuatorVelocities = new YoFloatArray(prefix + "ActuatorVelocity", registry, 0, 0, 0, 0, 0, 0);
+      actuatorCurrents = new YoFloatArray(prefix + "ActuatorCurrent", registry, 0, 0, 0, 0, 0, 0);
 
-      // Initialize integer YoVariable array with zeros
       int[] fsrInitial = new int[TOUCH_SENSOR_COUNT];
       rawFSRReadings = new YoIntegerArray(prefix + "RawFSR", registry, fsrInitial);
+
+      // High-level control variables (original AbilityHandManager naming)
+      String managerPrefix = handSide.name() + getClass().getSimpleName();
+      controlMode = new YoEnum<>(managerPrefix + "ControlMode", registry, AbilityHandControlMode.class);
+      grip = new YoEnum<>(managerPrefix + "Grip", registry, AbilityHandGrip.class);
+
+      // Initialize goal positions and velocities with previous defaults
+      goalPositions = new YoFloatArray(managerPrefix + "GoalPosition", registry, 30.0f, 30.0f, 30.0f, 30.0f, 30.0f, -30.0f);
+      goalVelocities = new YoFloatArray(managerPrefix + "GoalVelocity", registry, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
    }
 
+   /**
+    * Initializes high-level control state (goal positions, velocities, trajectories)
+    * using the current actuator state as the starting point.
+    */
+   void initialize()
+   {
+      initialized = true;
+      for (int i = 0; i < ACTUATOR_COUNT; i++)
+      {
+         goalPositions.set(i, getActuatorPosition(i));
+         goalVelocities.set(i, 30.0f);
+
+         fingerTrajectories[i] = new TrapezoidalTrajectory1D(goalPositions.get(i), Math.abs(goalVelocities.get(i)), DEFAULT_MAXIMUM_ACCELERATION);
+         fingerTrajectories[i].reset(getActuatorPosition(i), getActuatorVelocity(i));
+      }
+   }
+
+   /**
+    * Updates the hand commands based on the desired values set in this manager.
+    * Should be called periodically.
+    */
+   public void update()
+   {
+      long nowNanos = System.nanoTime();
+
+      if (previousTimeNanos > 0L)
+      {
+         long deltaNanos = nowNanos - previousTimeNanos;
+         float dt = Math.min(0.1f, deltaNanos * 1.0e-9f);
+
+         update(dt);
+      }
+
+      previousTimeNanos = nowNanos;
+   }
+
+   /** Need to supply virtual dt in tests. */
+   void update(float dt)
+   {
+      this.dt = dt;
+
+      if (!initialized && getActuatorPosition(0) != 0.0f)
+         initialize();
+
+      if (!initialized)
+         return;
+
+      AbilityHandControlMode currentControlMode = controlMode.getValue();
+
+      // Only reset trajectories when entering POSITION from another mode
+      if (currentControlMode == AbilityHandControlMode.POSITION && previousControlMode != AbilityHandControlMode.POSITION)
+      {
+         for (int i = 0; i < ACTUATOR_COUNT; i++)
+            fingerTrajectories[i].reset(getActuatorPosition(i), getActuatorVelocity(i));
+      }
+
+      if (currentControlMode != null)
+      {
+         switch (currentControlMode)
+         {
+            case POSITION -> updatePositionControl();
+            case VELOCITY -> updateVelocityControl();
+            case GRIP -> updateGripControl();
+         }
+      }
+
+      previousControlMode = currentControlMode;
+   }
+
+   /**
+    * Updates hand in POSITION mode using per-finger trapezoidal trajectories.
+    * goalPositions are the targets; goalVelocities set each finger's max velocity.
+    */
+   private void updatePositionControl()
+   {
+      setCommandType(AbilityHandCommandType.POSITION);
+
+      for (int actuatorIndex = 0; actuatorIndex < ACTUATOR_COUNT; actuatorIndex++)
+      {
+         TrapezoidalTrajectory1D trajectory = fingerTrajectories[actuatorIndex];
+         float targetPosition = goalPositions.get(actuatorIndex);
+         float maxVelocity = Math.abs(goalVelocities.get(actuatorIndex));
+
+         trajectory.setGoal(targetPosition, maxVelocity);
+         float commandedPosition = trajectory.update(dt);
+         setCommandValue(actuatorIndex, commandedPosition);
+      }
+   }
+
+   /** Updates hand to direct velocity control using goalVelocities. */
+   private void updateVelocityControl()
+   {
+      setCommandType(AbilityHandCommandType.VELOCITY);
+      setCommandValues(goalVelocities.toFloatArray());
+   }
+
+   /** Performs multi-stage grip control, moving fingers sequentially through {@link AbilityHandGrip#stages}. */
+   private void updateGripControl()
+   {
+      AbilityHandControlMode currentControlMode = controlMode.getValue();
+      AbilityHandGrip currentGrip = grip.getValue();
+
+      // Handle entering GRIP mode vs switching grips while already in GRIP
+      if (previousControlMode != AbilityHandControlMode.GRIP)
+      {
+         gripStage = 0;
+         previousGrip = currentGrip;
+
+         // Re-sync trajectories to current hand state once when entering GRIP
+         for (int actuatorIndex = 0; actuatorIndex < ACTUATOR_COUNT; actuatorIndex++)
+         {
+            fingerTrajectories[actuatorIndex].reset(getActuatorPosition(actuatorIndex), getActuatorVelocity(actuatorIndex));
+         }
+      }
+      else if (previousGrip != currentGrip)
+      {
+         // New grip while already in GRIP: restart stage sequence but keep trajectories continuous
+         gripStage = 0;
+         previousGrip = currentGrip;
+      }
+
+      // If we’re past the last stage, the grip is completed. No need to do anything
+      if (currentGrip == null || gripStage >= currentGrip.stages.length)
+         return;
+
+      setCommandType(AbilityHandCommandType.POSITION);
+
+      // Normal grip stages: move only the fingers in this stage toward their stage goals,
+      // but update all trajectories every tick.
+      int[] actuatorsToMove = currentGrip.stages[gripStage];
+      float[] stageGoalPositions = currentGrip.positions[gripStage];
+
+      boolean stageComplete = true;
+
+      for (int actuatorIndex = 0; actuatorIndex < ACTUATOR_COUNT; actuatorIndex++)
+      {
+         boolean isActive = false;
+         float desiredPosition = 0.0f;
+
+         // Check if this finger is active in the current stage
+         for (int i = 0; i < actuatorsToMove.length; i++)
+         {
+            if (actuatorIndex == actuatorsToMove[i])
+            {
+               isActive = true;
+               desiredPosition = stageGoalPositions[i];
+               break;
+            }
+         }
+
+         TrapezoidalTrajectory1D trajectory = fingerTrajectories[actuatorIndex];
+         float maximumVelocity = Math.abs(goalVelocities.get(actuatorIndex));
+
+         if (isActive)
+         {
+            trajectory.setGoal(desiredPosition, maximumVelocity);
+         }
+         else
+         {
+            // Not active: hold current trajectory position
+            float holdPosition = trajectory.getCurrentPosition();
+            trajectory.setGoal(holdPosition, maximumVelocity);
+         }
+
+         float commandedPosition = trajectory.update(dt);
+         setCommandValue(actuatorIndex, commandedPosition);
+
+         if (isActive && Math.abs(commandedPosition - desiredPosition) >= TOLERANCE)
+            stageComplete = false;
+      }
+
+      if (stageComplete)
+      {
+         // Snap active fingers to exact stage goal to avoid tiny residuals
+         for (int i = 0; i < actuatorsToMove.length; i++)
+         {
+            int actuatorIndex = actuatorsToMove[i];
+            float stageGoalPosition = stageGoalPositions[i];
+
+            TrapezoidalTrajectory1D trajectory = fingerTrajectories[actuatorIndex];
+            trajectory.reset(stageGoalPosition, 0.0f);
+            setCommandValue(actuatorIndex, stageGoalPosition);
+         }
+
+         gripStage++;
+      }
+   }
+
+   /**
+    * Get the hand object identifier.
+    *
+    * @return The identifier of this hand.
+    */
    @Override
    public String getIdentifier()
    {
       return identifier;
    }
 
+   /**
+    * Get the robot side this hand is attached to.
+    *
+    * @return the robot side
+    */
    @Override
    public RobotSide getSide()
    {
       return handSide;
    }
 
+   /**
+    * Get the type of this hand.
+    *
+    * @return {@link HandType#ABILITY_HAND}
+    */
    public HandType getType()
    {
       return HandType.ABILITY_HAND;
+   }
+
+   /**
+    * Sets the control mode for subsequent updates.
+    *
+    * @param controlMode desired control mode
+    */
+   public void setControlMode(AbilityHandControlMode controlMode)
+   {
+      this.controlMode.set(controlMode);
+   }
+
+   /**
+    * Sets the grip pattern for subsequent grip control.
+    *
+    * @param grip desired Grip pattern
+    */
+   public void setGrip(AbilityHandGrip grip)
+   {
+      this.grip.set(grip);
+   }
+
+   /**
+    * Retrieves the current grip stage.
+    *
+    * @return the current grip stage
+    */
+   public int getGripStage()
+   {
+      return gripStage;
+   }
+
+   /**
+    * Sets a goal position for a specific actuator.
+    *
+    * @param index        actuator index (0 to ACTUATOR_COUNT-1)
+    * @param goalPosition desired position in degrees
+    */
+   public void setGoalPosition(int index, float goalPosition)
+   {
+      goalPositions.set(index, goalPosition);
+   }
+
+   /**
+    * Sets goal positions for all actuators.
+    *
+    * @param goalPositions array of target positions, length ACTUATOR_COUNT
+    */
+   public void setGoalPositions(float[] goalPositions)
+   {
+      this.goalPositions.setAll(goalPositions);
+   }
+
+   /**
+    * Sets a goal velocity for a specific actuator.
+    *
+    * @param index        actuator index (0 to ACTUATOR_COUNT-1)
+    * @param goalVelocity desired velocity
+    */
+   public void setGoalVelocity(int index, float goalVelocity)
+   {
+      goalVelocities.set(index, goalVelocity);
+   }
+
+   /**
+    * Sets goal velocities for all actuators.
+    *
+    * @param goalVelocities array of target velocities, length ACTUATOR_COUNT
+    */
+   public void setGoalVelocities(float[] goalVelocities)
+   {
+      this.goalVelocities.setAll(goalVelocities);
+   }
+
+   /**
+    * Retrieves the current goal position for a specific actuator.
+    *
+    * @param index actuator index
+    * @return the current goal position for the specified actuator
+    */
+   public float getGoalPosition(int index)
+   {
+      return goalPositions.get(index);
+   }
+
+   /**
+    * Retrieves the current goal velocity for a specific actuator.
+    *
+    * @param index actuator index
+    * @return the current goal velocity for the specified actuator
+    */
+   public float getGoalVelocity(int index)
+   {
+      return goalVelocities.get(index);
    }
 
    /**
@@ -276,6 +636,11 @@ public class AbilityHand implements HandInterface
       rawFSRReadings.set(index, value);
    }
 
+   /**
+    * Set all raw FSR ADC values.
+    *
+    * @param values Raw FSR ADC values.
+    */
    public void setRawFSRValues(int[] values)
    {
       rawFSRReadings.setAll(values);
