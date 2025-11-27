@@ -3,7 +3,6 @@ package us.ihmc.handsros2.ezGripper;
 import ihmc_hands_ros2.msg.dds.EZGripperCommand;
 import ihmc_hands_ros2.msg.dds.EZGripperState;
 import us.ihmc.handsros2.HandMessageListener;
-import us.ihmc.handsros2.HandROS2ControllerCommunication;
 import us.ihmc.handsros2.ezGripper.EZGripperManager.OperationMode;
 import us.ihmc.ros2.ROS2NodeBuilder;
 import us.ihmc.ros2.ROS2Publisher;
@@ -14,7 +13,7 @@ import us.ihmc.ros2.RealtimeROS2Node;
  * <p>Hardware side ROS 2 communication for the {@link EZGripperInterface}. Communicates with external controller.</p>
  * <p>Subscribes to {@link EZGripperCommand} messages and publishes {@link EZGripperState} messages.</p>
  */
-public class EZGripperROS2ControllerCommunication implements HandROS2ControllerCommunication<EZGripperManager>
+public class EZGripperROS2ControllerCommunication
 {
    private final RealtimeROS2Node node;
 
@@ -45,8 +44,11 @@ public class EZGripperROS2ControllerCommunication implements HandROS2ControllerC
       commandSubscription = node.createSubscription(EZGripperROS2API.COMMAND_TOPIC, commandListener);
    }
 
-   /** {@inheritDoc} */
-   @Override
+   /**
+    * Update the hand manager with the latest command.
+    *
+    * @param gripperManager The hand manager to update.
+    */
    public void readCommand(EZGripperManager gripperManager)
    {
       if (commandListener.readLatestMessage(gripperManager.getHand().getIdentifier(), commandMessage))
@@ -60,8 +62,11 @@ public class EZGripperROS2ControllerCommunication implements HandROS2ControllerC
       }
    }
 
-   /** {@inheritDoc} */
-   @Override
+   /**
+    * Publish the hand's state.
+    *
+    * @param managerToPublish Manager of the hand to publish.
+    */
    public void publishState(EZGripperManager managerToPublish)
    {
       stateMessage.setIdentifier(managerToPublish.getHand().getIdentifier());
@@ -77,15 +82,17 @@ public class EZGripperROS2ControllerCommunication implements HandROS2ControllerC
       statePublisher.publish(stateMessage);
    }
 
-   /** {@inheritDoc} */
-   @Override
+   /**
+    * Initialize the communication.
+    */
    public void start()
    {
       node.spin();
    }
 
-   /** {@inheritDoc} */
-   @Override
+   /**
+    * Shut the communication down. {@link #start()} cannot be called again after this method.
+    */
    public void shutdown()
    {
       node.stopSpinning();

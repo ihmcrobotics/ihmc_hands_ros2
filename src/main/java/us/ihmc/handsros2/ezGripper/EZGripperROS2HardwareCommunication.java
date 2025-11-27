@@ -3,7 +3,6 @@ package us.ihmc.handsros2.ezGripper;
 import ihmc_hands_ros2.msg.dds.EZGripperCommand;
 import ihmc_hands_ros2.msg.dds.EZGripperState;
 import us.ihmc.handsros2.HandMessageListener;
-import us.ihmc.handsros2.HandROS2HardwareCommunication;
 import us.ihmc.ros2.ROS2NodeBuilder;
 import us.ihmc.ros2.ROS2Publisher;
 import us.ihmc.ros2.ROS2Subscription;
@@ -20,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>Controller side ROS 2 communication for the {@link EZGripperInterface}. Communicates with low-level hardware control process.</p>
  * <p>Subscribes to {@link EZGripperState} messages and publishes {@link EZGripperCommand} messages.</p>
  */
-public class EZGripperROS2HardwareCommunication implements HandROS2HardwareCommunication<EZGripperCommand, EZGripperState>
+public class EZGripperROS2HardwareCommunication
 {
    private final List<String> registeredHandIdentifiers;
 
@@ -63,29 +62,48 @@ public class EZGripperROS2HardwareCommunication implements HandROS2HardwareCommu
       registeredHandIdentifiers.add(identifier);
    }
 
-   /** {@inheritDoc} */
-   @Override
+   /**
+    * <p>Get the identifiers of the available hands.</p>
+    * <p>Treat the set as read-only.</p>
+    *
+    * @return Set of identifiers of the available hands.
+    */
    public Set<String> getAvailableHands()
    {
       return commandMessages.keySet();
    }
 
-   /** {@inheritDoc} */
-   @Override
+   /**
+    * <p>Get a synchronized list of the identifiers of the available hands.</p>
+    * <p>The list should be created using {@link java.util.Collections#synchronizedList(List)},
+    * thus a synchronized block must be used when iterating over the list/</p>
+    * <p>Tread the list as read-only.</p>
+    *
+    * @return List of identifiers of the available hands.
+    */
    public List<String> getAvailableHandList()
    {
       return registeredHandIdentifiers;
    }
 
-   /** {@inheritDoc} */
-   @Override
+   /**
+    * Read the latest state message of the specified hand.
+    *
+    * @param identifier  Identifier specifying the hand.
+    * @param stateToPack State message to pack with the latest state.
+    * @return {@code true} if a state message was available. {@code false} if no state had been received.
+    */
    public boolean readState(String identifier, EZGripperState messageToPack)
    {
       return stateListener.readLatestMessage(identifier, messageToPack);
    }
 
-   /** {@inheritDoc} */
-   @Override
+   /**
+    * Read the latest state message of the specified hand.
+    *
+    * @param identifier Identifier specifying the hand.
+    * @return A copy of the latest state message.
+    */
    public EZGripperState readState(String identifier)
    {
       EZGripperState stateMessage = new EZGripperState();
@@ -95,15 +113,25 @@ public class EZGripperROS2HardwareCommunication implements HandROS2HardwareCommu
       return null;
    }
 
-   /** {@inheritDoc} */
-   @Override
+   /**
+    * <p>Get the command message for the specified hand.</p>
+    * <p>Use this method to set the desired command values.
+    * Then publish the command using {@link #publishCommand(String)}.</p>
+    *
+    * @param identifier Identifier specifying the hand.
+    * @return A reference to the command message for the specified hand.
+    */
    public EZGripperCommand getCommand(String identifier)
    {
       return commandMessages.get(identifier);
    }
 
-   /** {@inheritDoc} */
-   @Override
+   /**
+    * Publish the command for the specified hand.
+    *
+    * @param identifier Serial number specifying the hand.
+    * @return {@code true} if the message was published. {@code false} if the hand specified wasn't found.
+    */
    public boolean publishCommand(String identifier)
    {
       EZGripperCommand commandMessage = commandMessages.get(identifier);
@@ -114,14 +142,17 @@ public class EZGripperROS2HardwareCommunication implements HandROS2HardwareCommu
       return true;
    }
 
-   /** {@inheritDoc} */
-   @Override
+   /**
+    * Start the communication.
+    */
    public void start()
    {
       node.spin();
    }
 
-   /** {@inheritDoc} */
+   /**
+    * Shut the communication down. {@link #start()} cannot be called again after this method.
+    */
    public void shutdown()
    {
       node.stopSpinning();

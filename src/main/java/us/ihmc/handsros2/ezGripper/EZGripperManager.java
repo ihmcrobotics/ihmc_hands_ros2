@@ -1,6 +1,5 @@
 package us.ihmc.handsros2.ezGripper;
 
-import us.ihmc.handsros2.HandManager;
 import us.ihmc.robotics.stateMachine.core.State;
 import us.ihmc.robotics.stateMachine.core.StateMachine;
 import us.ihmc.robotics.stateMachine.factories.StateMachineFactory;
@@ -10,7 +9,7 @@ import java.util.List;
 /**
  * Manages higher-level control of an EZGripper, including calibration, position control, error resets, and automatic cooldowns.
  */
-public class EZGripperManager implements HandManager<EZGripperInterface>
+public class EZGripperManager
 {
    public enum OperationMode
    {
@@ -208,15 +207,19 @@ public class EZGripperManager implements HandManager<EZGripperInterface>
       }
    }
 
-   /** {@inheritDoc} */
-   @Override
+   /**
+    * Get the hand object this manager manages.
+    *
+    * @return The hand this manager manages.
+    */
    public EZGripperInterface getHand()
    {
       return gripper;
    }
 
-   /** {@inheritDoc} */
-   @Override
+   /**
+    * Updates the hand commands based on the desired values set in this manager. Should be called periodically.
+    */
    public void update()
    {
       stateMachine.doActionAndTransition();

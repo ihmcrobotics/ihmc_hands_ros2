@@ -44,7 +44,6 @@ public class YoEZGripperManager extends EZGripperManager
       isCalibrated.set(false);
    }
 
-   @Override
    public void update()
    {
       super.setOperationMode(desiredOperationMode.getValue());

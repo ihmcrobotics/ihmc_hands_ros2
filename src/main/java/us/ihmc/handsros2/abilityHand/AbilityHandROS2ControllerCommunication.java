@@ -3,7 +3,6 @@ package us.ihmc.handsros2.abilityHand;
 import ihmc_hands_ros2.msg.dds.AbilityHandCommand;
 import ihmc_hands_ros2.msg.dds.AbilityHandState;
 import us.ihmc.handsros2.HandMessageListener;
-import us.ihmc.handsros2.HandROS2ControllerCommunication;
 import us.ihmc.ros2.ROS2NodeBuilder;
 import us.ihmc.ros2.ROS2Publisher;
 import us.ihmc.ros2.ROS2Subscription;
@@ -13,7 +12,7 @@ import us.ihmc.ros2.RealtimeROS2Node;
  * <p>Hardware side ROS 2 communication for the {@link AbilityHand}. Communicates with external controller.</p>
  * <p>Subscribes to {@link AbilityHandCommand} messages and publishes {@link AbilityHandState} messages.</p>
  */
-public class AbilityHandROS2ControllerCommunication implements HandROS2ControllerCommunication<AbilityHandManager>
+public class AbilityHandROS2ControllerCommunication
 {
    private final RealtimeROS2Node node;
 
@@ -44,8 +43,11 @@ public class AbilityHandROS2ControllerCommunication implements HandROS2Controlle
       commandSubscription = node.createSubscription(AbilityHandROS2API.COMMAND_TOPIC, commandListener);
    }
 
-   /** {@inheritDoc} */
-   @Override
+   /**
+    * Update the hand manager with the latest command.
+    *
+    * @param managerToUpdate The hand manager to update.
+    */
    public void readCommand(AbilityHandManager managerToUpdate)
    {
       if (commandListener.readLatestMessage(managerToUpdate.getHand().getIdentifier(), commandMessage))
@@ -57,8 +59,11 @@ public class AbilityHandROS2ControllerCommunication implements HandROS2Controlle
       }
    }
 
-   /** {@inheritDoc} */
-   @Override
+   /**
+    * Publish the hand's state.
+    *
+    * @param managerToPublish Manager of the hand to publish.
+    */
    public void publishState(AbilityHandManager managerToPublish)
    {
       stateMessage.setIdentifier(managerToPublish.getHand().getIdentifier());
@@ -78,15 +83,17 @@ public class AbilityHandROS2ControllerCommunication implements HandROS2Controlle
       statePublisher.publish(stateMessage);
    }
 
-   /** {@inheritDoc} */
-   @Override
+   /**
+    * Initialize the communication.
+    */
    public void start()
    {
       node.spin();
    }
 
-   /** {@inheritDoc} */
-   @Override
+   /**
+    * Shut the communication down. {@link #start()} cannot be called again after this method.
+    */
    public void shutdown()
    {
       node.stopSpinning();

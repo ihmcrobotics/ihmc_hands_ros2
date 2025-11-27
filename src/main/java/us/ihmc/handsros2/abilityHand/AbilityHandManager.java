@@ -1,6 +1,5 @@
 package us.ihmc.handsros2.abilityHand;
 
-import us.ihmc.handsros2.HandManager;
 import us.ihmc.handsros2.TrapezoidalTrajectory1D;
 
 import static us.ihmc.handsros2.abilityHand.AbilityHand.ACTUATOR_COUNT;
@@ -9,7 +8,7 @@ import static us.ihmc.handsros2.abilityHand.AbilityHand.ACTUATOR_COUNT;
  * Manages higher-level control of an Ability Hand, including position, velocity,
  * velocity-to-position, and multi-stage grip operations.
  */
-public class AbilityHandManager implements HandManager<AbilityHand>
+public class AbilityHandManager
 {
    private static final float TOLERANCE = 1.0f;
    /** Trajectory configuration: tune acceleration per joint as needed (deg/s^2) */
@@ -63,8 +62,9 @@ public class AbilityHandManager implements HandManager<AbilityHand>
       }
    }
 
-   /** {@inheritDoc} */
-   @Override
+   /**
+    * Updates the hand commands based on the desired values set in this manager. Should be called periodically.
+    */
    public void update()
    {
       long nowNanos = System.nanoTime();
@@ -220,8 +220,11 @@ public class AbilityHandManager implements HandManager<AbilityHand>
       }
    }
 
-   /** {@inheritDoc} */
-   @Override
+   /**
+    * Get the hand object this manager manages.
+    *
+    * @return The hand this manager manages.
+    */
    public AbilityHand getHand()
    {
       return hand;
