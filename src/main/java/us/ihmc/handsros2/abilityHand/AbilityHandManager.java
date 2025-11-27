@@ -1,8 +1,8 @@
 package us.ihmc.handsros2.abilityHand;
 
 import us.ihmc.handsros2.TrapezoidalTrajectory1D;
+import us.ihmc.handsros2.YoFloatArray;
 import us.ihmc.yoVariables.registry.YoRegistry;
-import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoEnum;
 
 import static us.ihmc.handsros2.abilityHand.AbilityHand.ACTUATOR_COUNT;
@@ -26,8 +26,8 @@ public class AbilityHandManager
    private AbilityHandGrip previousGrip = null;
    private int gripStage = Integer.MAX_VALUE;
 
-   private final YoDouble[] goalPositions = new YoDouble[ACTUATOR_COUNT];
-   private final YoDouble[] goalVelocities = new YoDouble[ACTUATOR_COUNT];
+   private final YoFloatArray goalPositions;
+   private final YoFloatArray goalVelocities;
 
    /** Per-finger position trajectories used in POSITION, VEL_TO_POS, and GRIP modes */
    private final TrapezoidalTrajectory1D[] fingerTrajectories;
@@ -62,18 +62,8 @@ public class AbilityHandManager
       controlMode = new YoEnum<>(prefix + "ControlMode", registry, AbilityHandControlMode.class);
       grip = new YoEnum<>(prefix + "Grip", registry, AbilityHandGrip.class);
 
-      // Initialize goal positions and velocities with previous defaults
-      float[] initialPositions = new float[] {30.0f, 30.0f, 30.0f, 30.0f, 30.0f, -30.0f};
-      float[] initialVelocities = new float[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
-
-      for (int i = 0; i < ACTUATOR_COUNT; ++i)
-      {
-         goalPositions[i] = new YoDouble(prefix + "GoalPosition" + i, registry);
-         goalPositions[i].set(initialPositions[i]);
-
-         goalVelocities[i] = new YoDouble(prefix + "GoalVelocity" + i, registry);
-         goalVelocities[i].set(initialVelocities[i]);
-      }
+      goalPositions = new YoFloatArray(prefix + "GoalPosition", registry, 30.0f, 30.0f, 30.0f, 30.0f, 30.0f, -30.0f);
+      goalVelocities = new YoFloatArray(prefix + "GoalVelocity", registry, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
 
       fingerTrajectories = new TrapezoidalTrajectory1D[ACTUATOR_COUNT];
    }
@@ -83,11 +73,11 @@ public class AbilityHandManager
       initialized = true;
       for (int i = 0; i < ACTUATOR_COUNT; i++)
       {
-         goalPositions[i].set(hand.getActuatorPosition(i));
-         goalVelocities[i].set(30.0f);
+         goalPositions.set(i, hand.getActuatorPosition(i));
+         goalVelocities.set(i, 30.0f);
 
-         fingerTrajectories[i] = new TrapezoidalTrajectory1D((float) goalPositions[i].getValue(),
-                                                             Math.abs((float) goalVelocities[i].getValue()),
+         fingerTrajectories[i] = new TrapezoidalTrajectory1D(goalPositions.get(i),
+                                                             Math.abs(goalVelocities.get(i)),
                                                              DEFAULT_MAXIMUM_ACCELERATION);
          fingerTrajectories[i].reset(hand.getActuatorPosition(i), hand.getActuatorVelocity(i));
       }
@@ -152,8 +142,8 @@ public class AbilityHandManager
       for (int actuatorIndex = 0; actuatorIndex < ACTUATOR_COUNT; actuatorIndex++)
       {
          TrapezoidalTrajectory1D trajectory = fingerTrajectories[actuatorIndex];
-         float targetPosition = (float) goalPositions[actuatorIndex].getValue();
-         float maxVelocity = Math.abs((float) goalVelocities[actuatorIndex].getValue());
+         float targetPosition = goalPositions.get(actuatorIndex);
+         float maxVelocity = Math.abs(goalVelocities.get(actuatorIndex));
 
          trajectory.setGoal(targetPosition, maxVelocity);
          float commandedPosition = trajectory.update(dt);
@@ -165,13 +155,7 @@ public class AbilityHandManager
    private void updateVelocityControl()
    {
       hand.setCommandType(AbilityHandCommandType.VELOCITY);
-
-      float[] commandVelocities = new float[ACTUATOR_COUNT];
-      for (int i = 0; i < ACTUATOR_COUNT; i++)
-      {
-         commandVelocities[i] = (float) goalVelocities[i].getValue();
-      }
-      hand.setCommandValues(commandVelocities);
+      hand.setCommandValues(goalVelocities.toFloatArray());
    }
 
    /** Performs multi-stage grip control, moving fingers sequentially through grip.stages. */
@@ -230,7 +214,7 @@ public class AbilityHandManager
          }
 
          TrapezoidalTrajectory1D trajectory = fingerTrajectories[actuatorIndex];
-         float maximumVelocity = Math.abs((float) goalVelocities[actuatorIndex].getValue());
+         float maximumVelocity = Math.abs(goalVelocities.get(actuatorIndex));
 
          if (isActive)
          {
@@ -305,18 +289,17 @@ public class AbilityHandManager
     */
    public void setGoalPosition(int index, float goalPosition)
    {
-      goalPositions[index].set(goalPosition);
+      goalPositions.set(index, goalPosition);
    }
 
    /**
     * Sets goal positions for all actuators.
     *
-    * @param goalPositions array of target positions, length ACTUATOR_COUNT
+    * @param positions array of target positions, length ACTUATOR_COUNT
     */
-   public void setGoalPositions(float[] goalPositions)
+   public void setGoalPositions(float[] positions)
    {
-      for (int i = 0; i < ACTUATOR_COUNT; ++i)
-         setGoalPosition(i, goalPositions[i]);
+      goalPositions.setAll(positions);
    }
 
    /**
@@ -327,18 +310,17 @@ public class AbilityHandManager
     */
    public void setGoalVelocity(int index, float goalVelocity)
    {
-      goalVelocities[index].set(goalVelocity);
+      goalVelocities.set(index, goalVelocity);
    }
 
    /**
     * Sets goal velocities for all actuators.
     *
-    * @param goalVelocities array of target velocities, length ACTUATOR_COUNT
+    * @param velocities array of target velocities, length ACTUATOR_COUNT
     */
-   public void setGoalVelocities(float[] goalVelocities)
+   public void setGoalVelocities(float[] velocities)
    {
-      for (int i = 0; i < ACTUATOR_COUNT; ++i)
-         setGoalVelocity(i, goalVelocities[i]);
+      goalVelocities.setAll(velocities);
    }
 
    /**
@@ -359,7 +341,7 @@ public class AbilityHandManager
     */
    public float getGoalPosition(int index)
    {
-      return (float) goalPositions[index].getValue();
+      return goalPositions.get(index);
    }
 
    /**
@@ -370,6 +352,6 @@ public class AbilityHandManager
     */
    public float getGoalVelocity(int index)
    {
-      return (float) goalVelocities[index].getValue();
+      return goalVelocities.get(index);
    }
 }
