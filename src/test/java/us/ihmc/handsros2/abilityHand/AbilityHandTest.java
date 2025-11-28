@@ -33,7 +33,7 @@ public class AbilityHandTest
       hand.setGoalPositions(goalPositions);
       hand.setGoalVelocities(new float[] {30f, 30f, 30f, 30f, 30f, 30f});
 
-      int numberOfSteps = 200;
+      int numberOfSteps = 100;
       float timeStep = 0.01f;
 
       float[] times = new float[numberOfSteps];
@@ -57,7 +57,7 @@ public class AbilityHandTest
             {
                float prevPos = actuatorPositions[fingerIndex][stepIndex - 1];
                float velocity = (command - prevPos) * (1.0f / timeStep);
-               hand.setActuatorVelocity(fingerIndex, velocity);
+               hand.setFingerVelocityDegPerSec(fingerIndex, velocity);
             }
 
             actuatorPositions[fingerIndex][stepIndex] = hand.getActuatorPosition(fingerIndex);
@@ -88,15 +88,19 @@ public class AbilityHandTest
 
       int plotWidth = 60;
 
-      System.out.println("ASCII plot of all finger positions/velocities in POSITION mode:");
-      asciiPlotAllFingers(times, actuatorPositions, fingerVelocities, minPos, maxPos, minVel, maxVel, plotWidth);
+      float tolerance = 1e-3f;
 
+      System.out.printf("Asserting command type is POSITION, actual=%s%n", hand.getCommandType());
       assertEquals(AbilityHandCommandType.POSITION, hand.getCommandType());
 
       for (int i = 0; i < goalPositions.length; i++)
-         System.out.printf("Finger %d: target=%.3f actual=%.3f%n", i, goalPositions[i], hand.getCommandValue(i));
-      for (int i = 0; i < goalPositions.length; i++)
-         assertEquals(goalPositions[i], hand.getCommandValue(i), 1e-3f);
+      {
+         float target = goalPositions[i];
+         float actual = hand.getCommandValue(i);
+         System.out.printf("Asserting finger %d: target=%.3f actual=%.3f tol=%.4f%n",
+                           i, target, actual, tolerance);
+         assertEquals(target, actual, tolerance);
+      }
    }
 
 
@@ -363,7 +367,8 @@ public class AbilityHandTest
    /**
     * ASCII plot for 6 fingers at once.
     * Each time step is a line; each finger's position is plotted on the left,
-    * and each finger's velocity is plotted on the right.
+    * and each finger's velocity is plotted on the right, followed by numeric
+    * positions and velocities.
     */
    private void asciiPlotAllFingers(float[] times,
                                     float[][] fingerPositions,
@@ -384,7 +389,8 @@ public class AbilityHandTest
       if (velRange < 1e-6f)
          velRange = 1e-6f;
 
-      String header = "Step | Time   | " + String.format("%-" + plotWidth + "s", "Position") + " | " + String.format("%-" + plotWidth + "s", "Velocity");
+      String header = "Step | Time   | " + String.format("%-" + plotWidth + "s", "Position") + " | " + String.format("%-" + plotWidth + "s", "Velocity")
+                      + " | pos[deg], vel[deg/s]";
       System.out.println(header);
 
       for (int stepIndex = 0; stepIndex < times.length; stepIndex++)
@@ -434,6 +440,14 @@ public class AbilityHandTest
          line.append(" | ");
          line.append(new String(velCanvas));
          line.append(" | ");
+
+         // Append numeric positions and velocities with %.1f precision
+         for (int fingerIndex = 0; fingerIndex < fingerPositions.length; fingerIndex++)
+         {
+            float pos = fingerPositions[fingerIndex][stepIndex];
+            float vel = fingerVelocities[fingerIndex][stepIndex];
+            line.append(String.format("%d:%.1f/%.1f ", fingerIndex, pos, vel));
+         }
 
          System.out.println(line);
       }

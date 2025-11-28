@@ -3,24 +3,30 @@ string<=32 identifier
 
 byte POSITION_CONTROL=0
 byte VELOCITY_CONTROL=1
-byte VEL_TO_POS_CONTROL=2
-byte GRIP_CONTROL=3
+byte GRIP_CONTROL=2
 
-# Specifies the control mode
+# Specifies the control mode (ordinal of AbilityHandControlMode)
 # Default = position control
 byte control_mode 0
 
-byte POWER_GRIP=0
-byte KEY_GRIP=1
-byte TRIPOD_OPEN_GRIP=2
-byte TRIPOD_CLOSED_GRIP=3
-byte RELAX_GRIP=3
-byte RUDE_GRIP=4
-byte HOOK_GRIP=5
-byte PINCH_OPEN_GRIP=6
-byte PINCH_CLOSED_GRIP=7
-
-byte grip
-
-float32[6] goal_positions
+# Goal velocities when executing commands in velocity control mode
+# Max velocities when in position or grip control modes
 float32[6] goal_velocities
+
+# Goal positions when using POSITION_CONTROL mode
+float32[6] goal_positions
+
+byte OPEN_GRIP=0
+byte CLOSE_GRIP=1
+byte PINCH_GRIP=2
+byte FLAT_GRIP=3
+byte HOOK_GRIP=4
+byte RELAX_GRIP=5
+byte DOOR_LEVER_OPEN_GRIP=6
+byte DOOR_LEVER_CLOSE_GRIP=7
+byte DOOR_LEVER_CRUSH_GRIP=8
+byte KEY_OPEN_GRIP=9
+byte KEY_CLOSE_GRIP=10
+
+# Grip to execute in GRIP_CONTROL mode
+byte grip

@@ -13,38 +13,41 @@ module ihmc_hands_ros2
       const octet VELOCITY_CONTROL =
       1;
 
-      const octet VEL_TO_POS_CONTROL =
+      const octet GRIP_CONTROL =
       2;
 
-      const octet GRIP_CONTROL =
-      3;
-
-      const octet POWER_GRIP =
+      const octet OPEN_GRIP =
       0;
 
-      const octet KEY_GRIP =
+      const octet CLOSE_GRIP =
       1;
 
-      const octet TRIPOD_OPEN_GRIP =
+      const octet PINCH_GRIP =
       2;
 
-      const octet TRIPOD_CLOSED_GRIP =
+      const octet FLAT_GRIP =
       3;
-
-      const octet RELAX_GRIP =
-      3;
-
-      const octet RUDE_GRIP =
-      4;
 
       const octet HOOK_GRIP =
+      4;
+
+      const octet RELAX_GRIP =
       5;
 
-      const octet PINCH_OPEN_GRIP =
+      const octet DOOR_LEVER_OPEN_GRIP =
       6;
 
-      const octet PINCH_CLOSED_GRIP =
+      const octet DOOR_LEVER_CLOSE_GRIP =
       7;
+
+      const octet DOOR_LEVER_CRUSH_GRIP =
+      8;
+
+      const octet KEY_OPEN_GRIP =
+      9;
+
+      const octet KEY_CLOSE_GRIP =
+      10;
 
 
       @TypeCode(type="ihmc_hands_ros2::msg::dds_::AbilityHandCommand_")
@@ -55,13 +58,23 @@ module ihmc_hands_ros2
          */
         string<32> identifier;
         /**
-         * Specifies the control mode
+         * Specifies the control mode (ordinal of AbilityHandControlMode)
          * Default = position control
          */
         octet control_mode;
-        octet grip;
-        float goal_positions[6];
+        /**
+         * Goal velocities when executing commands in velocity control mode
+         * Max velocities when in position or grip control modes
+         */
         float goal_velocities[6];
+        /**
+         * Goal positions when using POSITION_CONTROL mode
+         */
+        float goal_positions[6];
+        /**
+         * Grip to execute in GRIP_CONTROL mode
+         */
+        octet grip;
       };
     };
   };

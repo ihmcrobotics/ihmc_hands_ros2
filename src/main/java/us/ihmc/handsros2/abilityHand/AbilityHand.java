@@ -565,6 +565,34 @@ public class AbilityHand implements HandInterface
    }
 
    /**
+    * Set the actuator (rotor) velocity such that the approximate finger joint
+    * velocity in degrees per second matches the desired value.
+    * <p>
+    * This inverts the relation:
+    * <pre>
+    * finger_velocity_deg = gear_ratio * rotor_velocity_rad * (180 / pi)
+    * </pre>
+    * where the gear ratio depends on the finger:
+    * Index, Middle, Ring, Pinky, Thumb Flexor: 649
+    * Thumb Rotator: 162.45
+    * </p>
+    *
+    * @param index                 Index of the actuator (0..5).
+    * @param fingerVelocityDegPerSec Desired finger joint velocity in degrees per second.
+    */
+   public void setFingerVelocityDegPerSec(int index, float fingerVelocityDegPerSec)
+   {
+      // 0-3: fingers, 4: thumb flexor, 5: thumb rotator.
+      float gearRatio = (index == 5) ? 162.45f : 649.0f;
+
+      // rotor_velocity_rad = finger_velocity_deg / (gear_ratio * (180/pi))
+      float rotorVelocityRadPerSec =
+            fingerVelocityDegPerSec / (gearRatio * (180.0f / (float) Math.PI));
+
+      setActuatorVelocity(index, rotorVelocityRadPerSec);
+   }
+
+   /**
     * Set the velocity of the actuator at the specified index.
     *
     * @param index Index at which to set the velocity value, in radians per second.

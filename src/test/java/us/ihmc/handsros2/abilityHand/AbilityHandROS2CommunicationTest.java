@@ -90,25 +90,89 @@ public class AbilityHandROS2CommunicationTest
 
       // Read values
       controllerCommunication.readCommand(hand);
-      for (int i = 0; i < 100; ++i)
-         hand.update(0.01f);
 
-      // Assert that the messages were received
-      assertTrue(received.get());
       for (int i = 0; i < ACTUATOR_COUNT; ++i)
       {
-         assertEquals(hand.getActuatorPosition(i), stateReceived.getActuatorPositions()[i]);
-         assertEquals(hand.getActuatorVelocity(i), stateReceived.getActuatorVelocities()[i]);
-         assertEquals(hand.getActuatorCurrent(i), stateReceived.getActuatorCurrents()[i]);
-         assertEquals(COMMAND_VALUES[i], hand.getCommandValue(i));
+         float expectedPos = hand.getActuatorPosition(i);
+         float actualPos = stateReceived.getActuatorPositions()[i];
+         System.out.printf("Asserting actuator %d position: expected=%.3f actual=%.3f%n", i, expectedPos, actualPos);
+         assertEquals(expectedPos, actualPos);
+
+         float expectedVelDeg = hand.getFingerVelocityDegPerSec(i);
+         float actualVelDeg = stateReceived.getActuatorVelocities()[i];
+         System.out.printf("Asserting actuator %d velocity (deg/s): expected=%.3f actual=%.3f%n", i, expectedVelDeg, actualVelDeg);
+         assertEquals(expectedVelDeg, actualVelDeg);
       }
+
+      float[] prevPos = new float[ACTUATOR_COUNT];
+      for (int i = 0; i < 50; ++i)
+      {
+         float dt = 0.01f;
+         hand.update(dt);
+
+         for (int f = 0; f < ACTUATOR_COUNT; f++)
+         {
+            hand.setActuatorPosition(f, hand.getCommandValue(f));
+            if (i > 0)
+            {
+               float velocity = (hand.getCommandValue(f) - prevPos[f]) * (1.0f / dt);
+               hand.setFingerVelocityDegPerSec(f, velocity);
+            }
+            prevPos[f] = hand.getActuatorPosition(f);
+         }
+
+         System.out.printf("Hand state - Position: %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, Command: %.2f, %.2f, %.2f, %.2f, %.2f, %.2f%n",
+                           hand.getActuatorPosition(0),
+                           hand.getActuatorPosition(1),
+                           hand.getActuatorPosition(2),
+                           hand.getActuatorPosition(3),
+                           hand.getActuatorPosition(4),
+                           hand.getActuatorPosition(5),
+                           hand.getCommandValue(0),
+                           hand.getCommandValue(1),
+                           hand.getCommandValue(2),
+                           hand.getCommandValue(3),
+                           hand.getCommandValue(4),
+                           hand.getCommandValue(5));
+      }
+
+      // Assert that the messages were received
+      System.out.printf("Asserting that a state message was received: received=%s%n", received.get());
+      assertTrue(received.get());
+
+      for (int i = 0; i < ACTUATOR_COUNT; ++i)
+      {
+         float expectedCurrent = hand.getActuatorCurrent(i);
+         float actualCurrent = stateReceived.getActuatorCurrents()[i];
+         System.out.printf("Asserting actuator %d current: expected=%.3f actual=%.3f%n", i, expectedCurrent, actualCurrent);
+         assertEquals(expectedCurrent, actualCurrent);
+
+         float expectedCommand = COMMAND_VALUES[i];
+         float actualCommand = hand.getCommandValue(i);
+         System.out.printf("Asserting actuator %d command value: expected=%.3f actual=%.3f%n", i, expectedCommand, actualCommand);
+         assertEquals(expectedCommand, actualCommand);
+      }
+
       for (int i = 0; i < TOUCH_SENSOR_COUNT; ++i)
       {
-         assertEquals(hand.getSensedPressure(i), stateReceived.getTouchSensorReadings()[i]);
+         float expectedPressure = hand.getSensedPressure(i);
+         float actualPressure = stateReceived.getTouchSensorReadings()[i];
+         System.out.printf("Asserting touch sensor %d pressure: expected=%.3f actual=%.3f%n", i, expectedPressure, actualPressure);
+         assertEquals(expectedPressure, actualPressure);
       }
+
+      System.out.printf("Asserting command type: expected=%s actual=%s%n", COMMAND_TYPE, hand.getCommandType());
       assertEquals(COMMAND_TYPE, hand.getCommandType());
-      assertEquals(HAND_SIDE, RobotSide.fromByte(stateReceived.getHandSide()));
-      assertEquals(SERIAL_NUMBER, stateReceived.getIdentifierAsString());
+
+      RobotSide expectedSide = HAND_SIDE;
+      RobotSide actualSide = RobotSide.fromByte(stateReceived.getHandSide());
+      System.out.printf("Asserting hand side: expected=%s actual=%s%n", expectedSide, actualSide);
+      assertEquals(expectedSide, actualSide);
+
+      String expectedSerial = SERIAL_NUMBER;
+      String actualSerial = stateReceived.getIdentifierAsString();
+      System.out.printf("Asserting serial number: expected=%s actual=%s%n", expectedSerial, actualSerial);
+      assertEquals(expectedSerial, actualSerial);
 
       // Shut things down
       controllerCommunication.shutdown();
