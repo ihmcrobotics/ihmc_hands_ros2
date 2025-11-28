@@ -64,7 +64,6 @@ public class AbilityHandROS2CommunicationTest
       AbilityHand hand = new AbilityHand(SERIAL_NUMBER, HAND_SIDE);
       hand.setActuatorPositions(ACTUATOR_POSITIONS); // Set the state of the hand
       hand.setRawFSRValues(TOUCH_SENSOR_READINGS);
-      hand.initialize();
 
       // Create an instance of the communication class
       AbilityHandROS2ControllerCommunication controllerCommunication = new AbilityHandROS2ControllerCommunication("test_controller_comm", domainId);

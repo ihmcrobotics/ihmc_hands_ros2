@@ -99,7 +99,6 @@ public class AbilityHand implements HandInterface
    /** Track previous time for computing dt. */
    private long previousTimeNanos = -1L;
    private float dt;
-   private boolean initialized = false;
 
    /**
     * Creates a new AbilityHand with its own {@link YoRegistry}.
@@ -150,21 +149,6 @@ public class AbilityHand implements HandInterface
    }
 
    /**
-    * Initializes high-level control state (goal positions, velocities)
-    * using the current actuator state as the starting point.
-    */
-   void initialize()
-   {
-      initialized = true;
-      for (int i = 0; i < ACTUATOR_COUNT; i++)
-      {
-         // Use current measured state as starting goals
-         goalPositions.set(i, getActuatorPosition(i));
-         goalVelocities.set(i, 30.0f); // deg/s max per joint (tunable)
-      }
-   }
-
-   /**
     * Updates the hand commands based on the desired values set in this manager.
     * Should be called periodically.
     */
@@ -191,12 +175,6 @@ public class AbilityHand implements HandInterface
    void update(float dt)
    {
       this.dt = dt;
-
-      if (!initialized && getActuatorPosition(0) != 0.0f)
-         initialize();
-
-      if (!initialized)
-         return;
 
       AbilityHandControlMode currentControlMode = controlMode.getValue();
 
@@ -226,7 +204,6 @@ public class AbilityHand implements HandInterface
          float targetPosition = goalPositions.get(actuatorIndex);
          float maxVelocity = Math.abs(goalVelocities.get(actuatorIndex));
 
-         float currentCommand = getCommandValue(actuatorIndex);
          float commandedPosition = TrapezoidalStep.step(actuatorPositions.get(actuatorIndex),
                                                         getFingerVelocityDegPerSec(actuatorIndex),
                                                         targetPosition,

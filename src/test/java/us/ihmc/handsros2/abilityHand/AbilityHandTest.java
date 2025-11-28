@@ -19,24 +19,25 @@ public class AbilityHandTest
       AbilityHand hand = new AbilityHand("24ABH000", RobotSide.LEFT);
       hand.setActuatorPositions(new float[] {30f, 30f, 30f, 30f, 30f, -30f});
       hand.setGoalVelocities(new float[] {30f, 30f, 30f, 30f, 30f, 30f});
-      hand.initialize();
 
       return Stream.of(Arguments.of(hand));
    }
 
-   @ParameterizedTest
-   @MethodSource("createHand")
-   public void testPositionControl(AbilityHand hand)
+   @Test
+   public void testPositionControl()
    {
-      float[] targetPositions = {10f, 20f, 30f, 40f, 50f, -10f};
+      AbilityHand hand = new AbilityHand("", RobotSide.LEFT);
       hand.setControlMode(AbilityHandControlMode.POSITION);
-      hand.setGoalPositions(targetPositions);
+      hand.setActuatorPositions(new float[] {30f, 30f, 30f, 30f, 30f, -30f});
+      float[] goalPositions = {10f, 20f, 30f, 40f, 50f, -10f};
+      hand.setGoalPositions(goalPositions);
+      hand.setGoalVelocities(new float[] {30f, 30f, 30f, 30f, 30f, 30f});
 
       int numberOfSteps = 200;
       float timeStep = 0.01f;
 
       float[] times = new float[numberOfSteps];
-      float[][] commandedPositions = new float[ACTUATOR_COUNT][numberOfSteps];
+      float[][] actuatorPositions = new float[ACTUATOR_COUNT][numberOfSteps];
       float[][] fingerVelocities = new float[ACTUATOR_COUNT][numberOfSteps];
 
       float currentTime = 0.0f;
@@ -46,40 +47,58 @@ public class AbilityHandTest
          hand.update(timeStep);
 
          times[stepIndex] = currentTime;
+
          for (int fingerIndex = 0; fingerIndex < ACTUATOR_COUNT; fingerIndex++)
          {
-            commandedPositions[fingerIndex][stepIndex] = hand.getCommandValue(fingerIndex);
-            fingerVelocities[fingerIndex][stepIndex] = hand.getCommandValue(fingerIndex);
+            float command = hand.getCommandValue(fingerIndex);
+            hand.setActuatorPosition(fingerIndex, command);
+
+            if (stepIndex > 0)
+            {
+               float prevPos = actuatorPositions[fingerIndex][stepIndex - 1];
+               float velocity = (command - prevPos) * (1.0f / timeStep);
+               hand.setActuatorVelocity(fingerIndex, velocity);
+            }
+
+            actuatorPositions[fingerIndex][stepIndex] = hand.getActuatorPosition(fingerIndex);
+            fingerVelocities[fingerIndex][stepIndex] = hand.getFingerVelocityDegPerSec(fingerIndex);
          }
 
          currentTime += timeStep;
       }
 
-      // Compute global min/max across all fingers for normalization
-      float globalMin = Float.POSITIVE_INFINITY;
-      float globalMax = Float.NEGATIVE_INFINITY;
+      // Compute global min/max for positions and velocities
+      float minPos = Float.POSITIVE_INFINITY;
+      float maxPos = Float.NEGATIVE_INFINITY;
+      float minVel = Float.POSITIVE_INFINITY;
+      float maxVel = Float.NEGATIVE_INFINITY;
+
       for (int fingerIndex = 0; fingerIndex < ACTUATOR_COUNT; fingerIndex++)
       {
          for (int stepIndex = 0; stepIndex < numberOfSteps; stepIndex++)
          {
-            float value = commandedPositions[fingerIndex][stepIndex];
-            globalMin = Math.min(globalMin, value);
-            globalMax = Math.max(globalMax, value);
+            float p = actuatorPositions[fingerIndex][stepIndex];
+            float v = fingerVelocities[fingerIndex][stepIndex];
+            if (p < minPos) minPos = p;
+            if (p > maxPos) maxPos = p;
+            if (v < minVel) minVel = v;
+            if (v > maxVel) maxVel = v;
          }
       }
 
       int plotWidth = 60;
 
-      System.out.println("ASCII plot of all finger positions in POSITION mode:");
-      asciiPlotAllFingers(times, commandedPositions, fingerVelocities, globalMin, globalMax, plotWidth);
+      System.out.println("ASCII plot of all finger positions/velocities in POSITION mode:");
+      asciiPlotAllFingers(times, actuatorPositions, fingerVelocities, minPos, maxPos, minVel, maxVel, plotWidth);
 
       assertEquals(AbilityHandCommandType.POSITION, hand.getCommandType());
-      
-      for (int i = 0; i < targetPositions.length; i++)
-         System.out.printf("Finger %d: target=%.3f actual=%.3f%n", i, targetPositions[i], hand.getCommandValue(i));
-      for (int i = 0; i < targetPositions.length; i++)
-         assertEquals(targetPositions[i], hand.getCommandValue(i), 1e-3f);
+
+      for (int i = 0; i < goalPositions.length; i++)
+         System.out.printf("Finger %d: target=%.3f actual=%.3f%n", i, goalPositions[i], hand.getCommandValue(i));
+      for (int i = 0; i < goalPositions.length; i++)
+         assertEquals(goalPositions[i], hand.getCommandValue(i), 1e-3f);
    }
+
 
    @ParameterizedTest
    @MethodSource("createHand")
@@ -133,28 +152,34 @@ public class AbilityHandTest
          currentTime += timeStep;
       }
 
-      // Compute global min/max across all fingers for normalization
-      float globalMin = Float.POSITIVE_INFINITY;
-      float globalMax = Float.NEGATIVE_INFINITY;
+      // Compute global min/max across all fingers for positions and velocities
+      float minPos = Float.POSITIVE_INFINITY;
+      float maxPos = Float.NEGATIVE_INFINITY;
+      float minVel = Float.POSITIVE_INFINITY;
+      float maxVel = Float.NEGATIVE_INFINITY;
       for (int fingerIndex = 0; fingerIndex < ACTUATOR_COUNT; fingerIndex++)
       {
          for (int stepIndex = 0; stepIndex < numberOfSteps; stepIndex++)
          {
-            float value = fingerPositions[fingerIndex][stepIndex];
-            globalMin = Math.min(globalMin, value);
-            globalMax = Math.max(globalMax, value);
+            float p = fingerPositions[fingerIndex][stepIndex];
+            float v = fingerVelocities[fingerIndex][stepIndex];
+            if (p < minPos) minPos = p;
+            if (p > maxPos) maxPos = p;
+            if (v < minVel) minVel = v;
+            if (v > maxVel) maxVel = v;
          }
       }
 
       int plotWidth = 60;
 
-      System.out.println("ASCII plot of all finger positions in VELOCITY mode:");
-      asciiPlotAllFingers(times, fingerPositions, fingerVelocities, globalMin, globalMax, plotWidth);
+      System.out.println("ASCII plot of all finger positions/velocities in VELOCITY mode:");
+      asciiPlotAllFingers(times, fingerPositions, fingerVelocities, minPos, maxPos, minVel, maxVel, plotWidth);
 
       assertEquals(AbilityHandCommandType.VELOCITY, hand.getCommandType());
       for (int i = 0; i < targetVelocities.length; i++)
          assertEquals(targetVelocities[i], hand.getCommandValue(i), 1e-6f);
    }
+
 
    @ParameterizedTest
    @MethodSource("createHand")
@@ -173,6 +198,7 @@ public class AbilityHandTest
 
       float[] times = new float[numberOfSteps];
       float[][] fingerPositions = new float[ACTUATOR_COUNT][numberOfSteps];
+      float[][] fingerVelocities = new float[ACTUATOR_COUNT][numberOfSteps];
 
       float currentTime = 0.0f;
 
@@ -180,7 +206,7 @@ public class AbilityHandTest
       {
          if (stepIndex == 130)
          {
-            // Stage 0 fingers for POWER grip: indices 0–3 should have moved upward from initial 30
+            // Stage 0 fingers for POWER grip: indices 0–3 should have moved upward from initial positions
             for (int i = 0; i < 4; i++)
             {
                float fingerPos = hand.getCommandValue(i);
@@ -195,39 +221,53 @@ public class AbilityHandTest
 
          times[stepIndex] = currentTime;
 
-         // For this test, treat commanded positions as the actual positions
          for (int fingerIndex = 0; fingerIndex < ACTUATOR_COUNT; fingerIndex++)
          {
-            float commandedPosition = hand.getCommandValue(fingerIndex);
-            fingerPositions[fingerIndex][stepIndex] = commandedPosition;
+            float pos = hand.getCommandValue(fingerIndex);
+            fingerPositions[fingerIndex][stepIndex] = pos;
+
+            if (stepIndex == 0)
+            {
+               fingerVelocities[fingerIndex][stepIndex] = 0.0f;
+            }
+            else
+            {
+               float prevPos = fingerPositions[fingerIndex][stepIndex - 1];
+               fingerVelocities[fingerIndex][stepIndex] = (pos - prevPos) * (1.0f / timeStep);
+            }
          }
 
          currentTime += timeStep;
       }
 
       // Normalize for plotting
-      float globalMin = Float.POSITIVE_INFINITY;
-      float globalMax = Float.NEGATIVE_INFINITY;
+      float minPos = Float.POSITIVE_INFINITY;
+      float maxPos = Float.NEGATIVE_INFINITY;
+      float minVel = Float.POSITIVE_INFINITY;
+      float maxVel = Float.NEGATIVE_INFINITY;
       for (int fingerIndex = 0; fingerIndex < ACTUATOR_COUNT; fingerIndex++)
       {
          for (int stepIndex = 0; stepIndex < numberOfSteps; stepIndex++)
          {
-            float value = fingerPositions[fingerIndex][stepIndex];
-            globalMin = Math.min(globalMin, value);
-            globalMax = Math.max(globalMax, value);
+            float p = fingerPositions[fingerIndex][stepIndex];
+            float v = fingerVelocities[fingerIndex][stepIndex];
+            if (p < minPos) minPos = p;
+            if (p > maxPos) maxPos = p;
+            if (v < minVel) minVel = v;
+            if (v > maxVel) maxVel = v;
          }
       }
 
       int plotWidth = 60;
 
-      System.out.println("ASCII plot of all finger positions in GRIP mode (initial thumb stage):");
-      // We do not care about velocities here, so pass null for velocity array
-      asciiPlotAllFingers(times, fingerPositions, null, globalMin, globalMax, plotWidth);
+      System.out.println("ASCII plot of all finger positions/velocities in GRIP mode (initial thumb stage):");
+      asciiPlotAllFingers(times, fingerPositions, fingerVelocities, minPos, maxPos, minVel, maxVel, plotWidth);
 
       // GRIP mode should be issuing POSITION commands
       assertEquals(AbilityHandCommandType.POSITION, hand.getCommandType(),
                    "Expected POSITION command type but got " + hand.getCommandType());
    }
+
 
    @ParameterizedTest
    @MethodSource("createHand")
@@ -249,6 +289,7 @@ public class AbilityHandTest
 
       float[] times = new float[numberOfSteps];
       float[][] fingerPositions = new float[ACTUATOR_COUNT][numberOfSteps];
+      float[][] fingerVelocities = new float[ACTUATOR_COUNT][numberOfSteps];
 
       float currentTime = 0.0f;
 
@@ -269,67 +310,81 @@ public class AbilityHandTest
 
          times[stepIndex] = currentTime;
 
-         // Treat commanded positions as actual positions for this test
          for (int fingerIndex = 0; fingerIndex < ACTUATOR_COUNT; fingerIndex++)
          {
-            float commandedPosition = hand.getCommandValue(fingerIndex);
-            fingerPositions[fingerIndex][stepIndex] = commandedPosition;
+            float pos = hand.getCommandValue(fingerIndex);
+            fingerPositions[fingerIndex][stepIndex] = pos;
+
+            if (stepIndex == 0)
+            {
+               fingerVelocities[fingerIndex][stepIndex] = 0.0f;
+            }
+            else
+            {
+               float prevPos = fingerPositions[fingerIndex][stepIndex - 1];
+               fingerVelocities[fingerIndex][stepIndex] = (pos - prevPos) * (1.0f / timeStep);
+            }
          }
 
          currentTime += timeStep;
       }
 
       // Normalize for plotting
-      float globalMin = Float.POSITIVE_INFINITY;
-      float globalMax = Float.NEGATIVE_INFINITY;
+      float minPos = Float.POSITIVE_INFINITY;
+      float maxPos = Float.NEGATIVE_INFINITY;
+      float minVel = Float.POSITIVE_INFINITY;
+      float maxVel = Float.NEGATIVE_INFINITY;
       for (int fingerIndex = 0; fingerIndex < ACTUATOR_COUNT; fingerIndex++)
       {
          for (int stepIndex = 0; stepIndex < numberOfSteps; stepIndex++)
          {
-            float value = fingerPositions[fingerIndex][stepIndex];
-            globalMin = Math.min(globalMin, value);
-            globalMax = Math.max(globalMax, value);
+            float p = fingerPositions[fingerIndex][stepIndex];
+            float v = fingerVelocities[fingerIndex][stepIndex];
+            if (p < minPos)
+               minPos = p;
+            if (p > maxPos)
+               maxPos = p;
+            if (v < minVel)
+               minVel = v;
+            if (v > maxVel)
+               maxVel = v;
          }
       }
 
       int plotWidth = 60;
 
-      System.out.println("ASCII plot of all finger positions across multiple grips:");
-      asciiPlotAllFingers(times, fingerPositions, null, globalMin, globalMax, plotWidth);
+      System.out.println("ASCII plot of all finger positions/velocities across multiple grips:");
+      asciiPlotAllFingers(times, fingerPositions, fingerVelocities, minPos, maxPos, minVel, maxVel, plotWidth);
 
       // GRIP mode should be issuing POSITION commands at the end
-      assertEquals(AbilityHandCommandType.POSITION, hand.getCommandType(),
-                   "Expected POSITION command type but got " + hand.getCommandType());
+      assertEquals(AbilityHandCommandType.POSITION, hand.getCommandType(), "Expected POSITION command type but got " + hand.getCommandType());
    }
-
 
    /**
     * ASCII plot for 6 fingers at once.
-    * Each time step is a line; each finger is plotted with a different marker,
-    * and at the end of the line the numeric position and velocity for each finger
-    * are printed concisely.
+    * Each time step is a line; each finger's position is plotted on the left,
+    * and each finger's velocity is plotted on the right.
     */
    private void asciiPlotAllFingers(float[] times,
                                     float[][] fingerPositions,
                                     float[][] fingerVelocities,
-                                    float minimumValue,
-                                    float maximumValue,
+                                    float minPosition,
+                                    float maxPosition,
+                                    float minVelocity,
+                                    float maxVelocity,
                                     int plotWidth)
    {
       char[] markers = {'0', '1', '2', '3', '4', '5'};
 
-      float valueRange = maximumValue - minimumValue;
-      if (valueRange < 1e-6f)
-         valueRange = 1e-6f; // avoid division by zero
+      float posRange = maxPosition - minPosition;
+      if (posRange < 1e-6f)
+         posRange = 1e-6f;
 
-      StringBuilder header = new StringBuilder();
-      header.append("Step | Time   | ");
-      header.append(" ".repeat(Math.max(0, plotWidth)));
-      header.append(" | pos/vel per finger [0..5]");
-      if (fingerVelocities != null)
-         header.append(" | pos/vel per finger [0..5]");
-      else
-         header.append(" | pos per finger [0..5]");
+      float velRange = maxVelocity - minVelocity;
+      if (velRange < 1e-6f)
+         velRange = 1e-6f;
+
+      String header = "Step | Time   | " + String.format("%-" + plotWidth + "s", "Position") + " | " + String.format("%-" + plotWidth + "s", "Velocity");
       System.out.println(header);
 
       for (int stepIndex = 0; stepIndex < times.length; stepIndex++)
@@ -339,47 +394,50 @@ public class AbilityHandTest
          StringBuilder line = new StringBuilder();
          line.append(String.format("%4d | %6.3f | ", stepIndex, time));
 
-         // Canvas for markers
-         char[] canvas = new char[plotWidth];
+         // Position canvas
+         char[] posCanvas = new char[plotWidth];
          for (int i = 0; i < plotWidth; i++)
-            canvas[i] = ' ';
+            posCanvas[i] = ' ';
+
+         // Velocity canvas
+         char[] velCanvas = new char[plotWidth];
+         for (int i = 0; i < plotWidth; i++)
+            velCanvas[i] = ' ';
 
          // Place each finger marker based on position
          for (int fingerIndex = 0; fingerIndex < fingerPositions.length; fingerIndex++)
          {
-            float value = fingerPositions[fingerIndex][stepIndex];
-            float normalized = (value - minimumValue) / valueRange; // 0..1
-            int markerIndex = Math.round(normalized * (plotWidth - 1));
-            if (markerIndex < 0) markerIndex = 0;
-            if (markerIndex >= plotWidth) markerIndex = plotWidth - 1;
-
-            canvas[markerIndex] = markers[fingerIndex];
-         }
-
-         line.append(new String(canvas));
-         line.append(" | ");
-
-         // Append compact per-finger pos/vel: P0=xx.x,V0=yy.y;...
-         for (int fingerIndex = 0; fingerIndex < fingerPositions.length; fingerIndex++)
-         {
             float pos = fingerPositions[fingerIndex][stepIndex];
-            if (fingerVelocities != null)
-            {
-               float vel = fingerVelocities[fingerIndex][stepIndex];
-               line.append(String.format("F%d(%.3f,%.3f)", fingerIndex, pos, vel));
-            }
-            else
-            {
-               line.append(String.format("F%d(%.3f)", fingerIndex, pos));
-            }
-            if (fingerIndex < fingerPositions.length - 1)
-               line.append(" ");
+            float posNorm = (pos - minPosition) / posRange; // 0..1
+            int posIdx = Math.round(posNorm * (plotWidth - 1));
+            if (posIdx < 0)
+               posIdx = 0;
+            if (posIdx >= plotWidth)
+               posIdx = plotWidth - 1;
+            posCanvas[posIdx] = markers[fingerIndex];
          }
+
+         // Place each finger marker based on velocity
+         for (int fingerIndex = 0; fingerIndex < fingerVelocities.length; fingerIndex++)
+         {
+            float vel = fingerVelocities[fingerIndex][stepIndex];
+            float velNorm = (vel - minVelocity) / velRange; // 0..1
+            int velIdx = Math.round(velNorm * (plotWidth - 1));
+            if (velIdx < 0)
+               velIdx = 0;
+            if (velIdx >= plotWidth)
+               velIdx = plotWidth - 1;
+            velCanvas[velIdx] = markers[fingerIndex];
+         }
+
+         line.append(new String(posCanvas));
+         line.append(" | ");
+         line.append(new String(velCanvas));
+         line.append(" | ");
 
          System.out.println(line);
       }
    }
-
 
    @Test
    public void testType()
