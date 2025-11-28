@@ -2,10 +2,10 @@ package us.ihmc.handsros2.abilityHand;
 
 import us.ihmc.handsros2.HandInterface;
 import us.ihmc.handsros2.HandType;
-import us.ihmc.handsros2.trajectories.TrapezoidalTrajectory1D;
 import us.ihmc.handsros2.YoFloatArray;
 import us.ihmc.handsros2.YoIntegerArray;
 import us.ihmc.handsros2.abilityHand.AbilityHandModel.AbilityHandJointName;
+import us.ihmc.handsros2.trajectories.TrapezoidalStep;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoEnum;
@@ -34,7 +34,7 @@ import static us.ihmc.handsros2.abilityHand.AbilityHandModel.AbilityHandJointNam
  * <p>
  * The hand reports actuator velocities as radians per second.
  * These can be converted into degrees/sec using:
- *     de>finger_velocity_deg = gear_ratio * rotor_velocity_rad * (180 / pi)</code>
+ *     <code>finger_velocity_deg = gear_ratio * rotor_velocity_rad * (180 / pi)</code>
  * using the following gear ratios:
  * Index, Middle, Ring, Pinky, Thumb Flexor: 649
  * Thumb Rotator: 162.45
@@ -96,9 +96,6 @@ public class AbilityHand implements HandInterface
    /** Goal velocities per actuator, used as maximum velocities in trajectories and velocity mode. */
    private final YoFloatArray goalVelocities;
 
-   /** Per-finger position trajectories used in POSITION, VEL_TO_POS, and GRIP modes. */
-   private final TrapezoidalTrajectory1D[] fingerTrajectories = new TrapezoidalTrajectory1D[ACTUATOR_COUNT];
-
    /** Track previous time for computing dt. */
    private long previousTimeNanos = -1L;
    private float dt;
@@ -153,7 +150,7 @@ public class AbilityHand implements HandInterface
    }
 
    /**
-    * Initializes high-level control state (goal positions, velocities, trajectories)
+    * Initializes high-level control state (goal positions, velocities)
     * using the current actuator state as the starting point.
     */
    void initialize()
@@ -161,11 +158,9 @@ public class AbilityHand implements HandInterface
       initialized = true;
       for (int i = 0; i < ACTUATOR_COUNT; i++)
       {
+         // Use current measured state as starting goals
          goalPositions.set(i, getActuatorPosition(i));
-         goalVelocities.set(i, 30.0f);
-
-         fingerTrajectories[i] = new TrapezoidalTrajectory1D(goalPositions.get(i), Math.abs(goalVelocities.get(i)), DEFAULT_MAXIMUM_ACCELERATION);
-         fingerTrajectories[i].reset(getActuatorPosition(i), getActuatorVelocity(i));
+         goalVelocities.set(i, 30.0f); // deg/s max per joint (tunable)
       }
    }
 
@@ -188,7 +183,11 @@ public class AbilityHand implements HandInterface
       previousTimeNanos = nowNanos;
    }
 
-   /** Need to supply virtual dt in tests. */
+   /**
+    * Need to supply virtual dt in tests.
+    *
+    * @param dt time step in seconds
+    */
    void update(float dt)
    {
       this.dt = dt;
@@ -200,13 +199,6 @@ public class AbilityHand implements HandInterface
          return;
 
       AbilityHandControlMode currentControlMode = controlMode.getValue();
-
-      // Only reset trajectories when entering POSITION from another mode
-      if (currentControlMode == AbilityHandControlMode.POSITION && previousControlMode != AbilityHandControlMode.POSITION)
-      {
-         for (int i = 0; i < ACTUATOR_COUNT; i++)
-            fingerTrajectories[i].reset(getActuatorPosition(i), getActuatorVelocity(i));
-      }
 
       if (currentControlMode != null)
       {
@@ -222,7 +214,7 @@ public class AbilityHand implements HandInterface
    }
 
    /**
-    * Updates hand in POSITION mode using per-finger trapezoidal trajectories.
+    * Updates hand in POSITION mode using per-finger trapezoidal steps.
     * goalPositions are the targets; goalVelocities set each finger's max velocity.
     */
    private void updatePositionControl()
@@ -231,24 +223,33 @@ public class AbilityHand implements HandInterface
 
       for (int actuatorIndex = 0; actuatorIndex < ACTUATOR_COUNT; actuatorIndex++)
       {
-         TrapezoidalTrajectory1D trajectory = fingerTrajectories[actuatorIndex];
          float targetPosition = goalPositions.get(actuatorIndex);
          float maxVelocity = Math.abs(goalVelocities.get(actuatorIndex));
 
-         trajectory.setGoal(targetPosition, maxVelocity);
-         float commandedPosition = trajectory.update(dt);
+         float currentCommand = getCommandValue(actuatorIndex);
+         float commandedPosition = TrapezoidalStep.step(actuatorPositions.get(actuatorIndex),
+                                                        getFingerVelocityDegPerSec(actuatorIndex),
+                                                        targetPosition,
+                                                        maxVelocity,
+                                                        DEFAULT_MAXIMUM_ACCELERATION,
+                                                        dt);
+
          setCommandValue(actuatorIndex, commandedPosition);
       }
    }
 
-   /** Updates hand to direct velocity control using goalVelocities. */
+   /**
+    * Updates hand to direct velocity control using goalVelocities.
+    */
    private void updateVelocityControl()
    {
       setCommandType(AbilityHandCommandType.VELOCITY);
       setCommandValues(goalVelocities.toFloatArray());
    }
 
-   /** Performs multi-stage grip control, moving fingers sequentially through {@link AbilityHandGrip#stages}. */
+   /**
+    * Performs multi-stage grip control, moving fingers sequentially through {@link AbilityHandGrip#stages}.
+    */
    private void updateGripControl()
    {
       AbilityHandControlMode currentControlMode = controlMode.getValue();
@@ -259,16 +260,10 @@ public class AbilityHand implements HandInterface
       {
          gripStage = 0;
          previousGrip = currentGrip;
-
-         // Re-sync trajectories to current hand state once when entering GRIP
-         for (int actuatorIndex = 0; actuatorIndex < ACTUATOR_COUNT; actuatorIndex++)
-         {
-            fingerTrajectories[actuatorIndex].reset(getActuatorPosition(actuatorIndex), getActuatorVelocity(actuatorIndex));
-         }
       }
       else if (previousGrip != currentGrip)
       {
-         // New grip while already in GRIP: restart stage sequence but keep trajectories continuous
+         // New grip while already in GRIP: restart stage sequence
          gripStage = 0;
          previousGrip = currentGrip;
       }
@@ -280,7 +275,7 @@ public class AbilityHand implements HandInterface
       setCommandType(AbilityHandCommandType.POSITION);
 
       // Normal grip stages: move only the fingers in this stage toward their stage goals,
-      // but update all trajectories every tick.
+      // but update all trajectories (steps) every tick.
       int[] actuatorsToMove = currentGrip.stages[gripStage];
       float[] stageGoalPositions = currentGrip.positions[gripStage];
 
@@ -302,21 +297,28 @@ public class AbilityHand implements HandInterface
             }
          }
 
-         TrapezoidalTrajectory1D trajectory = fingerTrajectories[actuatorIndex];
          float maximumVelocity = Math.abs(goalVelocities.get(actuatorIndex));
+
+         float currentCommand = getCommandValue(actuatorIndex);
+         float targetForThisFinger;
 
          if (isActive)
          {
-            trajectory.setGoal(desiredPosition, maximumVelocity);
+            targetForThisFinger = desiredPosition;
          }
          else
          {
-            // Not active: hold current trajectory position
-            float holdPosition = trajectory.getCurrentPosition();
-            trajectory.setGoal(holdPosition, maximumVelocity);
+            // Not active: hold current command position as its goal
+            targetForThisFinger = currentCommand;
          }
 
-         float commandedPosition = trajectory.update(dt);
+         float commandedPosition = TrapezoidalStep.step(actuatorPositions.get(actuatorIndex),
+                                                        getFingerVelocityDegPerSec(actuatorIndex),
+                                                        targetForThisFinger,
+                                                        maximumVelocity,
+                                                        DEFAULT_MAXIMUM_ACCELERATION,
+                                                        dt);
+
          setCommandValue(actuatorIndex, commandedPosition);
 
          if (isActive && Math.abs(commandedPosition - desiredPosition) >= TOLERANCE)
@@ -330,9 +332,6 @@ public class AbilityHand implements HandInterface
          {
             int actuatorIndex = actuatorsToMove[i];
             float stageGoalPosition = stageGoalPositions[i];
-
-            TrapezoidalTrajectory1D trajectory = fingerTrajectories[actuatorIndex];
-            trajectory.reset(stageGoalPosition, 0.0f);
             setCommandValue(actuatorIndex, stageGoalPosition);
          }
 
@@ -559,6 +558,33 @@ public class AbilityHand implements HandInterface
    public float getActuatorVelocity(int index)
    {
       return actuatorVelocities.get(index);
+   }
+
+   /**
+    * Get the approximate finger velocity in degrees per second for the actuator at the specified index.
+    * <p>
+    * The hand reports actuator (rotor) velocities in radians per second. Finger joint
+    * velocities in degrees per second can be approximated using:
+    * <pre>
+    * finger_velocity_deg = gear_ratio * rotor_velocity_rad * (180 / pi)
+    * </pre>
+    * where the gear ratio depends on the finger:
+    * Index, Middle, Ring, Pinky, Thumb Flexor: 649
+    * Thumb Rotator: 162.45
+    * </p>
+    *
+    * @param index Index to read the velocity from.
+    * @return The approximate finger velocity in degrees per second.
+    */
+   public float getFingerVelocityDegPerSec(int index)
+   {
+      float rotorVelocityRadPerSec = getActuatorVelocity(index);
+
+      // Select gear ratio based on actuator index:
+      // 0-3: fingers, 4: thumb flexor, 5: thumb rotator.
+      float gearRatio = (index == 5) ? 162.45f : 649.0f;
+
+      return gearRatio * rotorVelocityRadPerSec * (180.0f / (float) Math.PI);
    }
 
    /**
