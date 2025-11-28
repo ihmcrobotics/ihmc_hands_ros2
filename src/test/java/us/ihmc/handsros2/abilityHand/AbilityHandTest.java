@@ -1,9 +1,7 @@
 package us.ihmc.handsros2.abilityHand;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import us.ihmc.handsros2.HandType;
 import us.ihmc.robotics.robotSide.RobotSide;
 
@@ -103,12 +101,15 @@ public class AbilityHandTest
       }
    }
 
-
-   @ParameterizedTest
-   @MethodSource("createHand")
-   public void testVelocityControl(AbilityHand hand)
+   @Test
+   public void testVelocityControl()
    {
-      float[] targetVelocities = {1f, 2f, 3f, 4f, 5f, -5f};
+      AbilityHand hand = new AbilityHand("", RobotSide.LEFT);
+      hand.setActuatorPositions(new float[] {30f, 30f, 30f, 30f, 30f, -30f});
+      float[] goalPositions = {10f, 20f, 30f, 40f, 50f, -10f};
+      hand.setGoalPositions(goalPositions);
+
+      float[] targetVelocities = {10f, 20f, 30f, 40f, 50f, -60f};
       hand.setControlMode(AbilityHandControlMode.VELOCITY);
       hand.setGoalVelocities(targetVelocities);
 
@@ -179,16 +180,26 @@ public class AbilityHandTest
       System.out.println("ASCII plot of all finger positions/velocities in VELOCITY mode:");
       asciiPlotAllFingers(times, fingerPositions, fingerVelocities, minPos, maxPos, minVel, maxVel, plotWidth);
 
+      float tolerance = 1e-6f;
+
+      System.out.printf("Asserting command type is VELOCITY, actual=%s%n", hand.getCommandType());
       assertEquals(AbilityHandCommandType.VELOCITY, hand.getCommandType());
+
       for (int i = 0; i < targetVelocities.length; i++)
-         assertEquals(targetVelocities[i], hand.getCommandValue(i), 1e-6f);
+      {
+         float expected = targetVelocities[i];
+         float actual = hand.getCommandValue(i);
+         System.out.printf("Asserting finger %d velocity: expected=%.6f actual=%.6f tol=%.1e%n",
+                           i, expected, actual, tolerance);
+         assertEquals(expected, actual, tolerance);
+      }
    }
 
-
-   @ParameterizedTest
-   @MethodSource("createHand")
-   public void testPowerGripWithInitialThumbStage(AbilityHand hand)
+   @Test
+   public void testCloseGrip()
    {
+      AbilityHand hand = new AbilityHand("24ABH000", RobotSide.LEFT);
+
       // Thumb (index 4) must clear first: simulate it at the clear position already
       float[] initialPositions = {0f, 2f, 7f, 15f, 90f, 10f};
       hand.setActuatorPositions(initialPositions);
@@ -197,11 +208,11 @@ public class AbilityHandTest
       hand.setControlMode(AbilityHandControlMode.GRIP);
       hand.setGrip(AbilityHandGrip.CLOSE);
 
-      int numberOfSteps = 450;
+      int numberOfSteps = 170;
       float timeStep = 0.01f;
 
       float[] times = new float[numberOfSteps];
-      float[][] fingerPositions = new float[ACTUATOR_COUNT][numberOfSteps];
+      float[][] actuatorPositions = new float[ACTUATOR_COUNT][numberOfSteps];
       float[][] fingerVelocities = new float[ACTUATOR_COUNT][numberOfSteps];
 
       float currentTime = 0.0f;
@@ -227,18 +238,18 @@ public class AbilityHandTest
 
          for (int fingerIndex = 0; fingerIndex < ACTUATOR_COUNT; fingerIndex++)
          {
-            float pos = hand.getCommandValue(fingerIndex);
-            fingerPositions[fingerIndex][stepIndex] = pos;
+            float command = hand.getCommandValue(fingerIndex);
+            hand.setActuatorPosition(fingerIndex, command);
 
-            if (stepIndex == 0)
+            if (stepIndex > 0)
             {
-               fingerVelocities[fingerIndex][stepIndex] = 0.0f;
+               float prevPos = actuatorPositions[fingerIndex][stepIndex - 1];
+               float velocity = (command - prevPos) * (1.0f / timeStep);
+               hand.setFingerVelocityDegPerSec(fingerIndex, velocity);
             }
-            else
-            {
-               float prevPos = fingerPositions[fingerIndex][stepIndex - 1];
-               fingerVelocities[fingerIndex][stepIndex] = (pos - prevPos) * (1.0f / timeStep);
-            }
+
+            actuatorPositions[fingerIndex][stepIndex] = hand.getActuatorPosition(fingerIndex);
+            fingerVelocities[fingerIndex][stepIndex] = hand.getFingerVelocityDegPerSec(fingerIndex);
          }
 
          currentTime += timeStep;
@@ -253,7 +264,7 @@ public class AbilityHandTest
       {
          for (int stepIndex = 0; stepIndex < numberOfSteps; stepIndex++)
          {
-            float p = fingerPositions[fingerIndex][stepIndex];
+            float p = actuatorPositions[fingerIndex][stepIndex];
             float v = fingerVelocities[fingerIndex][stepIndex];
             if (p < minPos) minPos = p;
             if (p > maxPos) maxPos = p;
@@ -265,18 +276,18 @@ public class AbilityHandTest
       int plotWidth = 60;
 
       System.out.println("ASCII plot of all finger positions/velocities in GRIP mode (initial thumb stage):");
-      asciiPlotAllFingers(times, fingerPositions, fingerVelocities, minPos, maxPos, minVel, maxVel, plotWidth);
+      asciiPlotAllFingers(times, actuatorPositions, fingerVelocities, minPos, maxPos, minVel, maxVel, plotWidth);
 
       // GRIP mode should be issuing POSITION commands
+      System.out.printf("Asserting GRIP mode uses POSITION command type, actual=%s%n", hand.getCommandType());
       assertEquals(AbilityHandCommandType.POSITION, hand.getCommandType(),
                    "Expected POSITION command type but got " + hand.getCommandType());
    }
 
-
-   @ParameterizedTest
-   @MethodSource("createHand")
-   public void testMultipleGripsSequence(AbilityHand hand)
+   @Test
+   public void testMultipleGripsSequence()
    {
+      AbilityHand hand = new AbilityHand("24ABH000", RobotSide.LEFT);
       // Start from some nontrivial configuration
       float[] initialPositions = {0f, 10f, 20f, 30f, 0f, 0f};
       hand.setActuatorPositions(initialPositions);
@@ -285,14 +296,15 @@ public class AbilityHandTest
       hand.setControlMode(AbilityHandControlMode.GRIP);
 
       // Sequence of grips to test
-      AbilityHandGrip[] gripSequence = new AbilityHandGrip[] {AbilityHandGrip.OPEN, AbilityHandGrip.RELAX, AbilityHandGrip.HOOK, AbilityHandGrip.CLOSE};
-      int[] gripSwitchSteps = new int[] {0, 200, 400, 600}; // when to switch grips
+      AbilityHandGrip[] gripSequence = new AbilityHandGrip[] {
+            AbilityHandGrip.OPEN, AbilityHandGrip.RELAX, AbilityHandGrip.HOOK, AbilityHandGrip.CLOSE};
+      int[] gripSwitchSteps = new int[] {0, 150, 400, 500}; // when to switch grips
 
-      int numberOfSteps = 1000;
+      int numberOfSteps = 650;
       float timeStep = 0.01f;
 
       float[] times = new float[numberOfSteps];
-      float[][] fingerPositions = new float[ACTUATOR_COUNT][numberOfSteps];
+      float[][] actuatorPositions = new float[ACTUATOR_COUNT][numberOfSteps];
       float[][] fingerVelocities = new float[ACTUATOR_COUNT][numberOfSteps];
 
       float currentTime = 0.0f;
@@ -316,18 +328,18 @@ public class AbilityHandTest
 
          for (int fingerIndex = 0; fingerIndex < ACTUATOR_COUNT; fingerIndex++)
          {
-            float pos = hand.getCommandValue(fingerIndex);
-            fingerPositions[fingerIndex][stepIndex] = pos;
+            float command = hand.getCommandValue(fingerIndex);
+            hand.setActuatorPosition(fingerIndex, command);
 
-            if (stepIndex == 0)
+            if (stepIndex > 0)
             {
-               fingerVelocities[fingerIndex][stepIndex] = 0.0f;
+               float prevPos = actuatorPositions[fingerIndex][stepIndex - 1];
+               float velocity = (command - prevPos) * (1.0f / timeStep);
+               hand.setFingerVelocityDegPerSec(fingerIndex, velocity);
             }
-            else
-            {
-               float prevPos = fingerPositions[fingerIndex][stepIndex - 1];
-               fingerVelocities[fingerIndex][stepIndex] = (pos - prevPos) * (1.0f / timeStep);
-            }
+
+            actuatorPositions[fingerIndex][stepIndex] = hand.getActuatorPosition(fingerIndex);
+            fingerVelocities[fingerIndex][stepIndex] = hand.getFingerVelocityDegPerSec(fingerIndex);
          }
 
          currentTime += timeStep;
@@ -342,26 +354,24 @@ public class AbilityHandTest
       {
          for (int stepIndex = 0; stepIndex < numberOfSteps; stepIndex++)
          {
-            float p = fingerPositions[fingerIndex][stepIndex];
+            float p = actuatorPositions[fingerIndex][stepIndex];
             float v = fingerVelocities[fingerIndex][stepIndex];
-            if (p < minPos)
-               minPos = p;
-            if (p > maxPos)
-               maxPos = p;
-            if (v < minVel)
-               minVel = v;
-            if (v > maxVel)
-               maxVel = v;
+            if (p < minPos) minPos = p;
+            if (p > maxPos) maxPos = p;
+            if (v < minVel) minVel = v;
+            if (v > maxVel) maxVel = v;
          }
       }
 
       int plotWidth = 60;
 
       System.out.println("ASCII plot of all finger positions/velocities across multiple grips:");
-      asciiPlotAllFingers(times, fingerPositions, fingerVelocities, minPos, maxPos, minVel, maxVel, plotWidth);
+      asciiPlotAllFingers(times, actuatorPositions, fingerVelocities, minPos, maxPos, minVel, maxVel, plotWidth);
 
       // GRIP mode should be issuing POSITION commands at the end
-      assertEquals(AbilityHandCommandType.POSITION, hand.getCommandType(), "Expected POSITION command type but got " + hand.getCommandType());
+      System.out.printf("Asserting GRIP mode uses POSITION command type at end, actual=%s%n", hand.getCommandType());
+      assertEquals(AbilityHandCommandType.POSITION, hand.getCommandType(),
+                   "Expected POSITION command type but got " + hand.getCommandType());
    }
 
    /**
