@@ -1,4 +1,4 @@
-package us.ihmc.handsros2.trajectories;
+package us.ihmc.handsros2;
 
 /**
  * Stateless trapezoidal (or triangular) trajectory step.

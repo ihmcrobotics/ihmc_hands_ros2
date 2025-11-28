@@ -5,7 +5,7 @@ import us.ihmc.handsros2.HandType;
 import us.ihmc.handsros2.YoFloatArray;
 import us.ihmc.handsros2.YoIntegerArray;
 import us.ihmc.handsros2.abilityHand.AbilityHandModel.AbilityHandJointName;
-import us.ihmc.handsros2.trajectories.TrapezoidalStep;
+import us.ihmc.handsros2.TrapezoidalStep;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoEnum;
