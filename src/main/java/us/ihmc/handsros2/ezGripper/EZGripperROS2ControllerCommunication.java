@@ -10,7 +10,7 @@ import us.ihmc.ros2.ROS2Subscription;
 import us.ihmc.ros2.RealtimeROS2Node;
 
 /**
- * <p>Hardware side ROS 2 communication for the {@link EZGripperInterface}. Communicates with external controller.</p>
+ * <p>Hardware side ROS 2 communication for the {@link EZGripper}. Communicates with external controller.</p>
  * <p>Subscribes to {@link EZGripperCommand} messages and publishes {@link EZGripperState} messages.</p>
  */
 public class EZGripperROS2ControllerCommunication

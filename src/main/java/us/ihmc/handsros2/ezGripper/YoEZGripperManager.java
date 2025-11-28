@@ -21,7 +21,7 @@ public class YoEZGripperManager extends EZGripperManager
 
    private final YoBoolean isCalibrated;
 
-   public YoEZGripperManager(YoRegistry registry, EZGripperInterface gripper)
+   public YoEZGripperManager(YoRegistry registry, EZGripper gripper)
    {
       super(gripper);
 

@@ -1,17 +1,24 @@
 package us.ihmc.handsros2.ezGripper;
 
+import us.ihmc.handsros2.HandInterface;
+import us.ihmc.handsros2.HandType;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoInteger;
 
+import static us.ihmc.handsros2.ezGripper.EZGripperModel.EZGripperJointName.*;
+import us.ihmc.handsros2.ezGripper.EZGripperModel.EZGripperJointName;
+
 /**
- * A partial implementation of the {@link EZGripperInterface} using YoVariables.
+ * Generic implementation for a SAKE EZGripper using YoVariables.
  * Only the calibration is left to be implemented.
  */
-public abstract class YoEZGripper implements EZGripperInterface
+public class EZGripper implements HandInterface
 {
+   public static final int RAW_RANGE_OF_MOTION = 2500;
+
    private final String identifier;
    private final RobotSide robotSide;
 
@@ -27,7 +34,12 @@ public abstract class YoEZGripper implements EZGripperInterface
    private final YoInteger realtimeTick;
    private final YoInteger errorCode;
 
-   public YoEZGripper(YoRegistry registry, String identifier, RobotSide robotSide)
+   public EZGripper(String identifier, RobotSide robotSide)
+   {
+      this(new YoRegistry("EZGripper_" + identifier + "_" + robotSide.name()), identifier, robotSide);
+   }
+
+   public EZGripper(YoRegistry registry, String identifier, RobotSide robotSide)
    {
       this.identifier = identifier;
       this.robotSide = robotSide;
@@ -45,111 +57,151 @@ public abstract class YoEZGripper implements EZGripperInterface
       errorCode = new YoInteger(prefix + "ErrorCode", registry);
    }
 
-   @Override
    public String getIdentifier()
    {
       return identifier;
    }
 
-   @Override
    public RobotSide getSide()
    {
       return robotSide;
    }
 
-   @Override
+   public HandType getType()
+   {
+      return HandType.EZ_GRIPPER;
+   }
+
+   // COMMAND METHODS //
+
+   /**
+    * Start the calibration process.
+    *
+    * Generally the grippers can be calibrated by closing until the fingers collide,
+    * then recording the position as the fully closed position. The open position is
+    * 2500 raw position units away from the closed position.
+    *
+    * @return {@code true} if calibration is complete.
+    * If {@code false} is returned, this method will be called again before any other commands are given to the gripper.
+    */
+   public boolean updateCalibration()
+   {
+      return false;
+   }
+
+   /**
+    * Set the goal position.
+    * 0.0 = closed, 1.0 = open.
+    *
+    * @param goalPosition The goal position.
+    */
    public void setGoalPosition(float goalPosition)
    {
       this.goalPosition.set(goalPosition);
    }
 
-   @Override
    public float getGoalPosition()
    {
       return (float) goalPosition.getValue();
    }
 
-   @Override
+   /**
+    * Set the maximum effort to put into achieving the goal position.
+    * 0.0 = no effort (fingers will not move), 1.0 = maximum effort (can quickly overheat actuator).
+    * 0.3 is a reasonable normal value, and it is recommended not to exceed 0.8.
+    *
+    * @param maxEffort Maximum effort to put into achieving the goal position.
+    */
    public void setMaxEffort(float maxEffort)
    {
       this.maxEffort.set(maxEffort);
    }
 
-   @Override
    public float getMaxEffort()
    {
       return (float) maxEffort.getValue();
    }
 
-   @Override
+   /**
+    * Set whether to turn torque on.
+    * Keeping the torque off when not needed can help keep the gripper's temperature down.
+    *
+    * @param on Whether to turn the torque on.
+    */
    public void setTorqueOn(boolean on)
    {
       torqueOn.set(on);
    }
 
-   @Override
    public boolean getTorqueOnCommand()
    {
       return torqueOn.getValue();
    }
 
-   @Override
+   // STATE METHODS //
+
    public float getCurrentPosition()
    {
       return (float) currentPosition.getValue();
    }
 
-   @Override
    public void setCurrentPosition(float currentPosition)
    {
       this.currentPosition.set(currentPosition);
    }
 
-   @Override
    public float getCurrentEffort()
    {
       return (float) currentEffort.getValue();
    }
 
-   @Override
    public void setCurrentEffort(float currentEffort)
    {
       this.currentEffort.set(currentEffort);
    }
 
-   @Override
    public byte getTemperature()
    {
       return (byte) temperature.getValue();
    }
 
-   @Override
    public void setCurrentTemperature(byte currentTemperature)
    {
       temperature.set(Byte.toUnsignedInt(currentTemperature));
    }
 
-   @Override
    public int getRealtimeTick()
    {
       return realtimeTick.getValue();
    }
 
-   @Override
    public void setRealtimeTick(int realtimeTick)
    {
       this.realtimeTick.set(realtimeTick);
    }
 
-   @Override
    public byte getErrorCode()
    {
       return (byte) errorCode.getValue();
    }
 
-   @Override
    public void setErrorCode(byte errorCode)
    {
       this.errorCode.set(Byte.toUnsignedInt(errorCode));
+   }
+
+   public void readJointAngles(double[] jointAngles)
+   {
+      double angle = JOINT_RANGE * (1.0f - getCurrentPosition());
+      jointAngles[KNUCKLE_PALM_L1_1.getIndex(getSide())] = angle;
+      jointAngles[KNUCKLE_PALM_L1_2.getIndex(getSide())] = angle;
+      // We can't know the angle of the fingertips
+      jointAngles[KNUCKLE_L1_L2_1.getIndex(getSide())] = 0.0;
+      jointAngles[KNUCKLE_L1_L2_2.getIndex(getSide())] = 0.0;
+   }
+
+   public int getJointCount()
+   {
+      return EZGripperJointName.values.length;
    }
 }

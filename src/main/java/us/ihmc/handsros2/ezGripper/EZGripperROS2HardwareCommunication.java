@@ -16,7 +16,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * <p>Controller side ROS 2 communication for the {@link EZGripperInterface}. Communicates with low-level hardware control process.</p>
+ * <p>Controller side ROS 2 communication for the {@link EZGripper}. Communicates with low-level hardware control process.</p>
  * <p>Subscribes to {@link EZGripperState} messages and publishes {@link EZGripperCommand} messages.</p>
  */
 public class EZGripperROS2HardwareCommunication

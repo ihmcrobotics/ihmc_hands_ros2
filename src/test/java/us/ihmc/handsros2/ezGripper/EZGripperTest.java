@@ -6,12 +6,12 @@ import us.ihmc.robotics.robotSide.RobotSide;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class EZGripperInterfaceTest
+public class EZGripperTest
 {
    @Test
    public void testEZGripperType()
    {
-      TestEZGripper testEZGripper = new TestEZGripper("EZGripper", RobotSide.LEFT);
+      EZGripper testEZGripper = new EZGripper("EZGripper", RobotSide.LEFT);
       assertEquals(HandType.EZ_GRIPPER, testEZGripper.getType());
    }
 }

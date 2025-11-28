@@ -13,18 +13,32 @@ public class EZGripperManagerTest
 {
    private static Stream<Arguments> getControllers()
    {
-      TestEZGripper ezGripper = new TestEZGripper("LeftEZGripper", RobotSide.LEFT);
-      EZGripperManager manager = new EZGripperManager(ezGripper);
+      EZGripper leftEZGripper = new EZGripper("LeftEZGripper", RobotSide.LEFT)
+      {
+         @Override
+         public boolean updateCalibration()
+         {
+            return true;
+         }
+      };
+      EZGripperManager manager = new EZGripperManager(leftEZGripper);
 
-      YoEZGripper yoEZGripper = new TestYoEZGripper(null, "RightEZGripper", RobotSide.RIGHT);
-      YoEZGripperManager yoManager = new YoEZGripperManager(null, yoEZGripper);
+      EZGripper rightEZGripper = new EZGripper(null, "RightEZGripper", RobotSide.RIGHT)
+      {
+         @Override
+         public boolean updateCalibration()
+         {
+            return true;
+         }
+      };
+      YoEZGripperManager yoManager = new YoEZGripperManager(null, rightEZGripper);
 
-      return Stream.of(Arguments.of(manager, ezGripper), Arguments.of(yoManager, yoEZGripper));
+      return Stream.of(Arguments.of(manager, leftEZGripper), Arguments.of(yoManager, rightEZGripper));
    }
 
    @ParameterizedTest
    @MethodSource("getControllers")
-   public void testPositionControlUpdate(EZGripperManager gripperManager, EZGripperInterface testGripper)
+   public void testPositionControlUpdate(EZGripperManager gripperManager, EZGripper testGripper)
    {
       gripperManager.setGoalPosition(0.5f);
       gripperManager.setMaxEffort(1.0f);
@@ -57,7 +71,7 @@ public class EZGripperManagerTest
 
    @ParameterizedTest
    @MethodSource("getControllers")
-   public void testErrorResetWithNoError(EZGripperManager gripperManager, EZGripperInterface testGripper)
+   public void testErrorResetWithNoError(EZGripperManager gripperManager, EZGripper testGripper)
    {
       testGripper.setErrorCode((byte) 0);
       gripperManager.setOperationMode(EZGripperManager.OperationMode.ERROR_RESET);
@@ -73,7 +87,7 @@ public class EZGripperManagerTest
 
    @ParameterizedTest
    @MethodSource("getControllers")
-   public void testErrorResetWithError(EZGripperManager gripperManager, EZGripperInterface testGripper)
+   public void testErrorResetWithError(EZGripperManager gripperManager, EZGripper testGripper)
    {
       testGripper.setErrorCode((byte) 1);
       gripperManager.setOperationMode(EZGripperManager.OperationMode.ERROR_RESET);
@@ -87,7 +101,7 @@ public class EZGripperManagerTest
 
    @ParameterizedTest
    @MethodSource("getControllers")
-   public void testCooldownStart(EZGripperManager gripperManager, EZGripperInterface testGripper)
+   public void testCooldownStart(EZGripperManager gripperManager, EZGripper testGripper)
    {
       gripperManager.setTemperatureLimit((byte) 50);
       testGripper.setCurrentTemperature((byte) 60); // Above limit
@@ -101,7 +115,7 @@ public class EZGripperManagerTest
 
    @ParameterizedTest
    @MethodSource("getControllers")
-   public void testCooldownComplete(EZGripperManager gripperManager, EZGripperInterface testGripper)
+   public void testCooldownComplete(EZGripperManager gripperManager, EZGripper testGripper)
    {
       gripperManager.setTemperatureLimit((byte) 50);
       testGripper.setCurrentTemperature((byte) 60);

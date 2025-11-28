@@ -30,7 +30,7 @@ public class EZGripperManager
 
    public static final byte DISABLE_AUTO_COOLDOWN = (byte) 255;
 
-   private final EZGripperInterface gripper;
+   private final EZGripper gripper;
 
    private OperationMode desiredOperationMode = OperationMode.POSITION_CONTROL;
    private final StateMachine<OperationMode, State> stateMachine;
@@ -42,7 +42,7 @@ public class EZGripperManager
 
    private boolean isCalibrated = false;
 
-   public EZGripperManager(EZGripperInterface gripper)
+   public EZGripperManager(EZGripper gripper)
    {
       this.gripper = gripper;
 
@@ -212,7 +212,7 @@ public class EZGripperManager
     *
     * @return The hand this manager manages.
     */
-   public EZGripperInterface getHand()
+   public EZGripper getHand()
    {
       return gripper;
    }
