@@ -6,6 +6,7 @@ import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
+import us.ihmc.yoVariables.variable.YoEnum;
 import us.ihmc.yoVariables.variable.YoInteger;
 import us.ihmc.robotics.stateMachine.core.State;
 import us.ihmc.robotics.stateMachine.core.StateMachine;
@@ -63,7 +64,8 @@ public class EZGripper implements HandInterface
    private final YoDouble temperatureLimit;
    private final YoRegistry registry;
 
-   private OperationMode desiredOperationMode = OperationMode.POSITION_CONTROL;
+   private final YoEnum<OperationMode> desiredOperationMode;
+   private final YoEnum<OperationMode> operationMode;
    private final StateMachine<OperationMode, State> stateMachine;
 
    public EZGripper(String identifier, RobotSide robotSide)
@@ -97,6 +99,11 @@ public class EZGripper implements HandInterface
       temperatureLimit = new YoDouble(prefix + "TemperatureLimit", registry);
       temperatureLimit.set(DISABLE_AUTO_COOLDOWN);
 
+      desiredOperationMode = new YoEnum<>(prefix + "DesiredOperationMode", registry, OperationMode.class);
+      desiredOperationMode.set(OperationMode.POSITION_CONTROL);
+      operationMode = new YoEnum<>(prefix + "operationMode", registry, OperationMode.class);
+      operationMode.set(OperationMode.POSITION_CONTROL);
+
       StateMachineFactory<OperationMode, State> factory = new StateMachineFactory<>(OperationMode.class);
       factory.buildClock(System::nanoTime);
 
@@ -104,9 +111,12 @@ public class EZGripper implements HandInterface
       factory.addState(OperationMode.POSITION_CONTROL, new PositionControlState());
 
       // Position control goes to calibration or error reset if demanded
-      factory.addTransition(OperationMode.POSITION_CONTROL, OperationMode.CALIBRATION, nanoTime -> desiredOperationMode == OperationMode.CALIBRATION);
-      factory.addTransition(OperationMode.POSITION_CONTROL, OperationMode.ERROR_RESET, nanoTime -> desiredOperationMode == OperationMode.ERROR_RESET);
-      factory.addTransition(OperationMode.POSITION_CONTROL, OperationMode.COOLDOWN, nanoTime -> desiredOperationMode == OperationMode.COOLDOWN);
+      factory.addTransition(OperationMode.POSITION_CONTROL, OperationMode.CALIBRATION,
+                            nanoTime -> desiredOperationMode.getValue() == OperationMode.CALIBRATION);
+      factory.addTransition(OperationMode.POSITION_CONTROL, OperationMode.ERROR_RESET,
+                            nanoTime -> desiredOperationMode.getValue() == OperationMode.ERROR_RESET);
+      factory.addTransition(OperationMode.POSITION_CONTROL, OperationMode.COOLDOWN,
+                            nanoTime -> desiredOperationMode.getValue() == OperationMode.COOLDOWN);
 
       // Add calibration state. Goes to position control once done.
       factory.addStateAndDoneTransition(OperationMode.CALIBRATION, new CalibrationState(), OperationMode.POSITION_CONTROL);
@@ -170,7 +180,7 @@ public class EZGripper implements HandInterface
       {
          isCalibrated.set(done);
          torqueOn.set(false);
-         desiredOperationMode = OperationMode.POSITION_CONTROL;
+         desiredOperationMode.set(OperationMode.POSITION_CONTROL);
       }
 
       @Override
@@ -214,7 +224,7 @@ public class EZGripper implements HandInterface
       public void onExit(double timeInState)
       {
          torqueOn.set(false);
-         desiredOperationMode = OperationMode.POSITION_CONTROL;
+         desiredOperationMode.set(OperationMode.POSITION_CONTROL);
       }
 
       @Override
@@ -248,7 +258,7 @@ public class EZGripper implements HandInterface
       public void onExit(double timeInState)
       {
          torqueOn.set(false);
-         desiredOperationMode = OperationMode.POSITION_CONTROL;
+         desiredOperationMode.set(OperationMode.POSITION_CONTROL);
       }
 
       @Override
@@ -265,6 +275,7 @@ public class EZGripper implements HandInterface
    public void update()
    {
       stateMachine.doActionAndTransition();
+      operationMode.set(stateMachine.getCurrentStateKey());
    }
 
    public String getIdentifier()
@@ -354,7 +365,7 @@ public class EZGripper implements HandInterface
     */
    public void setOperationMode(OperationMode operationMode)
    {
-      this.desiredOperationMode = operationMode;
+      this.desiredOperationMode.set(operationMode);
    }
 
    /**
