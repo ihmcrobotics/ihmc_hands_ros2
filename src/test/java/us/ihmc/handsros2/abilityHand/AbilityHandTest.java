@@ -275,13 +275,34 @@ public class AbilityHandTest
 
       int plotWidth = 60;
 
-      System.out.println("ASCII plot of all finger positions/velocities in GRIP mode (initial thumb stage):");
+      System.out.println("ASCII plot of all finger positions/velocities in CLOSE grip:");
       asciiPlotAllFingers(times, actuatorPositions, fingerVelocities, minPos, maxPos, minVel, maxVel, plotWidth);
 
       // GRIP mode should be issuing POSITION commands
       System.out.printf("Asserting GRIP mode uses POSITION command type, actual=%s%n", hand.getCommandType());
       assertEquals(AbilityHandCommandType.POSITION, hand.getCommandType(),
                    "Expected POSITION command type but got " + hand.getCommandType());
+
+      // Assert CLOSE grip final-stage target positions are achieved at the end
+      float tolerance = 1e-1f;
+      AbilityHandGrip grip = AbilityHandGrip.CLOSE;
+      int lastStage = grip.stages.length - 1;
+      int[] stageActuators = grip.stages[lastStage];
+      float[] stageTargets = grip.positions[lastStage];
+
+      int finalStep = numberOfSteps - 1;
+      System.out.printf("Asserting final positions for CLOSE grip at step %d%n", finalStep);
+
+      for (int i = 0; i < stageActuators.length; i++)
+      {
+         int actuatorIndex = stageActuators[i];
+         float target = stageTargets[i];
+         float actual = actuatorPositions[actuatorIndex][finalStep];
+
+         System.out.printf("CLOSE grip, finger %d: target=%.3f actual=%.3f tol=%.3f%n",
+                           actuatorIndex, target, actual, tolerance);
+         assertEquals(target, actual, tolerance);
+      }
    }
 
    @Test
@@ -372,7 +393,40 @@ public class AbilityHandTest
       System.out.printf("Asserting GRIP mode uses POSITION command type at end, actual=%s%n", hand.getCommandType());
       assertEquals(AbilityHandCommandType.POSITION, hand.getCommandType(),
                    "Expected POSITION command type but got " + hand.getCommandType());
+
+      // New: assert that at the end of each grip segment, the final stage target positions are reached
+      float tolerance = 1e-1f; // looser tolerance to allow some discretization error
+
+      for (int seqIndex = 0; seqIndex < gripSequence.length; seqIndex++)
+      {
+         AbilityHandGrip grip = gripSequence[seqIndex];
+         int segmentEndStep;
+
+         if (seqIndex < gripSequence.length - 1)
+            segmentEndStep = gripSwitchSteps[seqIndex + 1] - 1;
+         else
+            segmentEndStep = numberOfSteps - 1;
+
+         // Use the last stage of the grip (all fingers should be at these positions by the end)
+         int lastStage = grip.stages.length - 1;
+         int[] stageActuators = grip.stages[lastStage];
+         float[] stageTargets = grip.positions[lastStage];
+
+         System.out.printf("Asserting final positions for grip %s at step %d%n", grip, segmentEndStep);
+
+         for (int i = 0; i < stageActuators.length; i++)
+         {
+            int actuatorIndex = stageActuators[i];
+            float target = stageTargets[i];
+            float actual = actuatorPositions[actuatorIndex][segmentEndStep];
+
+            System.out.printf("Grip %s, finger %d: target=%.3f actual=%.3f tol=%.3f%n",
+                              grip, actuatorIndex, target, actual, tolerance);
+            assertEquals(target, actual, tolerance);
+         }
+      }
    }
+
 
    /**
     * ASCII plot for 6 fingers at once.
