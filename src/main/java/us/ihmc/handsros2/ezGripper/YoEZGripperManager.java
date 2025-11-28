@@ -7,9 +7,9 @@ import us.ihmc.yoVariables.variable.YoEnum;
 import us.ihmc.yoVariables.variable.YoInteger;
 
 /**
- * A YoVariable-ized version of the {@link EZGripperManager}.
+ * A YoVariable-ized version of the {@link EZGripper}.
  */
-public class YoEZGripperManager extends EZGripperManager
+public class YoEZGripperManager extends EZGripper
 {
    private final YoEnum<OperationMode> desiredOperationMode;
    private final YoEnum<OperationMode> operationMode;
