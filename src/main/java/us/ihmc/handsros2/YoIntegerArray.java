@@ -10,6 +10,7 @@ import us.ihmc.yoVariables.variable.YoInteger;
 public class YoIntegerArray
 {
    private final YoInteger[] yoIntegers;
+   private transient final int[] temp;
 
    /**
     * Creates a YoIntegerArray with the specified initial values.
@@ -28,6 +29,8 @@ public class YoIntegerArray
          yoIntegers[i] = new YoInteger(namePrefix + i, registry);
          yoIntegers[i].set(initialValues[i]);
       }
+
+      temp = new int[yoIntegers.length];
    }
 
    /**
@@ -53,18 +56,18 @@ public class YoIntegerArray
    }
 
    /**
-    * Returns a copy of the internal data as a primitive int array.
+    * Returns an internally kept array packed with updated primitive int values.
+    * Make a copy if you need to hold onto this array.
     *
-    * @return a new int array containing copies of all values
+    * @return a reused int array containing copies of all values
     */
    public int[] toIntArray()
    {
-      int[] result = new int[yoIntegers.length];
       for (int i = 0; i < yoIntegers.length; i++)
       {
-         result[i] = yoIntegers[i].getIntegerValue();
+         temp[i] = yoIntegers[i].getIntegerValue();
       }
-      return result;
+      return temp;
    }
 
    /**

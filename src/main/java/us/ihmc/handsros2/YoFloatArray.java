@@ -10,6 +10,7 @@ import us.ihmc.yoVariables.variable.YoDouble;
 public class YoFloatArray
 {
    private final YoDouble[] yoDoubles;
+   private transient final float[] temp;
 
    /**
     * Creates a YoFloatArray with the specified size and initial values.
@@ -28,6 +29,8 @@ public class YoFloatArray
          yoDoubles[i] = new YoDouble(namePrefix + i, registry);
          yoDoubles[i].set(initialValues[i]);
       }
+
+      temp = new float[yoDoubles.length];
    }
 
    /**
@@ -53,18 +56,18 @@ public class YoFloatArray
    }
 
    /**
-    * Returns a copy of the internal data as a primitive float array.
+    * Returns an internally kept array packed with updated primitive float values.
+    * Make a copy if you need to hold onto this array.
     *
-    * @return a new float array containing copies of all values
+    * @return a reused float array containing copies of all values
     */
    public float[] toFloatArray()
    {
-      float[] result = new float[yoDoubles.length];
       for (int i = 0; i < yoDoubles.length; i++)
       {
-         result[i] = (float) yoDoubles[i].getValue();
+         temp[i] = (float) yoDoubles[i].getValue();
       }
-      return result;
+      return temp;
    }
 
    /**

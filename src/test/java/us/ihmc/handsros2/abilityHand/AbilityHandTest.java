@@ -1,26 +1,14 @@
 package us.ihmc.handsros2.abilityHand;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.provider.Arguments;
 import us.ihmc.handsros2.HandType;
 import us.ihmc.robotics.robotSide.RobotSide;
-
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static us.ihmc.handsros2.abilityHand.AbilityHand.ACTUATOR_COUNT;
 
 public class AbilityHandTest
 {
-   private static Stream<Arguments> createHand()
-   {
-      AbilityHand hand = new AbilityHand("24ABH000", RobotSide.LEFT);
-      hand.setActuatorPositions(new float[] {30f, 30f, 30f, 30f, 30f, -30f});
-      hand.setGoalVelocities(new float[] {30f, 30f, 30f, 30f, 30f, 30f});
-
-      return Stream.of(Arguments.of(hand));
-   }
-
    @Test
    public void testPositionControl()
    {
@@ -34,7 +22,6 @@ public class AbilityHandTest
       int numberOfSteps = 100;
       float timeStep = 0.01f;
 
-      float[] times = new float[numberOfSteps];
       float[][] actuatorPositions = new float[ACTUATOR_COUNT][numberOfSteps];
       float[][] fingerVelocities = new float[ACTUATOR_COUNT][numberOfSteps];
 
@@ -43,8 +30,6 @@ public class AbilityHandTest
       for (int stepIndex = 0; stepIndex < numberOfSteps; stepIndex++)
       {
          hand.update(timeStep);
-
-         times[stepIndex] = currentTime;
 
          for (int fingerIndex = 0; fingerIndex < ACTUATOR_COUNT; fingerIndex++)
          {

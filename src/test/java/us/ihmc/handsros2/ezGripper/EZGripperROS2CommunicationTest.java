@@ -61,7 +61,7 @@ public class EZGripperROS2CommunicationTest
          }
       });
 
-      // Initialize a test gripper and its manager
+      // Initialize a test gripper
       EZGripper testGripper = new EZGripper(IDENTIFIER, GRIPPER_SIDE);
 
       // Set the state of the gripper

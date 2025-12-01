@@ -138,7 +138,7 @@ public class AbilityHand implements HandInterface
       int[] fsrInitial = new int[TOUCH_SENSOR_COUNT];
       rawFSRReadings = new YoIntegerArray(prefix + "RawFSR", registry, fsrInitial);
 
-      // High-level control variables (original AbilityHandManager naming)
+      // High-level control variables
       String managerPrefix = handSide.name() + getClass().getSimpleName();
       controlMode = new YoEnum<>(managerPrefix + "ControlMode", registry, AbilityHandControlMode.class);
       grip = new YoEnum<>(managerPrefix + "Grip", registry, AbilityHandGrip.class);
@@ -152,6 +152,7 @@ public class AbilityHand implements HandInterface
     * Updates the hand commands based on the desired values set in this manager.
     * Should be called periodically.
     */
+   @Override
    public void update()
    {
       long nowNanos = System.nanoTime();
@@ -229,18 +230,11 @@ public class AbilityHand implements HandInterface
     */
    private void updateGripControl()
    {
-      AbilityHandControlMode currentControlMode = controlMode.getValue();
       AbilityHandGrip currentGrip = grip.getValue();
 
-      // Handle entering GRIP mode vs switching grips while already in GRIP
-      if (previousControlMode != AbilityHandControlMode.GRIP)
+      // Check if we're starting a new grip
+      if (previousControlMode != AbilityHandControlMode.GRIP || previousGrip != currentGrip)
       {
-         gripStage = 0;
-         previousGrip = currentGrip;
-      }
-      else if (previousGrip != currentGrip)
-      {
-         // New grip while already in GRIP: restart stage sequence
          gripStage = 0;
          previousGrip = currentGrip;
       }

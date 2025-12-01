@@ -28,6 +28,14 @@ public interface HandInterface
    HandType getType();
 
    /**
+    * Updates the state or configuration of the hand.
+    * This method typically handles tasks such as refreshing the internal state,
+    * recalculating values, or processing any changes necessary to ensure the hand's behavior
+    * or data remains consistent and up-to-date.
+    */
+   void update();
+
+   /**
     * Read the current joint angles into the passed in array.
     *
     * @param jointAngles Array to pack the joint angles into.

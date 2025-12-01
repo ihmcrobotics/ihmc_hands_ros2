@@ -1,21 +1,16 @@
 package us.ihmc.handsros2.ezGripper;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import us.ihmc.handsros2.HandType;
 import us.ihmc.robotics.robotSide.RobotSide;
-
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class EZGripperTest
 {
-   private static Stream<Arguments> getControllers()
+   private static EZGripper createTestGripper()
    {
-      EZGripper leftEZGripper = new EZGripper("LeftEZGripper", RobotSide.LEFT)
+      return new EZGripper("LeftEZGripper", RobotSide.LEFT)
       {
          @Override
          public boolean updateCalibration()
@@ -23,23 +18,12 @@ public class EZGripperTest
             return true;
          }
       };
-
-      EZGripper rightEZGripper = new EZGripper(null, "RightEZGripper", RobotSide.RIGHT)
-      {
-         @Override
-         public boolean updateCalibration()
-         {
-            return true;
-         }
-      };
-
-      return Stream.of(Arguments.of(leftEZGripper), Arguments.of(rightEZGripper));
    }
 
-   @ParameterizedTest
-   @MethodSource("getControllers")
-   public void testPositionControlUpdate(EZGripper testGripper)
+   @Test
+   public void testPositionControlUpdate()
    {
+      EZGripper testGripper = createTestGripper();
       testGripper.setGoalPosition(0.5f);
       testGripper.setMaxEffort(1.0f);
       testGripper.setTorqueOn(true);
@@ -53,10 +37,10 @@ public class EZGripperTest
       assertEquals(EZGripper.OperationMode.POSITION_CONTROL, testGripper.getOperationMode());
    }
 
-   @ParameterizedTest
-   @MethodSource("getControllers")
-   public void testCalibrationMode(EZGripper testGripper)
+   @Test
+   public void testCalibrationMode()
    {
+      EZGripper testGripper = createTestGripper();
       testGripper.setOperationMode(EZGripper.OperationMode.CALIBRATION);
 
       // First update: calibrates
@@ -69,10 +53,10 @@ public class EZGripperTest
       assertEquals(EZGripper.OperationMode.POSITION_CONTROL, testGripper.getOperationMode());
    }
 
-   @ParameterizedTest
-   @MethodSource("getControllers")
-   public void testErrorResetWithNoError(EZGripper testGripper)
+   @Test
+   public void testErrorResetWithNoError()
    {
+      EZGripper testGripper = createTestGripper();
       testGripper.setErrorCode((byte) 0);
       testGripper.setOperationMode(EZGripper.OperationMode.ERROR_RESET);
 
@@ -85,10 +69,10 @@ public class EZGripperTest
       assertEquals(EZGripper.OperationMode.POSITION_CONTROL, testGripper.getOperationMode());
    }
 
-   @ParameterizedTest
-   @MethodSource("getControllers")
-   public void testErrorResetWithError(EZGripper testGripper)
+   @Test
+   public void testErrorResetWithError()
    {
+      EZGripper testGripper = createTestGripper();
       testGripper.setErrorCode((byte) 1);
       testGripper.setOperationMode(EZGripper.OperationMode.ERROR_RESET);
 
@@ -99,10 +83,10 @@ public class EZGripperTest
       assertFalse(testGripper.getTorqueOnCommand());
    }
 
-   @ParameterizedTest
-   @MethodSource("getControllers")
-   public void testCooldownStart(EZGripper testGripper)
+   @Test
+   public void testCooldownStart()
    {
+      EZGripper testGripper = createTestGripper();
       testGripper.setTemperatureLimit((byte) 50);
       testGripper.setCurrentTemperature((byte) 60); // Above limit
 
@@ -113,10 +97,10 @@ public class EZGripperTest
       assertFalse(testGripper.getTorqueOnCommand());
    }
 
-   @ParameterizedTest
-   @MethodSource("getControllers")
-   public void testCooldownComplete(EZGripper testGripper)
+   @Test
+   public void testCooldownComplete()
    {
+      EZGripper testGripper = createTestGripper();
       testGripper.setTemperatureLimit((byte) 50);
       testGripper.setCurrentTemperature((byte) 60);
       testGripper.update(); // Start cooldown

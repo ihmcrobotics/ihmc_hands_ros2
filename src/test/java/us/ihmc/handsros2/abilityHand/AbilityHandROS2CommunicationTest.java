@@ -60,7 +60,7 @@ public class AbilityHandROS2CommunicationTest
          }
       });
 
-      // Initialize a test hand and its manager
+      // Initialize a test hand
       AbilityHand hand = new AbilityHand(SERIAL_NUMBER, HAND_SIDE);
       hand.setActuatorPositions(ACTUATOR_POSITIONS); // Set the state of the hand
       hand.setRawFSRValues(TOUCH_SENSOR_READINGS);

@@ -18,11 +18,8 @@ import us.ihmc.handsros2.ezGripper.EZGripperModel.EZGripperJointName;
 import java.util.List;
 
 /**
- * Generic implementation for a SAKE EZGripper using YoVariables.
- * Only the calibration is left to be implemented.
- *
- * This version also incorporates the higher-level management logic such as operation modes,
- * calibration status, and automatic cooldown temperature limits.
+ * Manages and controls a SAKE Robotics EZ Gripper.
+ * Supports calibration, error reset, and cooldown.
  */
 public class EZGripper implements HandInterface
 {
@@ -93,7 +90,7 @@ public class EZGripper implements HandInterface
       realtimeTick = new YoInteger(prefix + "RealtimeTick", registry);
       errorCode = new YoInteger(prefix + "ErrorCode", registry);
 
-      // Manager state
+      // High level state
       isCalibrated = new YoBoolean(prefix + "IsCalibrated", registry);
       isCalibrated.set(false);
       temperatureLimit = new YoDouble(prefix + "TemperatureLimit", registry);
@@ -101,7 +98,7 @@ public class EZGripper implements HandInterface
 
       desiredOperationMode = new YoEnum<>(prefix + "DesiredOperationMode", registry, OperationMode.class);
       desiredOperationMode.set(OperationMode.POSITION_CONTROL);
-      operationMode = new YoEnum<>(prefix + "operationMode", registry, OperationMode.class);
+      operationMode = new YoEnum<>(prefix + "OperationMode", registry, OperationMode.class);
       operationMode.set(OperationMode.POSITION_CONTROL);
 
       StateMachineFactory<OperationMode, State> factory = new StateMachineFactory<>(OperationMode.class);
@@ -115,8 +112,7 @@ public class EZGripper implements HandInterface
                             nanoTime -> desiredOperationMode.getValue() == OperationMode.CALIBRATION);
       factory.addTransition(OperationMode.POSITION_CONTROL, OperationMode.ERROR_RESET,
                             nanoTime -> desiredOperationMode.getValue() == OperationMode.ERROR_RESET);
-      factory.addTransition(OperationMode.POSITION_CONTROL, OperationMode.COOLDOWN,
-                            nanoTime -> desiredOperationMode.getValue() == OperationMode.COOLDOWN);
+      factory.addTransition(OperationMode.POSITION_CONTROL, OperationMode.COOLDOWN, nanoTime -> desiredOperationMode.getValue() == OperationMode.COOLDOWN);
 
       // Add calibration state. Goes to position control once done.
       factory.addStateAndDoneTransition(OperationMode.CALIBRATION, new CalibrationState(), OperationMode.POSITION_CONTROL);
@@ -130,7 +126,7 @@ public class EZGripper implements HandInterface
       // All other states go to cooldown if gripper overheats.
       factory.addTransition(List.of(OperationMode.POSITION_CONTROL, OperationMode.CALIBRATION, OperationMode.ERROR_RESET),
                             OperationMode.COOLDOWN,
-                            nanoTime -> temperatureLimit.getValue() != DISABLE_AUTO_COOLDOWN && temperature.getValue() >  temperatureLimit.getValue());
+                            nanoTime -> temperatureLimit.getValue() != DISABLE_AUTO_COOLDOWN && temperature.getValue() > temperatureLimit.getValue());
 
       // Build the state machine
       stateMachine = factory.build(OperationMode.POSITION_CONTROL);
@@ -272,6 +268,7 @@ public class EZGripper implements HandInterface
    /**
     * Call periodically to update internal state machine and enforce temperature-based cooldown.
     */
+   @Override
    public void update()
    {
       stateMachine.doActionAndTransition();
@@ -297,13 +294,13 @@ public class EZGripper implements HandInterface
 
    /**
     * Start the calibration process.
-    *
+    * <p>
     * Generally the grippers can be calibrated by closing until the fingers collide,
     * then recording the position as the fully closed position. The open position is
     * 2500 raw position units away from the closed position.
     *
     * @return {@code true} if calibration is complete.
-    * If {@code false} is returned, this method will be called again before any other commands are given to the gripper.
+    *       If {@code false} is returned, this method will be called again before any other commands are given to the gripper.
     */
    public boolean updateCalibration()
    {
@@ -369,7 +366,7 @@ public class EZGripper implements HandInterface
    }
 
    /**
-    * Get the current operation mode. Depending on the state of the manager,
+    * Get the current operation mode. Depending on the state of the high level state,
     * the current operation mode may not be the desired operation mode.
     *
     * @return The current operation mode.
@@ -392,7 +389,7 @@ public class EZGripper implements HandInterface
 
    /**
     * <p>Set the temperature limit.</p>
-    * <p>The manager will automatically go into cooldown mode if the gripper exceed this temperature.
+    * <p>The hand will automatically go into cooldown mode if the gripper exceed this temperature.
     * Cooldown will continue until the gripper's temperature drops by 10% of the temperature limit.</p>
     * <p>To override or disable automatic cooldown, set the temperature limit to {@link #DISABLE_AUTO_COOLDOWN}</p>
     *
