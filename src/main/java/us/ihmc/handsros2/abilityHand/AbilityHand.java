@@ -60,8 +60,6 @@ public class AbilityHand implements HandInterface
    private static final float TOLERANCE = 1.0f;
    /** Trajectory configuration: tune acceleration per joint as needed (deg/s^2) */
    private static final float DEFAULT_MAXIMUM_ACCELERATION = 200.0f;
-   /** Low-pass filter break frequency for actuator velocities in Hz */
-   private static final float VELOCITY_FILTER_BREAK_FREQUENCY = 1.0f;
 
    private final String identifier;
    private final RobotSide handSide;
@@ -97,8 +95,10 @@ public class AbilityHand implements HandInterface
    private final YoFloatArray goalVelocities;
 
    /** Track previous time for computing dt. */
-   private long previousTimeNanos = -1L;
-   private final YoDouble dt;
+   private long previousControlTimeNanos = -1L;
+   private final YoDouble controlDT;
+   private long previousFilterTimeNanos = -1L;
+   private final YoDouble filterDT;
 
    /** Previous filtered actuator velocities for low-pass filter */
    private final float[] previousFilteredActuatorVelocities = new float[ACTUATOR_COUNT];
@@ -130,7 +130,6 @@ public class AbilityHand implements HandInterface
 
       // Low-level command type
       commandType = new YoEnum<>(prefix + "CommandType", registry, AbilityHandCommandType.class);
-      commandType.set(AbilityHandCommandType.VELOCITY);
 
       // Low-level arrays (start at zero)
       commandValues = new YoFloatArray(prefix + "Command", registry, 0, 0, 0, 0, 0, 0);
@@ -145,31 +144,64 @@ public class AbilityHand implements HandInterface
       // High-level control variables
       String managerPrefix = handSide.name() + getClass().getSimpleName();
       controlMode = new YoEnum<>(managerPrefix + "ControlMode", registry, AbilityHandControlMode.class);
+      controlMode.set(AbilityHandControlMode.VELOCITY);
       grip = new YoEnum<>(managerPrefix + "Grip", registry, AbilityHandGrip.class);
 
       // Initialize goal positions and velocities with previous defaults
       goalPositions = new YoFloatArray(managerPrefix + "GoalPosition", registry, 30.0f, 30.0f, 30.0f, 30.0f, 30.0f, -30.0f);
       goalVelocities = new YoFloatArray(managerPrefix + "GoalVelocity", registry, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
 
-      dt = new YoDouble(managerPrefix + "_dt", registry);
+      controlDT = new YoDouble(managerPrefix + "_controlDT", registry);
+      filterDT = new YoDouble(managerPrefix + "_filterDT", registry);
+   }
+
+   public void updateFilters()
+   {
+      long nowNanos = System.nanoTime();
+
+      if (previousFilterTimeNanos > 0L)
+      {
+         long deltaNanos = nowNanos - previousFilterTimeNanos;
+         filterDT.set(deltaNanos * 1.0e-9f);
+
+         for (int i = 0; i < ACTUATOR_COUNT; i++)
+         {
+            float rawVelocity = getActuatorVelocity(i);
+
+            float breakFrequency = 0.2f;
+            float tau = 1.0f / (2.0f * (float) Math.PI * breakFrequency);
+            float alpha = (float) filterDT.getValue() / (tau + (float) filterDT.getValue());
+            float filteredVelocity = alpha * rawVelocity + (1.0f - alpha) * previousFilteredActuatorVelocities[i];
+
+            previousFilteredActuatorVelocities[i] = filteredVelocity;
+            filteredActuatorVelocities.set(i, filteredVelocity);
+         }
+      }
+
+      previousFilterTimeNanos = nowNanos;
+   }
+
+   @Override
+   public void update()
+   {
+
    }
 
    /**
     * Updates the hand commands based on the desired values set in this manager.
     * Should be called periodically.
     */
-   @Override
-   public void update()
+   public void updateControl()
    {
       long nowNanos = System.nanoTime();
 
-      if (previousTimeNanos > 0L)
+      if (previousControlTimeNanos > 0L)
       {
-         long deltaNanos = nowNanos - previousTimeNanos;
+         long deltaNanos = nowNanos - previousControlTimeNanos;
          update(deltaNanos * 1.0e-9f);
       }
 
-      previousTimeNanos = nowNanos;
+      previousControlTimeNanos = nowNanos;
    }
 
    /**
@@ -179,7 +211,7 @@ public class AbilityHand implements HandInterface
     */
    void update(float dt)
    {
-      this.dt.set(dt);
+      controlDT.set(dt);
 
       AbilityHandControlMode currentControlMode = controlMode.getValue();
 
@@ -305,11 +337,10 @@ public class AbilityHand implements HandInterface
                                         targetPosition,
                                         goalVelocities.get(actuatorIndex),
                                         DEFAULT_MAXIMUM_ACCELERATION,
-                                        (float) dt.getValue());
+                                        (float) controlDT.getValue());
 
 //      float direction = Math.signum(targetPosition - currentPosition);
-//      float step = currentPosition + direction * goalVelocities.get(actuatorIndex) * (float) dt.getValue();
-
+//      float step = currentPosition + direction * goalVelocities.get(actuatorIndex) * (float) controlDT.getValue();
 
       // Because the Ability hand uses a signed int 16 internal representation,
       // any commanded position has to be at least a 0.005 increment or it won't move.
@@ -562,26 +593,6 @@ public class AbilityHand implements HandInterface
    public void setActuatorVelocity(int index, float value)
    {
       actuatorVelocities.set(index, value);
-      updateFilteredActuatorVelocity(index);
-   }
-
-   /**
-    * Updates the filtered actuator velocity for a specific actuator.
-    * Applies a low-pass filter with a 3 Hz break frequency.
-    *
-    * @param index Index of the actuator.
-    */
-   private void updateFilteredActuatorVelocity(int index)
-   {
-      float rawVelocity = getActuatorVelocity(index);
-
-      // Apply first-order low-pass filter
-      float tau = 1.0f / (2.0f * (float) Math.PI * VELOCITY_FILTER_BREAK_FREQUENCY);
-      float alpha = (float) dt.getValue() / (tau + (float) dt.getValue());
-      float filteredVelocity = alpha * rawVelocity + (1.0f - alpha) * previousFilteredActuatorVelocities[index];
-
-      previousFilteredActuatorVelocities[index] = filteredVelocity;
-      filteredActuatorVelocities.set(index, filteredVelocity);
    }
 
    /**
