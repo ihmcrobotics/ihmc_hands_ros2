@@ -69,6 +69,8 @@ public class AbilityHand implements HandInterface
 
    /** Low-level command values sent to the hand (position or velocity depending on {@link #commandType}). */
    private final YoFloatArray commandValues;
+   /** Filtered command values. */
+   private final YoFloatArray filteredCommandValues;
    /** Measured actuator positions in degrees. */
    private final YoFloatArray actuatorPositions;
    /** Measured actuator velocities in radians per second. */
@@ -102,6 +104,8 @@ public class AbilityHand implements HandInterface
 
    /** Previous filtered actuator velocities for low-pass filter */
    private final float[] previousFilteredActuatorVelocities = new float[ACTUATOR_COUNT];
+   /** Previous filtered command values for low-pass filter */
+   private final float[] previousFilteredCommandValues = new float[ACTUATOR_COUNT];
 
    /**
     * Creates a new AbilityHand with its own {@link YoRegistry}.
@@ -133,6 +137,7 @@ public class AbilityHand implements HandInterface
 
       // Low-level arrays (start at zero)
       commandValues = new YoFloatArray(prefix + "Command", registry, 0, 0, 0, 0, 0, 0);
+      filteredCommandValues = new YoFloatArray(prefix + "FilteredCommand", registry, 0, 0, 0, 0, 0, 0);
       actuatorPositions = new YoFloatArray(prefix + "ActuatorPosition", registry, 0, 0, 0, 0, 0, 0);
       actuatorVelocities = new YoFloatArray(prefix + "ActuatorVelocity", registry, 0, 0, 0, 0, 0, 0);
       filteredActuatorVelocities = new YoFloatArray(prefix + "FilteredActuatorVelocity", registry, 0, 0, 0, 0, 0, 0);
@@ -166,15 +171,25 @@ public class AbilityHand implements HandInterface
 
          for (int i = 0; i < ACTUATOR_COUNT; i++)
          {
-            float rawVelocity = getActuatorVelocity(i);
+            {
+               float breakFrequency = 0.2f;
+               float tau = 1.0f / (2.0f * (float) Math.PI * breakFrequency);
+               float alpha = (float) filterDT.getValue() / (tau + (float) filterDT.getValue());
+               float rawVelocity = getActuatorVelocity(i);
+               float filteredVelocity = alpha * rawVelocity + (1.0f - alpha) * previousFilteredActuatorVelocities[i];
+               previousFilteredActuatorVelocities[i] = filteredVelocity;
+               filteredActuatorVelocities.set(i, filteredVelocity);
+            }
 
-            float breakFrequency = 0.2f;
-            float tau = 1.0f / (2.0f * (float) Math.PI * breakFrequency);
-            float alpha = (float) filterDT.getValue() / (tau + (float) filterDT.getValue());
-            float filteredVelocity = alpha * rawVelocity + (1.0f - alpha) * previousFilteredActuatorVelocities[i];
-
-            previousFilteredActuatorVelocities[i] = filteredVelocity;
-            filteredActuatorVelocities.set(i, filteredVelocity);
+            {
+               float breakFrequency = 0.3f;
+               float tau = 1.0f / (2.0f * (float) Math.PI * breakFrequency);
+               float alpha = (float) filterDT.getValue() / (tau + (float) filterDT.getValue());
+               float rawCommand = getCommandValue(i);
+               float filteredCommand = alpha * rawCommand + (1.0f - alpha) * previousFilteredCommandValues[i];
+               previousFilteredCommandValues[i] = filteredCommand;
+               filteredCommandValues.set(i, filteredCommand);
+            }
          }
       }
 
@@ -332,15 +347,13 @@ public class AbilityHand implements HandInterface
    private float step(int actuatorIndex, float targetPosition)
    {
       float currentPosition = actuatorPositions.get(actuatorIndex);
-      float step = TrapezoidalStep.step(currentPosition,
-                                        filteredActuatorVelocities.get(actuatorIndex),
-                                        targetPosition,
-                                        goalVelocities.get(actuatorIndex),
-                                        DEFAULT_MAXIMUM_ACCELERATION,
-                                        (float) controlDT.getValue());
 
-//      float direction = Math.signum(targetPosition - currentPosition);
-//      float step = currentPosition + direction * goalVelocities.get(actuatorIndex) * (float) controlDT.getValue();
+      float positionError = targetPosition - currentPosition;
+      float direction = Math.signum(positionError);
+      float step = currentPosition + direction * goalVelocities.get(actuatorIndex) * (float) controlDT.getValue();
+
+      if (Math.abs(positionError) < 2.0f)
+         step = targetPosition;
 
       // Because the Ability hand uses a signed int 16 internal representation,
       // any commanded position has to be at least a 0.005 increment or it won't move.
@@ -507,6 +520,17 @@ public class AbilityHand implements HandInterface
    public float getCommandValue(int index)
    {
       return commandValues.get(index);
+   }
+
+   /**
+    * Get the filtered command value at the specified index.
+    *
+    * @param index Index to read the value from.
+    * @return The filtered command value.
+    */
+   public float getFilteredCommandValue(int index)
+   {
+      return filteredCommandValues.get(index);
    }
 
    /**
