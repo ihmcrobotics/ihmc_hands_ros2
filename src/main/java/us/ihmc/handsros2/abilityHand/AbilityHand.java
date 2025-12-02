@@ -8,6 +8,7 @@ import us.ihmc.handsros2.abilityHand.AbilityHandModel.AbilityHandJointName;
 import us.ihmc.handsros2.TrapezoidalStep;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.yoVariables.registry.YoRegistry;
+import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoEnum;
 
 import static us.ihmc.handsros2.abilityHand.AbilityHandModel.AbilityHandJointName.*;
@@ -60,7 +61,7 @@ public class AbilityHand implements HandInterface
    /** Trajectory configuration: tune acceleration per joint as needed (deg/s^2) */
    private static final float DEFAULT_MAXIMUM_ACCELERATION = 200.0f;
    /** Low-pass filter break frequency for actuator velocities in Hz */
-   private static final float VELOCITY_FILTER_BREAK_FREQUENCY = 3.0f;
+   private static final float VELOCITY_FILTER_BREAK_FREQUENCY = 1.0f;
 
    private final String identifier;
    private final RobotSide handSide;
@@ -97,7 +98,7 @@ public class AbilityHand implements HandInterface
 
    /** Track previous time for computing dt. */
    private long previousTimeNanos = -1L;
-   private float dt;
+   private final YoDouble dt;
 
    /** Previous filtered actuator velocities for low-pass filter */
    private final float[] previousFilteredActuatorVelocities = new float[ACTUATOR_COUNT];
@@ -149,6 +150,8 @@ public class AbilityHand implements HandInterface
       // Initialize goal positions and velocities with previous defaults
       goalPositions = new YoFloatArray(managerPrefix + "GoalPosition", registry, 30.0f, 30.0f, 30.0f, 30.0f, 30.0f, -30.0f);
       goalVelocities = new YoFloatArray(managerPrefix + "GoalVelocity", registry, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+
+      dt = new YoDouble(managerPrefix + "_dt", registry);
    }
 
    /**
@@ -176,7 +179,7 @@ public class AbilityHand implements HandInterface
     */
    void update(float dt)
    {
-      this.dt = dt;
+      this.dt.set(dt);
 
       AbilityHandControlMode currentControlMode = controlMode.getValue();
 
@@ -302,7 +305,7 @@ public class AbilityHand implements HandInterface
                                         targetPosition,
                                         goalVelocities.get(actuatorIndex),
                                         DEFAULT_MAXIMUM_ACCELERATION,
-                                        dt);
+                                        (float) dt.getValue());
       // Because the Ability hand uses a signed int 16 internal representation,
       // any commanded position has to be at least a 0.005 increment or it won't move.
       // Math:
@@ -579,7 +582,7 @@ public class AbilityHand implements HandInterface
 
       // Apply first-order low-pass filter
       float tau = 1.0f / (2.0f * (float) Math.PI * VELOCITY_FILTER_BREAK_FREQUENCY);
-      float alpha = dt / (tau + dt);
+      float alpha = (float) dt.getValue() / (tau + (float) dt.getValue());
       float filteredVelocity = alpha * rawVelocity + (1.0f - alpha) * previousFilteredActuatorVelocities[index];
 
       previousFilteredActuatorVelocities[index] = filteredVelocity;
