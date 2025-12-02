@@ -306,12 +306,18 @@ public class AbilityHand implements HandInterface
                                         goalVelocities.get(actuatorIndex),
                                         DEFAULT_MAXIMUM_ACCELERATION,
                                         (float) dt.getValue());
+
+//      float direction = Math.signum(targetPosition - currentPosition);
+//      float step = currentPosition + direction * goalVelocities.get(actuatorIndex) * (float) dt.getValue();
+
+
       // Because the Ability hand uses a signed int 16 internal representation,
       // any commanded position has to be at least a 0.005 increment or it won't move.
       // Math:
       // 150 deg / 32767 (int16 max) = 0.00458 minimum command delta
-      if (step != currentPosition && Math.abs(step - currentPosition) < 0.005f)
-         step = currentPosition + 0.005f * Math.signum(step - currentPosition);
+      float minDelta = 0.1f;
+      if (step != currentPosition && Math.abs(step - currentPosition) < minDelta)
+         step = currentPosition + minDelta * Math.signum(step - currentPosition);
       return step;
    }
 
@@ -560,17 +566,6 @@ public class AbilityHand implements HandInterface
    }
 
    /**
-    * Set the actuator velocities.
-    *
-    * @param velocities The actuator velocities, in radians per second.
-    */
-   public void setActuatorVelocities(float[] velocities)
-   {
-      actuatorVelocities.setAll(velocities);
-      updateAllFilteredActuatorVelocities();
-   }
-
-   /**
     * Updates the filtered actuator velocity for a specific actuator.
     * Applies a low-pass filter with a 3 Hz break frequency.
     *
@@ -587,17 +582,6 @@ public class AbilityHand implements HandInterface
 
       previousFilteredActuatorVelocities[index] = filteredVelocity;
       filteredActuatorVelocities.set(index, filteredVelocity);
-   }
-
-   /**
-    * Updates the filtered actuator velocities for all actuators.
-    */
-   private void updateAllFilteredActuatorVelocities()
-   {
-      for (int i = 0; i < ACTUATOR_COUNT; i++)
-      {
-         updateFilteredActuatorVelocity(i);
-      }
    }
 
    /**
