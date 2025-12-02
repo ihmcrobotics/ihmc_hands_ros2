@@ -203,16 +203,7 @@ public class AbilityHand implements HandInterface
 
       for (int actuatorIndex = 0; actuatorIndex < ACTUATOR_COUNT; actuatorIndex++)
       {
-         float targetPosition = goalPositions.get(actuatorIndex);
-         float maxVelocity = Math.abs(goalVelocities.get(actuatorIndex));
-
-         float commandedPosition = TrapezoidalStep.step(actuatorPositions.get(actuatorIndex),
-                                                        actuatorVelocities.get(actuatorIndex),
-                                                        targetPosition,
-                                                        maxVelocity,
-                                                        DEFAULT_MAXIMUM_ACCELERATION,
-                                                        dt * 5.0f);
-
+         float commandedPosition = step(actuatorIndex, goalPositions.get(actuatorIndex));
          setCommandValue(actuatorIndex, commandedPosition);
       }
    }
@@ -269,8 +260,6 @@ public class AbilityHand implements HandInterface
             }
          }
 
-         float maximumVelocity = Math.abs(goalVelocities.get(actuatorIndex));
-
          float currentCommand = getCommandValue(actuatorIndex);
          float targetForThisFinger;
 
@@ -284,13 +273,7 @@ public class AbilityHand implements HandInterface
             targetForThisFinger = currentCommand;
          }
 
-         float commandedPosition = TrapezoidalStep.step(actuatorPositions.get(actuatorIndex),
-                                                        getFingerVelocityDegPerSec(actuatorIndex),
-                                                        targetForThisFinger,
-                                                        maximumVelocity,
-                                                        DEFAULT_MAXIMUM_ACCELERATION,
-                                                        dt);
-
+         float commandedPosition = step(actuatorIndex, targetForThisFinger);
          setCommandValue(actuatorIndex, commandedPosition);
 
          if (isActive && Math.abs(commandedPosition - desiredPosition) >= TOLERANCE)
@@ -309,6 +292,24 @@ public class AbilityHand implements HandInterface
 
          gripStage++;
       }
+   }
+
+   private float step(int actuatorIndex, float targetPosition)
+   {
+      float currentPosition = actuatorPositions.get(actuatorIndex);
+      float step = TrapezoidalStep.step(currentPosition,
+                                        fingerVelocitiesDegPerSec.get(actuatorIndex),
+                                        targetPosition,
+                                        goalVelocities.get(actuatorIndex),
+                                        DEFAULT_MAXIMUM_ACCELERATION,
+                                        dt);
+      // Because the Ability hand uses a signed int 16 internal representation,
+      // any commanded position has to be at least a 0.005 increment or it won't move.
+      // Math:
+      // 150 deg / 32767 (int16 max) = 0.00458 minimum command delta
+      if (step != currentPosition && Math.abs(step - currentPosition) < 0.005f)
+         step = currentPosition + 0.005f * Math.signum(step - currentPosition);
+      return step;
    }
 
    /**

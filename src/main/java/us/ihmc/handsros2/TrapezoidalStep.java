@@ -76,14 +76,6 @@ public class TrapezoidalStep
          newPosition = goalPosition;
       }
 
-      // Ability hand have signed int internal representations so 150 deg / 32767 = 0.00458 minimum command delta
-      // TODO: Move to ability side
-      float outputDelta = newPosition - currentPosition;
-      if (Math.abs(outputDelta) > 0.0f && Math.abs(outputDelta) < 0.005f)
-      {
-         newPosition = currentPosition + 0.005f * direction;
-      }
-
       return newPosition;
    }
 }
