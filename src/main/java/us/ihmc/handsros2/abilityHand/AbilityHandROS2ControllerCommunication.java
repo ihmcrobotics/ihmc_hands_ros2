@@ -71,7 +71,7 @@ public class AbilityHandROS2ControllerCommunication
       for (int i = 0; i < AbilityHand.ACTUATOR_COUNT; ++i)
       {
          stateMessage.getActuatorPositions()[i] = hand.getActuatorPosition(i);
-         stateMessage.getActuatorVelocities()[i] = hand.getFingerVelocityDegPerSec(i);
+         stateMessage.getActuatorVelocities()[i] = hand.getFilteredActuatorVelocity(i);
          stateMessage.getActuatorCurrents()[i] = hand.getActuatorCurrent(i);
          stateMessage.getGoalPositions()[i] = hand.getGoalPosition(i);
          stateMessage.getGoalVelocities()[i] = hand.getGoalVelocity(i);

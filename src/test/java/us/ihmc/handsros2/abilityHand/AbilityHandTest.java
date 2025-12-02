@@ -40,11 +40,11 @@ public class AbilityHandTest
             {
                float prevPos = actuatorPositions[fingerIndex][stepIndex - 1];
                float velocity = (command - prevPos) * (1.0f / timeStep);
-               hand.setFingerVelocityDegPerSec(fingerIndex, velocity);
+               hand.setActuatorVelocity(fingerIndex, velocity);
             }
 
             actuatorPositions[fingerIndex][stepIndex] = hand.getActuatorPosition(fingerIndex);
-            fingerVelocities[fingerIndex][stepIndex] = hand.getFingerVelocityDegPerSec(fingerIndex);
+            fingerVelocities[fingerIndex][stepIndex] = hand.getActuatorVelocity(fingerIndex);
          }
 
          currentTime += timeStep;
@@ -230,11 +230,11 @@ public class AbilityHandTest
             {
                float prevPos = actuatorPositions[fingerIndex][stepIndex - 1];
                float velocity = (command - prevPos) * (1.0f / timeStep);
-               hand.setFingerVelocityDegPerSec(fingerIndex, velocity);
+               hand.setActuatorVelocity(fingerIndex, velocity);
             }
 
             actuatorPositions[fingerIndex][stepIndex] = hand.getActuatorPosition(fingerIndex);
-            fingerVelocities[fingerIndex][stepIndex] = hand.getFingerVelocityDegPerSec(fingerIndex);
+            fingerVelocities[fingerIndex][stepIndex] = hand.getActuatorVelocity(fingerIndex);
          }
 
          currentTime += timeStep;
@@ -341,11 +341,11 @@ public class AbilityHandTest
             {
                float prevPos = actuatorPositions[fingerIndex][stepIndex - 1];
                float velocity = (command - prevPos) * (1.0f / timeStep);
-               hand.setFingerVelocityDegPerSec(fingerIndex, velocity);
+               hand.setActuatorVelocity(fingerIndex, velocity);
             }
 
             actuatorPositions[fingerIndex][stepIndex] = hand.getActuatorPosition(fingerIndex);
-            fingerVelocities[fingerIndex][stepIndex] = hand.getFingerVelocityDegPerSec(fingerIndex);
+            fingerVelocities[fingerIndex][stepIndex] = hand.getActuatorVelocity(fingerIndex);
          }
 
          currentTime += timeStep;

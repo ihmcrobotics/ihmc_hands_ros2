@@ -33,11 +33,6 @@ import static us.ihmc.handsros2.abilityHand.AbilityHandModel.AbilityHandJointNam
  * </p>
  * <p>
  * The hand reports actuator velocities as radians per second.
- * These can be converted into degrees/sec using:
- *     <code>finger_velocity_deg = gear_ratio * rotor_velocity_rad * (180 / pi)</code>
- * using the following gear ratios:
- * Index, Middle, Ring, Pinky, Thumb Flexor: 649
- * Thumb Rotator: 162.45
  * </p>
  * <p>
  * Ability Hands can be optionally equipped with touch sensors.
@@ -64,6 +59,8 @@ public class AbilityHand implements HandInterface
    private static final float TOLERANCE = 1.0f;
    /** Trajectory configuration: tune acceleration per joint as needed (deg/s^2) */
    private static final float DEFAULT_MAXIMUM_ACCELERATION = 200.0f;
+   /** Low-pass filter break frequency for actuator velocities in Hz */
+   private static final float VELOCITY_FILTER_BREAK_FREQUENCY = 3.0f;
 
    private final String identifier;
    private final RobotSide handSide;
@@ -77,8 +74,8 @@ public class AbilityHand implements HandInterface
    private final YoFloatArray actuatorPositions;
    /** Measured actuator velocities in radians per second. */
    private final YoFloatArray actuatorVelocities;
-   /** Measured finger velocities in degrees per second. */
-   private final YoFloatArray fingerVelocitiesDegPerSec;
+   /** Filtered actuator velocities in radians per second. */
+   private final YoFloatArray filteredActuatorVelocities;
    /** Measured actuator currents in amperes. */
    private final YoFloatArray actuatorCurrents;
    /** Raw touch sensor FSR readings (ADC counts). */
@@ -101,6 +98,9 @@ public class AbilityHand implements HandInterface
    /** Track previous time for computing dt. */
    private long previousTimeNanos = -1L;
    private float dt;
+
+   /** Previous filtered actuator velocities for low-pass filter */
+   private final float[] previousFilteredActuatorVelocities = new float[ACTUATOR_COUNT];
 
    /**
     * Creates a new AbilityHand with its own {@link YoRegistry}.
@@ -135,7 +135,7 @@ public class AbilityHand implements HandInterface
       commandValues = new YoFloatArray(prefix + "Command", registry, 0, 0, 0, 0, 0, 0);
       actuatorPositions = new YoFloatArray(prefix + "ActuatorPosition", registry, 0, 0, 0, 0, 0, 0);
       actuatorVelocities = new YoFloatArray(prefix + "ActuatorVelocity", registry, 0, 0, 0, 0, 0, 0);
-      fingerVelocitiesDegPerSec = new YoFloatArray(prefix + "FingerVelocityDegPerSec", registry, 0, 0, 0, 0, 0, 0);
+      filteredActuatorVelocities = new YoFloatArray(prefix + "FilteredActuatorVelocity", registry, 0, 0, 0, 0, 0, 0);
       actuatorCurrents = new YoFloatArray(prefix + "ActuatorCurrent", registry, 0, 0, 0, 0, 0, 0);
 
       int[] fsrInitial = new int[TOUCH_SENSOR_COUNT];
@@ -231,7 +231,7 @@ public class AbilityHand implements HandInterface
          previousGrip = currentGrip;
       }
 
-      // If we’re past the last stage, the grip is completed. No need to do anything
+      // If we're past the last stage, the grip is completed. No need to do anything
       if (currentGrip == null || gripStage >= currentGrip.stages.length)
          return;
 
@@ -298,7 +298,7 @@ public class AbilityHand implements HandInterface
    {
       float currentPosition = actuatorPositions.get(actuatorIndex);
       float step = TrapezoidalStep.step(currentPosition,
-                                        fingerVelocitiesDegPerSec.get(actuatorIndex),
+                                        filteredActuatorVelocities.get(actuatorIndex),
                                         targetPosition,
                                         goalVelocities.get(actuatorIndex),
                                         DEFAULT_MAXIMUM_ACCELERATION,
@@ -534,80 +534,14 @@ public class AbilityHand implements HandInterface
    }
 
    /**
-    * Get the approximate finger velocity in degrees per second for the actuator at the specified index.
-    * <p>
-    * The hand reports actuator (rotor) velocities in radians per second. Finger joint
-    * velocities in degrees per second can be approximated using:
-    * <pre>
-    * finger_velocity_deg = gear_ratio * rotor_velocity_rad * (180 / pi)
-    * </pre>
-    * where the gear ratio depends on the finger:
-    * Index, Middle, Ring, Pinky, Thumb Flexor: 649
-    * Thumb Rotator: 162.45
-    * </p>
+    * Get the filtered velocity of the actuator at the specified index.
     *
     * @param index Index to read the velocity from.
-    * @return The approximate finger velocity in degrees per second.
+    * @return The filtered velocity value in radians per second.
     */
-   public float getFingerVelocityDegPerSec(int index)
+   public float getFilteredActuatorVelocity(int index)
    {
-      return fingerVelocitiesDegPerSec.get(index);
-   }
-
-   /**
-    * Updates the YoVariable for finger velocity in deg/s for a specific actuator.
-    *
-    * @param index Index of the actuator.
-    */
-   private void updateFingerVelocityDegPerSec(int index)
-   {
-      float rotorVelocityRadPerSec = getActuatorVelocity(index);
-
-      // Select gear ratio based on actuator index:
-      // 0-3: fingers, 4: thumb flexor, 5: thumb rotator.
-      float gearRatio = (index == 5) ? 162.45f : 649.0f;
-
-      float fingerVelocityDegPerSec = gearRatio / rotorVelocityRadPerSec * (180.0f / (float) Math.PI);
-      fingerVelocitiesDegPerSec.set(index, fingerVelocityDegPerSec);
-   }
-
-   /**
-    * Updates the YoVariables for finger velocity in deg/s for all actuators.
-    */
-   private void updateAllFingerVelocitiesDegPerSec()
-   {
-      for (int i = 0; i < ACTUATOR_COUNT; i++)
-      {
-         updateFingerVelocityDegPerSec(i);
-      }
-   }
-
-   /**
-    * Set the actuator (rotor) velocity such that the approximate finger joint
-    * velocity in degrees per second matches the desired value.
-    * <p>
-    * This inverts the relation:
-    * <pre>
-    * finger_velocity_deg = gear_ratio * rotor_velocity_rad * (180 / pi)
-    * </pre>
-    * where the gear ratio depends on the finger:
-    * Index, Middle, Ring, Pinky, Thumb Flexor: 649
-    * Thumb Rotator: 162.45
-    * </p>
-    *
-    * @param index                 Index of the actuator (0..5).
-    * @param fingerVelocityDegPerSec Desired finger joint velocity in degrees per second.
-    */
-   public void setFingerVelocityDegPerSec(int index, float fingerVelocityDegPerSec)
-   {
-      // 0-3: fingers, 4: thumb flexor, 5: thumb rotator.
-      float gearRatio = (index == 5) ? 162.45f : 649.0f;
-
-      // rotor_velocity_rad = finger_velocity_deg / (gear_ratio * (180/pi))
-      float rotorVelocityRadPerSec =
-            fingerVelocityDegPerSec / (gearRatio * (180.0f / (float) Math.PI));
-
-      setActuatorVelocity(index, rotorVelocityRadPerSec);
+      return filteredActuatorVelocities.get(index);
    }
 
    /**
@@ -619,7 +553,7 @@ public class AbilityHand implements HandInterface
    public void setActuatorVelocity(int index, float value)
    {
       actuatorVelocities.set(index, value);
-      updateFingerVelocityDegPerSec(index);
+      updateFilteredActuatorVelocity(index);
    }
 
    /**
@@ -630,7 +564,37 @@ public class AbilityHand implements HandInterface
    public void setActuatorVelocities(float[] velocities)
    {
       actuatorVelocities.setAll(velocities);
-      updateAllFingerVelocitiesDegPerSec();
+      updateAllFilteredActuatorVelocities();
+   }
+
+   /**
+    * Updates the filtered actuator velocity for a specific actuator.
+    * Applies a low-pass filter with a 3 Hz break frequency.
+    *
+    * @param index Index of the actuator.
+    */
+   private void updateFilteredActuatorVelocity(int index)
+   {
+      float rawVelocity = getActuatorVelocity(index);
+
+      // Apply first-order low-pass filter
+      float tau = 1.0f / (2.0f * (float) Math.PI * VELOCITY_FILTER_BREAK_FREQUENCY);
+      float alpha = dt / (tau + dt);
+      float filteredVelocity = alpha * rawVelocity + (1.0f - alpha) * previousFilteredActuatorVelocities[index];
+
+      previousFilteredActuatorVelocities[index] = filteredVelocity;
+      filteredActuatorVelocities.set(index, filteredVelocity);
+   }
+
+   /**
+    * Updates the filtered actuator velocities for all actuators.
+    */
+   private void updateAllFilteredActuatorVelocities()
+   {
+      for (int i = 0; i < ACTUATOR_COUNT; i++)
+      {
+         updateFilteredActuatorVelocity(i);
+      }
    }
 
    /**

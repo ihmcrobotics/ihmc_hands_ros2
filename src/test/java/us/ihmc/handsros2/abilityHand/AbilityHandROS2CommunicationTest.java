@@ -98,7 +98,7 @@ public class AbilityHandROS2CommunicationTest
          System.out.printf("Asserting actuator %d position: expected=%.3f actual=%.3f%n", i, expectedPos, actualPos);
          assertEquals(expectedPos, actualPos);
 
-         float expectedVelDeg = hand.getFingerVelocityDegPerSec(i);
+         float expectedVelDeg = hand.getFilteredActuatorVelocity(i);
          float actualVelDeg = stateReceived.getActuatorVelocities()[i];
          System.out.printf("Asserting actuator %d velocity (deg/s): expected=%.3f actual=%.3f%n", i, expectedVelDeg, actualVelDeg);
          assertEquals(expectedVelDeg, actualVelDeg);
@@ -116,7 +116,7 @@ public class AbilityHandROS2CommunicationTest
             if (i > 0)
             {
                float velocity = (hand.getCommandValue(f) - prevPos[f]) * (1.0f / dt);
-               hand.setFingerVelocityDegPerSec(f, velocity);
+               hand.setActuatorVelocity(f, velocity);
             }
             prevPos[f] = hand.getActuatorPosition(f);
          }
