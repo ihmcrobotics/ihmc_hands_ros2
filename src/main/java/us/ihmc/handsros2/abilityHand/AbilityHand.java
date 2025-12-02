@@ -77,6 +77,8 @@ public class AbilityHand implements HandInterface
    private final YoFloatArray actuatorPositions;
    /** Measured actuator velocities in radians per second. */
    private final YoFloatArray actuatorVelocities;
+   /** Measured finger velocities in degrees per second. */
+   private final YoFloatArray fingerVelocitiesDegPerSec;
    /** Measured actuator currents in amperes. */
    private final YoFloatArray actuatorCurrents;
    /** Raw touch sensor FSR readings (ADC counts). */
@@ -133,6 +135,7 @@ public class AbilityHand implements HandInterface
       commandValues = new YoFloatArray(prefix + "Command", registry, 0, 0, 0, 0, 0, 0);
       actuatorPositions = new YoFloatArray(prefix + "ActuatorPosition", registry, 0, 0, 0, 0, 0, 0);
       actuatorVelocities = new YoFloatArray(prefix + "ActuatorVelocity", registry, 0, 0, 0, 0, 0, 0);
+      fingerVelocitiesDegPerSec = new YoFloatArray(prefix + "FingerVelocityDegPerSec", registry, 0, 0, 0, 0, 0, 0);
       actuatorCurrents = new YoFloatArray(prefix + "ActuatorCurrent", registry, 0, 0, 0, 0, 0, 0);
 
       int[] fsrInitial = new int[TOUCH_SENSOR_COUNT];
@@ -160,9 +163,7 @@ public class AbilityHand implements HandInterface
       if (previousTimeNanos > 0L)
       {
          long deltaNanos = nowNanos - previousTimeNanos;
-         float dt = Math.min(0.1f, deltaNanos * 1.0e-9f);
-
-         update(dt);
+         update(deltaNanos * 1.0e-9f);
       }
 
       previousTimeNanos = nowNanos;
@@ -206,11 +207,11 @@ public class AbilityHand implements HandInterface
          float maxVelocity = Math.abs(goalVelocities.get(actuatorIndex));
 
          float commandedPosition = TrapezoidalStep.step(actuatorPositions.get(actuatorIndex),
-                                                        getFingerVelocityDegPerSec(actuatorIndex),
+                                                        actuatorVelocities.get(actuatorIndex),
                                                         targetPosition,
                                                         maxVelocity,
                                                         DEFAULT_MAXIMUM_ACCELERATION,
-                                                        dt);
+                                                        dt * 5.0f);
 
          setCommandValue(actuatorIndex, commandedPosition);
       }
@@ -549,13 +550,35 @@ public class AbilityHand implements HandInterface
     */
    public float getFingerVelocityDegPerSec(int index)
    {
+      return fingerVelocitiesDegPerSec.get(index);
+   }
+
+   /**
+    * Updates the YoVariable for finger velocity in deg/s for a specific actuator.
+    *
+    * @param index Index of the actuator.
+    */
+   private void updateFingerVelocityDegPerSec(int index)
+   {
       float rotorVelocityRadPerSec = getActuatorVelocity(index);
 
       // Select gear ratio based on actuator index:
       // 0-3: fingers, 4: thumb flexor, 5: thumb rotator.
       float gearRatio = (index == 5) ? 162.45f : 649.0f;
 
-      return gearRatio * rotorVelocityRadPerSec * (180.0f / (float) Math.PI);
+      float fingerVelocityDegPerSec = gearRatio / rotorVelocityRadPerSec * (180.0f / (float) Math.PI);
+      fingerVelocitiesDegPerSec.set(index, fingerVelocityDegPerSec);
+   }
+
+   /**
+    * Updates the YoVariables for finger velocity in deg/s for all actuators.
+    */
+   private void updateAllFingerVelocitiesDegPerSec()
+   {
+      for (int i = 0; i < ACTUATOR_COUNT; i++)
+      {
+         updateFingerVelocityDegPerSec(i);
+      }
    }
 
    /**
@@ -595,6 +618,7 @@ public class AbilityHand implements HandInterface
    public void setActuatorVelocity(int index, float value)
    {
       actuatorVelocities.set(index, value);
+      updateFingerVelocityDegPerSec(index);
    }
 
    /**
@@ -605,6 +629,7 @@ public class AbilityHand implements HandInterface
    public void setActuatorVelocities(float[] velocities)
    {
       actuatorVelocities.setAll(velocities);
+      updateAllFingerVelocitiesDegPerSec();
    }
 
    /**
