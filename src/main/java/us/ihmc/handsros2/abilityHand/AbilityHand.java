@@ -64,8 +64,10 @@ public class AbilityHand implements HandInterface
    /** Command type used for low-level interface. */
    private final YoEnum<AbilityHandCommandType> commandType;
 
-   /** Low-level command values sent to the hand (position or velocity depending on {@link #commandType}). */
-   private final YoFloatArray commandValues;
+   /** Position command values sent to the hand. */
+   private final YoFloatArray positionCommands;
+   /** Velocity command values sent to the hand. */
+   private final YoFloatArray velocityCommands;
    /** Filtered command values. */
    private final YoFloatArray filteredCommandValues;
    /** Measured actuator positions in degrees. */
@@ -129,11 +131,14 @@ public class AbilityHand implements HandInterface
 
       String prefix = handSide.name() + "AbilityHand_" + identifier + "_";
 
-      // Low-level command type
       commandType = new YoEnum<>(prefix + "CommandType", registry, AbilityHandCommandType.class);
+      commandType.set(AbilityHandCommandType.VELOCITY);
+      controlMode = new YoEnum<>(prefix + "ControlMode", registry, AbilityHandControlMode.class);
+      controlMode.set(AbilityHandControlMode.VELOCITY);
+      grip = new YoEnum<>(prefix + "Grip", registry, AbilityHandGrip.class);
 
-      // Low-level arrays (start at zero)
-      commandValues = new YoFloatArray(prefix + "Command", registry, 0, 0, 0, 0, 0, 0);
+      positionCommands = new YoFloatArray(prefix + "PositionCommand", registry, 0, 0, 0, 0, 0, 0);
+      velocityCommands = new YoFloatArray(prefix + "VelocityCommand", registry, 0, 0, 0, 0, 0, 0);
       filteredCommandValues = new YoFloatArray(prefix + "FilteredCommand", registry, 0, 0, 0, 0, 0, 0);
       actuatorPositions = new YoFloatArray(prefix + "ActuatorPosition", registry, 0, 0, 0, 0, 0, 0);
       actuatorVelocities = new YoFloatArray(prefix + "ActuatorVelocity", registry, 0, 0, 0, 0, 0, 0);
@@ -143,18 +148,11 @@ public class AbilityHand implements HandInterface
       int[] fsrInitial = new int[TOUCH_SENSOR_COUNT];
       rawFSRReadings = new YoIntegerArray(prefix + "RawFSR", registry, fsrInitial);
 
-      // High-level control variables
-      String managerPrefix = handSide.name() + getClass().getSimpleName();
-      controlMode = new YoEnum<>(managerPrefix + "ControlMode", registry, AbilityHandControlMode.class);
-      controlMode.set(AbilityHandControlMode.VELOCITY);
-      grip = new YoEnum<>(managerPrefix + "Grip", registry, AbilityHandGrip.class);
+      goalPositions = new YoFloatArray(prefix + "GoalPosition", registry, 30.0f, 30.0f, 30.0f, 30.0f, 30.0f, -30.0f);
+      goalVelocities = new YoFloatArray(prefix + "GoalVelocity", registry, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
 
-      // Initialize goal positions and velocities with previous defaults
-      goalPositions = new YoFloatArray(managerPrefix + "GoalPosition", registry, 30.0f, 30.0f, 30.0f, 30.0f, 30.0f, -30.0f);
-      goalVelocities = new YoFloatArray(managerPrefix + "GoalVelocity", registry, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-
-      controlDT = new YoDouble(managerPrefix + "_controlDT", registry);
-      filterDT = new YoDouble(managerPrefix + "_filterDT", registry);
+      controlDT = new YoDouble(prefix + "_controlDT", registry);
+      filterDT = new YoDouble(prefix + "_filterDT", registry);
    }
 
    public void updateFilters()
@@ -172,7 +170,7 @@ public class AbilityHand implements HandInterface
                float breakFrequency = 0.2f;
                float tau = 1.0f / (2.0f * (float) Math.PI * breakFrequency);
                float alpha = (float) filterDT.getValue() / (tau + (float) filterDT.getValue());
-               float rawVelocity = getActuatorVelocity(i);
+               float rawVelocity = actuatorVelocities.get(i);
                float filteredVelocity = alpha * rawVelocity + (1.0f - alpha) * previousFilteredActuatorVelocities[i];
                previousFilteredActuatorVelocities[i] = filteredVelocity;
                filteredActuatorVelocities.set(i, filteredVelocity);
@@ -182,7 +180,7 @@ public class AbilityHand implements HandInterface
                float breakFrequency = 0.3f;
                float tau = 1.0f / (2.0f * (float) Math.PI * breakFrequency);
                float alpha = (float) filterDT.getValue() / (tau + (float) filterDT.getValue());
-               float rawCommand = getCommandValue(i);
+               float rawCommand = positionCommands.get(i);
                float filteredCommand = alpha * rawCommand + (1.0f - alpha) * previousFilteredCommandValues[i];
                previousFilteredCommandValues[i] = filteredCommand;
                filteredCommandValues.set(i, filteredCommand);
@@ -231,18 +229,21 @@ public class AbilityHand implements HandInterface
       {
          if (currentControlMode == AbilityHandControlMode.VELOCITY)
          {
-            setCommandType(AbilityHandCommandType.VELOCITY);
-            setCommandValues(goalVelocities.toFloatArray());
+            commandType.set(AbilityHandCommandType.VELOCITY);
+            velocityCommands.setAll(goalVelocities.toFloatArray());
+
+            positionCommands.setAll(actuatorPositions.toFloatArray()); // Make sure filtered commands dont jump when switching
+            goalPositions.setAll(actuatorPositions.toFloatArray()); // Make sure goals stay up to date
          }
          else
          {
-            setCommandType(AbilityHandCommandType.POSITION);
+            commandType.set(AbilityHandCommandType.POSITION);
 
             if (currentControlMode == AbilityHandControlMode.GRIP)
                updateGripControl();
 
             for (int i = 0; i < ACTUATOR_COUNT; i++)
-               setCommandValue(i, step(i, goalPositions.get(i)));
+               positionCommands.set(i, step(i, goalPositions.get(i)));
          }
       }
 
@@ -465,6 +466,11 @@ public class AbilityHand implements HandInterface
       this.commandType.set(commandType);
    }
 
+   public YoEnum<AbilityHandControlMode> getControlMode()
+   {
+      return controlMode;
+   }
+
    /**
     * Get the command value at the specified index.
     *
@@ -473,7 +479,18 @@ public class AbilityHand implements HandInterface
     */
    public float getCommandValue(int index)
    {
-      return commandValues.get(index);
+      return positionCommands.get(index);
+   }
+
+   /**
+    * Retrieves the velocity command value at the specified index.
+    *
+    * @param index the index of the velocity command to retrieve
+    * @return the velocity command value at the specified index
+    */
+   public float getVelocityCommandValue(int index)
+   {
+      return velocityCommands.get(index);
    }
 
    /**
@@ -485,27 +502,6 @@ public class AbilityHand implements HandInterface
    public float getFilteredCommandValue(int index)
    {
       return filteredCommandValues.get(index);
-   }
-
-   /**
-    * Set the command value at the specified index.
-    *
-    * @param index Index at which to set the value.
-    * @param value The value to set.
-    */
-   public void setCommandValue(int index, float value)
-   {
-      commandValues.set(index, value);
-   }
-
-   /**
-    * Set the command values.
-    *
-    * @param values The command values.
-    */
-   public void setCommandValues(float[] values)
-   {
-      commandValues.setAll(values);
    }
 
    /**
@@ -596,16 +592,6 @@ public class AbilityHand implements HandInterface
    }
 
    /**
-    * Set the actuator currents.
-    *
-    * @param currents The actuator currents, in amperes.
-    */
-   public void setActuatorCurrents(float[] currents)
-   {
-      actuatorCurrents.setAll(currents);
-   }
-
-   /**
     * Get the raw FSR ADC value measured by the touch sensor at the specified index.
     *
     * @param index Index of the touch sensor.
@@ -645,7 +631,7 @@ public class AbilityHand implements HandInterface
     */
    public float getSensedPressure(int index)
    {
-      int rawADCValue = getRawFSRValue(index);
+      int rawADCValue = rawFSRReadings.get(index);
 
       // When a touch sensor is not present, the raw adc value reported is 0.
       if (rawADCValue == 0)
@@ -658,16 +644,16 @@ public class AbilityHand implements HandInterface
    /** {@inheritDoc} */
    public void readJointAngles(double[] jointAngles)
    {
-      jointAngles[INDEX_Q1.getIndex(getSide())] = Math.toRadians(getActuatorPosition(0));
-      jointAngles[INDEX_Q2.getIndex(getSide())] = Q2_JOINT_MULTIPLIER * Math.toRadians(getActuatorPosition(0)) + Q2_JOINT_OFFSET;
-      jointAngles[MIDDLE_Q1.getIndex(getSide())] = Math.toRadians(getActuatorPosition(1));
-      jointAngles[MIDDLE_Q2.getIndex(getSide())] = Q2_JOINT_MULTIPLIER * Math.toRadians(getActuatorPosition(1)) + Q2_JOINT_OFFSET;
-      jointAngles[RING_Q1.getIndex(getSide())] = Math.toRadians(getActuatorPosition(2));
-      jointAngles[RING_Q2.getIndex(getSide())] = Q2_JOINT_MULTIPLIER * Math.toRadians(getActuatorPosition(2)) + Q2_JOINT_OFFSET;
-      jointAngles[PINKY_Q1.getIndex(getSide())] = Math.toRadians(getActuatorPosition(3));
-      jointAngles[PINKY_Q2.getIndex(getSide())] = Q2_JOINT_MULTIPLIER * Math.toRadians(getActuatorPosition(3)) + Q2_JOINT_OFFSET;
-      jointAngles[THUMB_Q1.getIndex(getSide())] = Math.toRadians(getActuatorPosition(5));
-      jointAngles[THUMB_Q2.getIndex(getSide())] = Math.toRadians(getActuatorPosition(4));
+      jointAngles[INDEX_Q1.getIndex(handSide)] = Math.toRadians(actuatorPositions.get(0));
+      jointAngles[INDEX_Q2.getIndex(handSide)] = Q2_JOINT_MULTIPLIER * Math.toRadians(actuatorPositions.get(0)) + Q2_JOINT_OFFSET;
+      jointAngles[MIDDLE_Q1.getIndex(handSide)] = Math.toRadians(actuatorPositions.get(1));
+      jointAngles[MIDDLE_Q2.getIndex(handSide)] = Q2_JOINT_MULTIPLIER * Math.toRadians(actuatorPositions.get(1)) + Q2_JOINT_OFFSET;
+      jointAngles[RING_Q1.getIndex(handSide)] = Math.toRadians(actuatorPositions.get(2));
+      jointAngles[RING_Q2.getIndex(handSide)] = Q2_JOINT_MULTIPLIER * Math.toRadians(actuatorPositions.get(2)) + Q2_JOINT_OFFSET;
+      jointAngles[PINKY_Q1.getIndex(handSide)] = Math.toRadians(actuatorPositions.get(3));
+      jointAngles[PINKY_Q2.getIndex(handSide)] = Q2_JOINT_MULTIPLIER * Math.toRadians(actuatorPositions.get(3)) + Q2_JOINT_OFFSET;
+      jointAngles[THUMB_Q1.getIndex(handSide)] = Math.toRadians(actuatorPositions.get(5));
+      jointAngles[THUMB_Q2.getIndex(handSide)] = Math.toRadians(actuatorPositions.get(4));
    }
 
    /** {@inheritDoc} */
