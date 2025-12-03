@@ -243,7 +243,10 @@ public class AbilityHand implements HandInterface
                updateGripControl();
 
             for (int i = 0; i < ACTUATOR_COUNT; i++)
+            {
                positionCommands.set(i, step(i, goalPositions.get(i)));
+               velocityCommands.set(i, 0.0f); // Just keeping these 0 in case
+            }
          }
       }
 
