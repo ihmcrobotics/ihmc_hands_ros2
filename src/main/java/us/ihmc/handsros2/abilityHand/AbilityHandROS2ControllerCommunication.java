@@ -52,9 +52,12 @@ public class AbilityHandROS2ControllerCommunication
    {
       if (commandListener.readLatestMessage(hand.getIdentifier(), commandMessage))
       {
-         hand.setControlMode(AbilityHandControlMode.fromByte(commandMessage.getControlMode()));
-         hand.setGrip(AbilityHandGrip.fromByte(commandMessage.getGrip()));
-         hand.setGoalPositions(commandMessage.getGoalPositions());
+         AbilityHandControlMode controlMode = AbilityHandControlMode.fromByte(commandMessage.getControlMode());
+         hand.setControlMode(controlMode);
+         if (controlMode == AbilityHandControlMode.POSITION)
+            hand.setGoalPositions(commandMessage.getGoalPositions());
+         if (controlMode == AbilityHandControlMode.GRIP)
+            hand.setGrip(AbilityHandGrip.fromByte(commandMessage.getGrip()));
          hand.setGoalVelocities(commandMessage.getGoalVelocities());
       }
    }

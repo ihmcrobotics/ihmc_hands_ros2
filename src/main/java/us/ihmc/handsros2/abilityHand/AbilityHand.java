@@ -9,6 +9,7 @@ import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoEnum;
+import us.ihmc.yoVariables.variable.YoLong;
 
 import static us.ihmc.handsros2.abilityHand.AbilityHandModel.AbilityHandJointName.*;
 
@@ -56,7 +57,7 @@ public class AbilityHand implements HandInterface
    public static int ACTUATOR_COUNT = 6;
    public static int TOUCH_SENSOR_COUNT = 30;
 
-   private static final float DEADZONE = 1.0f;
+   private static final float DEADZONE = 3.0f; // TODO: Reduce with current control
 
    private final String identifier;
    private final RobotSide handSide;
@@ -87,8 +88,8 @@ public class AbilityHand implements HandInterface
 
    /** High-level multi-stage grip pattern. */
    private final YoEnum<AbilityHandGrip> grip;
-   private AbilityHandGrip previousGrip = null;
-   private int gripStage = Integer.MAX_VALUE;
+   private final YoEnum<AbilityHandGrip> previousGrip;
+   private final YoLong gripStage;
 
    /** Goal positions per actuator, used by POSITION, VEL_TO_POS, and GRIP modes. */
    private final YoFloatArray goalPositions;
@@ -98,8 +99,6 @@ public class AbilityHand implements HandInterface
    /** Track previous time for computing dt. */
    private long previousControlTimeNanos = -1L;
    private final YoDouble controlDT;
-   private long previousFilterTimeNanos = -1L;
-   private final YoDouble filterDT;
 
    /** Previous filtered actuator velocities for low-pass filter */
    private final float[] previousFilteredActuatorVelocities = new float[ACTUATOR_COUNT];
@@ -135,7 +134,11 @@ public class AbilityHand implements HandInterface
       commandType.set(AbilityHandCommandType.VELOCITY);
       controlMode = new YoEnum<>(prefix + "ControlMode", registry, AbilityHandControlMode.class);
       controlMode.set(AbilityHandControlMode.VELOCITY);
-      grip = new YoEnum<>(prefix + "Grip", registry, AbilityHandGrip.class);
+      grip = new YoEnum<>(prefix + "Grip", registry, AbilityHandGrip.class, true);
+      grip.set(null);
+      previousGrip = new YoEnum<>(prefix + "PreviousGrip", registry, AbilityHandGrip.class, true);
+      previousGrip.set(null);
+      gripStage = new YoLong(prefix + "GripStage", registry);
 
       positionCommands = new YoFloatArray(prefix + "PositionCommand", registry, 0, 0, 0, 0, 0, 0);
       velocityCommands = new YoFloatArray(prefix + "VelocityCommand", registry, 0, 0, 0, 0, 0, 0);
@@ -152,56 +155,10 @@ public class AbilityHand implements HandInterface
       goalVelocities = new YoFloatArray(prefix + "GoalVelocity", registry, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
 
       controlDT = new YoDouble(prefix + "_controlDT", registry);
-      filterDT = new YoDouble(prefix + "_filterDT", registry);
-   }
-
-   public void updateFilters()
-   {
-      long nowNanos = System.nanoTime();
-
-      if (previousFilterTimeNanos > 0L)
-      {
-         long deltaNanos = nowNanos - previousFilterTimeNanos;
-         filterDT.set(deltaNanos * 1.0e-9f);
-
-         for (int i = 0; i < ACTUATOR_COUNT; i++)
-         {
-            {
-               float breakFrequency = 0.2f;
-               float tau = 1.0f / (2.0f * (float) Math.PI * breakFrequency);
-               float alpha = (float) filterDT.getValue() / (tau + (float) filterDT.getValue());
-               float rawVelocity = actuatorVelocities.get(i);
-               float filteredVelocity = alpha * rawVelocity + (1.0f - alpha) * previousFilteredActuatorVelocities[i];
-               previousFilteredActuatorVelocities[i] = filteredVelocity;
-               filteredActuatorVelocities.set(i, filteredVelocity);
-            }
-
-            {
-               float breakFrequency = 0.3f;
-               float tau = 1.0f / (2.0f * (float) Math.PI * breakFrequency);
-               float alpha = (float) filterDT.getValue() / (tau + (float) filterDT.getValue());
-               float rawCommand = positionCommands.get(i);
-               float filteredCommand = alpha * rawCommand + (1.0f - alpha) * previousFilteredCommandValues[i];
-               previousFilteredCommandValues[i] = filteredCommand;
-               filteredCommandValues.set(i, filteredCommand);
-            }
-         }
-      }
-
-      previousFilterTimeNanos = nowNanos;
    }
 
    @Override
    public void update()
-   {
-
-   }
-
-   /**
-    * Updates the hand commands based on the desired values set in this manager.
-    * Should be called periodically.
-    */
-   public void updateControl()
    {
       long nowNanos = System.nanoTime();
 
@@ -223,6 +180,29 @@ public class AbilityHand implements HandInterface
    {
       controlDT.set(dt);
 
+      for (int i = 0; i < ACTUATOR_COUNT; i++)
+      {
+         {
+            float breakFrequency = 0.2f;
+            float tau = 1.0f / (2.0f * (float) Math.PI * breakFrequency);
+            float alpha = dt / (tau + dt);
+            float rawVelocity = actuatorVelocities.get(i);
+            float filteredVelocity = alpha * rawVelocity + (1.0f - alpha) * previousFilteredActuatorVelocities[i];
+            previousFilteredActuatorVelocities[i] = filteredVelocity;
+            filteredActuatorVelocities.set(i, filteredVelocity);
+         }
+
+         {
+            float breakFrequency = 0.3f;
+            float tau = 1.0f / (2.0f * (float) Math.PI * breakFrequency);
+            float alpha = dt / (tau + dt);
+            float rawCommand = positionCommands.get(i);
+            float filteredCommand = alpha * rawCommand + (1.0f - alpha) * previousFilteredCommandValues[i];
+            previousFilteredCommandValues[i] = filteredCommand;
+            filteredCommandValues.set(i, filteredCommand);
+         }
+      }
+
       AbilityHandControlMode currentControlMode = controlMode.getValue();
 
       if (currentControlMode != null)
@@ -239,7 +219,7 @@ public class AbilityHand implements HandInterface
          {
             commandType.set(AbilityHandCommandType.POSITION);
 
-            if (currentControlMode == AbilityHandControlMode.GRIP)
+            if (currentControlMode == AbilityHandControlMode.GRIP && grip.getValue() != null)
                updateGripControl();
 
             for (int i = 0; i < ACTUATOR_COUNT; i++)
@@ -253,6 +233,29 @@ public class AbilityHand implements HandInterface
       previousControlMode = currentControlMode;
    }
 
+   private float step(int actuatorIndex, float targetPosition)
+   {
+      float currentGoal = goalPositions.get(actuatorIndex);
+
+      float dt = (float) controlDT.getValue();
+      float positionError = targetPosition - currentGoal;
+      float direction = Math.signum(positionError);
+      float step = currentGoal + direction * goalVelocities.get(actuatorIndex) * dt;
+
+      // Clamp to target position if close
+      if (Math.abs(positionError) < DEADZONE)
+         step = targetPosition;
+
+      // Because the Ability hand uses a signed int 16 internal representation,
+      // any commanded position has to be at least a 0.005 increment or it won't move.
+      // Math:
+      // 150 deg / 32767 (int16 max) = 0.00458 minimum command delta
+      float minDelta = 0.1f;
+      if (step != currentGoal && Math.abs(step - currentGoal) < minDelta)
+         step = currentGoal + minDelta * Math.signum(step - currentGoal);
+      return step;
+   }
+
    /**
     * Performs multi-stage grip control, moving fingers sequentially through {@link AbilityHandGrip#stages}.
     */
@@ -261,30 +264,39 @@ public class AbilityHand implements HandInterface
       AbilityHandGrip currentGrip = grip.getValue();
 
       // Check if we're starting a new grip
-      if (previousControlMode != AbilityHandControlMode.GRIP || previousGrip != currentGrip)
+      if (previousControlMode != AbilityHandControlMode.GRIP || previousGrip.getValue() != currentGrip)
       {
-         gripStage = 0;
-         previousGrip = currentGrip;
+         gripStage.set(0);
+         previousGrip.set(currentGrip);
       }
 
-      // If we're past the last stage, the grip is completed. No need to do anything
-      if (currentGrip == null || gripStage >= currentGrip.stages.length)
-         return;
+      int stage = (int) gripStage.getValue();
+      if (stage >= 0 && stage < currentGrip.stages.length)
+      {
+         for (int s = 0; s <= stage; s++) // Keep previous stage goals as well
+            for (int i = 0; i < currentGrip.stages[s].length; i++)
+               goalPositions.set(currentGrip.stages[s][i], currentGrip.positions[s][i]);
 
-      // Normal grip stages: move only the fingers in this stage toward their stage goals,
-      // but update all trajectories (steps) every tick.
-      int[] actuatorsToMove = currentGrip.stages[gripStage];
-      float[] stageGoalPositions = currentGrip.positions[gripStage];
+         boolean stageComplete = true;
+         for (int i = 0; i < currentGrip.stages[stage].length; i++)
+         {
+            int f = currentGrip.stages[stage][i];
+            stageComplete &= Math.abs(goalPositions.get(f) - actuatorPositions.get(f)) < DEADZONE;
+         }
 
-      for (int i = 0; i < actuatorsToMove.length; i++)
-         goalPositions.set(actuatorsToMove[i], stageGoalPositions[i]);
-
-      boolean stageComplete = true;
-      for (int actuatorIndex = 0; actuatorIndex < ACTUATOR_COUNT; actuatorIndex++)
-         stageComplete &= Math.abs(goalPositions.get(actuatorIndex) - actuatorPositions.get(actuatorIndex)) < DEADZONE;
-
-      if (stageComplete)
-         gripStage++;
+         if (stageComplete)
+         {
+            if (stage + 1 == currentGrip.stages.length)
+            {
+               controlMode.set(AbilityHandControlMode.POSITION);
+               gripStage.set(-1);
+            }
+            else
+            {
+               gripStage.increment();
+            }
+         }
+      }
    }
 
    private float stepCurrent(int actuatorIndex, float targetPosition)
@@ -298,29 +310,6 @@ public class AbilityHand implements HandInterface
       float direction = Math.signum(positionError);
 
       return 0.05f * direction;
-   }
-
-   private float step(int actuatorIndex, float targetPosition)
-   {
-      float currentPosition = actuatorPositions.get(actuatorIndex);
-
-      float dt = (float) controlDT.getValue();
-      float positionError = targetPosition - currentPosition;
-      float direction = Math.signum(positionError);
-      float step = currentPosition + direction * goalVelocities.get(actuatorIndex) * dt;
-
-      // Clamp to target position if close
-      if (Math.abs(positionError) < DEADZONE)
-         step = targetPosition;
-
-      // Because the Ability hand uses a signed int 16 internal representation,
-      // any commanded position has to be at least a 0.005 increment or it won't move.
-      // Math:
-      // 150 deg / 32767 (int16 max) = 0.00458 minimum command delta
-      float minDelta = 0.1f;
-      if (step != currentPosition && Math.abs(step - currentPosition) < minDelta)
-         step = currentPosition + minDelta * Math.signum(step - currentPosition);
-      return step;
    }
 
    /**
@@ -382,7 +371,7 @@ public class AbilityHand implements HandInterface
     */
    public int getGripStage()
    {
-      return gripStage;
+      return (int) gripStage.getValue();
    }
 
    /**
