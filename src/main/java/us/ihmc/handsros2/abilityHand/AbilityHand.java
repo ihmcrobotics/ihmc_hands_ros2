@@ -249,11 +249,11 @@ public class AbilityHand implements HandInterface
     */
    private void updatePositionControl()
    {
-      setCommandType(AbilityHandCommandType.CURRENT);
+      setCommandType(AbilityHandCommandType.POSITION);
 
       for (int actuatorIndex = 0; actuatorIndex < ACTUATOR_COUNT; actuatorIndex++)
       {
-         float commandedPosition = stepCurrent(actuatorIndex, goalPositions.get(actuatorIndex));
+         float commandedPosition = step(actuatorIndex, goalPositions.get(actuatorIndex));
          setCommandValue(actuatorIndex, commandedPosition);
       }
    }
@@ -285,7 +285,7 @@ public class AbilityHand implements HandInterface
       if (currentGrip == null || gripStage >= currentGrip.stages.length)
          return;
 
-      setCommandType(AbilityHandCommandType.CURRENT);
+      setCommandType(AbilityHandCommandType.POSITION);
 
       // Normal grip stages: move only the fingers in this stage toward their stage goals,
       // but update all trajectories (steps) every tick.
@@ -323,7 +323,7 @@ public class AbilityHand implements HandInterface
             targetForThisFinger = currentCommand;
          }
 
-         float commandedPosition = stepCurrent(actuatorIndex, targetForThisFinger);
+         float commandedPosition = step(actuatorIndex, targetForThisFinger);
          setCommandValue(actuatorIndex, commandedPosition);
 
          if (isActive && Math.abs(commandedPosition - desiredPosition) >= TOLERANCE)
@@ -337,13 +337,12 @@ public class AbilityHand implements HandInterface
          {
             int actuatorIndex = actuatorsToMove[i];
             float stageGoalPosition = stageGoalPositions[i];
-            setCommandValue(actuatorIndex, 0.0f);
+            setCommandValue(actuatorIndex, stageGoalPosition);
          }
 
          gripStage++;
       }
    }
-
 
    private float stepCurrent(int actuatorIndex, float targetPosition)
    {
@@ -357,7 +356,6 @@ public class AbilityHand implements HandInterface
 
       return 0.05f * direction;
    }
-
 
    private float step(int actuatorIndex, float targetPosition)
    {
