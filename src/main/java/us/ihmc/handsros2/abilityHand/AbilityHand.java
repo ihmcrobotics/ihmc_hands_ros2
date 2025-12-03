@@ -5,7 +5,6 @@ import us.ihmc.handsros2.HandType;
 import us.ihmc.handsros2.YoFloatArray;
 import us.ihmc.handsros2.YoIntegerArray;
 import us.ihmc.handsros2.abilityHand.AbilityHandModel.AbilityHandJointName;
-import us.ihmc.handsros2.TrapezoidalStep;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
@@ -57,9 +56,7 @@ public class AbilityHand implements HandInterface
    public static int ACTUATOR_COUNT = 6;
    public static int TOUCH_SENSOR_COUNT = 30;
 
-   private static final float TOLERANCE = 1.0f;
-   /** Trajectory configuration: tune acceleration per joint as needed (deg/s^2) */
-   private static final float DEFAULT_MAXIMUM_ACCELERATION = 200.0f;
+   private static final float DEADZONE = 1.0f;
 
    private final String identifier;
    private final RobotSide handSide;
@@ -232,39 +229,24 @@ public class AbilityHand implements HandInterface
 
       if (currentControlMode != null)
       {
-         switch (currentControlMode)
+         if (currentControlMode == AbilityHandControlMode.VELOCITY)
          {
-            case POSITION -> updatePositionControl();
-            case VELOCITY -> updateVelocityControl();
-            case GRIP -> updateGripControl();
+            setCommandType(AbilityHandCommandType.VELOCITY);
+            setCommandValues(goalVelocities.toFloatArray());
+         }
+         else
+         {
+            setCommandType(AbilityHandCommandType.POSITION);
+
+            if (currentControlMode == AbilityHandControlMode.GRIP)
+               updateGripControl();
+
+            for (int i = 0; i < ACTUATOR_COUNT; i++)
+               setCommandValue(i, step(i, goalPositions.get(i)));
          }
       }
 
       previousControlMode = currentControlMode;
-   }
-
-   /**
-    * Updates hand in POSITION mode using per-finger trapezoidal steps.
-    * goalPositions are the targets; goalVelocities set each finger's max velocity.
-    */
-   private void updatePositionControl()
-   {
-      setCommandType(AbilityHandCommandType.POSITION);
-
-      for (int actuatorIndex = 0; actuatorIndex < ACTUATOR_COUNT; actuatorIndex++)
-      {
-         float commandedPosition = step(actuatorIndex, goalPositions.get(actuatorIndex));
-         setCommandValue(actuatorIndex, commandedPosition);
-      }
-   }
-
-   /**
-    * Updates hand to direct velocity control using goalVelocities.
-    */
-   private void updateVelocityControl()
-   {
-      setCommandType(AbilityHandCommandType.VELOCITY);
-      setCommandValues(goalVelocities.toFloatArray());
    }
 
    /**
@@ -285,63 +267,20 @@ public class AbilityHand implements HandInterface
       if (currentGrip == null || gripStage >= currentGrip.stages.length)
          return;
 
-      setCommandType(AbilityHandCommandType.POSITION);
-
       // Normal grip stages: move only the fingers in this stage toward their stage goals,
       // but update all trajectories (steps) every tick.
       int[] actuatorsToMove = currentGrip.stages[gripStage];
       float[] stageGoalPositions = currentGrip.positions[gripStage];
 
+      for (int i = 0; i < actuatorsToMove.length; i++)
+         goalPositions.set(actuatorsToMove[i], stageGoalPositions[i]);
+
       boolean stageComplete = true;
-
       for (int actuatorIndex = 0; actuatorIndex < ACTUATOR_COUNT; actuatorIndex++)
-      {
-         boolean isActive = false;
-         float desiredPosition = 0.0f;
-
-         // Check if this finger is active in the current stage
-         for (int i = 0; i < actuatorsToMove.length; i++)
-         {
-            if (actuatorIndex == actuatorsToMove[i])
-            {
-               isActive = true;
-               desiredPosition = stageGoalPositions[i];
-               break;
-            }
-         }
-
-         float currentCommand = getCommandValue(actuatorIndex);
-         float targetForThisFinger;
-
-         if (isActive)
-         {
-            targetForThisFinger = desiredPosition;
-         }
-         else
-         {
-            // Not active: hold current command position as its goal
-            targetForThisFinger = currentCommand;
-         }
-
-         float commandedPosition = step(actuatorIndex, targetForThisFinger);
-         setCommandValue(actuatorIndex, commandedPosition);
-
-         if (isActive && Math.abs(commandedPosition - desiredPosition) >= TOLERANCE)
-            stageComplete = false;
-      }
+         stageComplete &= Math.abs(goalPositions.get(actuatorIndex) - actuatorPositions.get(actuatorIndex)) < DEADZONE;
 
       if (stageComplete)
-      {
-         // Snap active fingers to exact stage goal to avoid tiny residuals
-         for (int i = 0; i < actuatorsToMove.length; i++)
-         {
-            int actuatorIndex = actuatorsToMove[i];
-            float stageGoalPosition = stageGoalPositions[i];
-            setCommandValue(actuatorIndex, stageGoalPosition);
-         }
-
          gripStage++;
-      }
    }
 
    private float stepCurrent(int actuatorIndex, float targetPosition)
@@ -349,7 +288,7 @@ public class AbilityHand implements HandInterface
       float currentPosition = actuatorPositions.get(actuatorIndex);
       float positionError = targetPosition - currentPosition;
 
-      if (Math.abs(positionError) < 2.0f)
+      if (Math.abs(positionError) < DEADZONE)
          return 0.0f;
 
       float direction = Math.signum(positionError);
@@ -367,7 +306,7 @@ public class AbilityHand implements HandInterface
       float step = currentPosition + direction * goalVelocities.get(actuatorIndex) * dt;
 
       // Clamp to target position if close
-      if (Math.abs(positionError) < 2.0f)
+      if (Math.abs(positionError) < DEADZONE)
          step = targetPosition;
 
       // Because the Ability hand uses a signed int 16 internal representation,
