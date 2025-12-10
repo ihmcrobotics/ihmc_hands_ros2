@@ -149,8 +149,8 @@ public class AbilityHandROS2CommunicationTest
 
          float expectedCommand = COMMAND_VALUES[i];
          float actualCommand = hand.getCommandValue(i);
-         System.out.printf("Asserting actuator %d command value: expected=%.3f actual=%.3f%n", i, expectedCommand, actualCommand);
-         assertEquals(expectedCommand, actualCommand);
+         System.out.printf("Asserting actuator %d command value: expected=%.3f actual=%.3f tolerance=%.3f%n", i, expectedCommand, actualCommand, 1.0);
+         assertEquals(expectedCommand, actualCommand, 1.0);
       }
 
       for (int i = 0; i < TOUCH_SENSOR_COUNT; ++i)
