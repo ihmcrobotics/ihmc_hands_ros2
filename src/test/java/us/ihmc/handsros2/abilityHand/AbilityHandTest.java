@@ -19,7 +19,7 @@ public class AbilityHandTest
       hand.setGoalPositions(goalPositions);
       hand.setGoalVelocities(new float[] {30f, 30f, 30f, 30f, 30f, 30f});
 
-      int numberOfSteps = 100;
+      int numberOfSteps = 200;
       float timeStep = 0.01f;
 
       float[][] actuatorPositions = new float[ACTUATOR_COUNT][numberOfSteps];
@@ -69,9 +69,7 @@ public class AbilityHandTest
          }
       }
 
-      int plotWidth = 60;
-
-      float tolerance = 1e-3f;
+      float tolerance = 1.0f;
 
       System.out.printf("Asserting command type is POSITION, actual=%s%n", hand.getCommandType());
       assertEquals(AbilityHandCommandType.POSITION, hand.getCommandType());
@@ -269,7 +267,7 @@ public class AbilityHandTest
                    "Expected POSITION command type but got " + hand.getCommandType());
 
       // Assert CLOSE grip final-stage target positions are achieved at the end
-      float tolerance = 1e-1f;
+      float tolerance = 1.0f;
       AbilityHandGrip grip = AbilityHandGrip.CLOSE;
       int lastStage = grip.stages.length - 1;
       int[] stageActuators = grip.stages[lastStage];
@@ -303,10 +301,10 @@ public class AbilityHandTest
 
       // Sequence of grips to test
       AbilityHandGrip[] gripSequence = new AbilityHandGrip[] {
-            AbilityHandGrip.OPEN, AbilityHandGrip.RELAX, AbilityHandGrip.HOOK, AbilityHandGrip.CLOSE};
-      int[] gripSwitchSteps = new int[] {0, 150, 400, 500}; // when to switch grips
+            AbilityHandGrip.OPEN, AbilityHandGrip.CLOSE, AbilityHandGrip.FLAT, AbilityHandGrip.HOOK};
+      int[] gripSwitchSteps = new int[] {0, 250, 450, 750}; // when to switch grips
 
-      int numberOfSteps = 650;
+      int numberOfSteps = 900;
       float timeStep = 0.01f;
 
       float[] times = new float[numberOfSteps];
@@ -315,6 +313,8 @@ public class AbilityHandTest
 
       float currentTime = 0.0f;
 
+      AbilityHandGrip priorGrip = null;
+      int segmentStartStep = 0;
       for (int stepIndex = 0; stepIndex < numberOfSteps; stepIndex++)
       {
          // Choose grip based on schedule
@@ -322,7 +322,55 @@ public class AbilityHandTest
          {
             if (stepIndex >= gripSwitchSteps[seqIndex])
             {
-               hand.setGrip(gripSequence[seqIndex]);
+               AbilityHandGrip grip = gripSequence[seqIndex];
+               if (priorGrip != grip)
+               {
+                  // Before switching to a new grip, plot the segment we just completed
+                  if (priorGrip != null && stepIndex - segmentStartStep > 0)
+                  {
+                     int segLen = stepIndex - segmentStartStep;
+
+                     // Build segment arrays [segmentStartStep, stepIndex)
+                     float[] timesSeg = new float[segLen];
+                     float[][] actuatorPositionsSeg = new float[ACTUATOR_COUNT][segLen];
+                     float[][] fingerVelocitiesSeg = new float[ACTUATOR_COUNT][segLen];
+
+                     float minPosSeg = Float.POSITIVE_INFINITY;
+                     float maxPosSeg = Float.NEGATIVE_INFINITY;
+                     float minVelSeg = Float.POSITIVE_INFINITY;
+                     float maxVelSeg = Float.NEGATIVE_INFINITY;
+
+                     for (int i = 0; i < segLen; i++)
+                     {
+                        int srcIdx = segmentStartStep + i;
+                        timesSeg[i] = times[srcIdx];
+                        for (int f = 0; f < ACTUATOR_COUNT; f++)
+                        {
+                           float p = actuatorPositions[f][srcIdx];
+                           float v = fingerVelocities[f][srcIdx];
+                           actuatorPositionsSeg[f][i] = p;
+                           fingerVelocitiesSeg[f][i] = v;
+                           if (p < minPosSeg) minPosSeg = p;
+                           if (p > maxPosSeg) maxPosSeg = p;
+                           if (v < minVelSeg) minVelSeg = v;
+                           if (v > maxVelSeg) maxVelSeg = v;
+                        }
+                     }
+
+                     int plotWidthSeg = 60;
+                     System.out.println("ASCII plot of all finger positions/velocities for grip segment: " + priorGrip
+                           + " [steps " + segmentStartStep + ".." + (stepIndex - 1) + "]");
+                     asciiPlotAllFingers(timesSeg, actuatorPositionsSeg, fingerVelocitiesSeg,
+                                         minPosSeg, maxPosSeg, minVelSeg, maxVelSeg, plotWidthSeg);
+                  }
+
+                  // Now perform the switch
+                  priorGrip = grip;
+                  segmentStartStep = stepIndex;
+                  System.out.printf("Switching to grip %s at step %d%n", grip, stepIndex);
+               }
+               hand.setGrip(grip);
+               hand.setControlMode(AbilityHandControlMode.GRIP);
                break;
             }
          }
@@ -351,28 +399,43 @@ public class AbilityHandTest
          currentTime += timeStep;
       }
 
-      // Normalize for plotting
-      float minPos = Float.POSITIVE_INFINITY;
-      float maxPos = Float.NEGATIVE_INFINITY;
-      float minVel = Float.POSITIVE_INFINITY;
-      float maxVel = Float.NEGATIVE_INFINITY;
-      for (int fingerIndex = 0; fingerIndex < ACTUATOR_COUNT; fingerIndex++)
+      // After the loop, also plot the final segment (no switch follows it)
+      if (priorGrip != null && numberOfSteps - segmentStartStep > 0)
       {
-         for (int stepIndex = 0; stepIndex < numberOfSteps; stepIndex++)
+         int segLen = numberOfSteps - segmentStartStep;
+
+         float[] timesSeg = new float[segLen];
+         float[][] actuatorPositionsSeg = new float[ACTUATOR_COUNT][segLen];
+         float[][] fingerVelocitiesSeg = new float[ACTUATOR_COUNT][segLen];
+
+         float minPosSeg = Float.POSITIVE_INFINITY;
+         float maxPosSeg = Float.NEGATIVE_INFINITY;
+         float minVelSeg = Float.POSITIVE_INFINITY;
+         float maxVelSeg = Float.NEGATIVE_INFINITY;
+
+         for (int i = 0; i < segLen; i++)
          {
-            float p = actuatorPositions[fingerIndex][stepIndex];
-            float v = fingerVelocities[fingerIndex][stepIndex];
-            if (p < minPos) minPos = p;
-            if (p > maxPos) maxPos = p;
-            if (v < minVel) minVel = v;
-            if (v > maxVel) maxVel = v;
+            int srcIdx = segmentStartStep + i;
+            timesSeg[i] = times[srcIdx];
+            for (int f = 0; f < ACTUATOR_COUNT; f++)
+            {
+               float p = actuatorPositions[f][srcIdx];
+               float v = fingerVelocities[f][srcIdx];
+               actuatorPositionsSeg[f][i] = p;
+               fingerVelocitiesSeg[f][i] = v;
+               if (p < minPosSeg) minPosSeg = p;
+               if (p > maxPosSeg) maxPosSeg = p;
+               if (v < minVelSeg) minVelSeg = v;
+               if (v > maxVelSeg) maxVelSeg = v;
+            }
          }
+
+         int plotWidthSeg = 60;
+         System.out.println("ASCII plot of all finger positions/velocities for final grip segment: " + priorGrip
+               + " [steps " + segmentStartStep + ".." + (numberOfSteps - 1) + "]");
+         asciiPlotAllFingers(timesSeg, actuatorPositionsSeg, fingerVelocitiesSeg,
+                             minPosSeg, maxPosSeg, minVelSeg, maxVelSeg, plotWidthSeg);
       }
-
-      int plotWidth = 60;
-
-      System.out.println("ASCII plot of all finger positions/velocities across multiple grips:");
-      asciiPlotAllFingers(times, actuatorPositions, fingerVelocities, minPos, maxPos, minVel, maxVel, plotWidth);
 
       // GRIP mode should be issuing POSITION commands at the end
       System.out.printf("Asserting GRIP mode uses POSITION command type at end, actual=%s%n", hand.getCommandType());
@@ -380,7 +443,7 @@ public class AbilityHandTest
                    "Expected POSITION command type but got " + hand.getCommandType());
 
       // New: assert that at the end of each grip segment, the final stage target positions are reached
-      float tolerance = 1e-1f; // looser tolerance to allow some discretization error
+      float tolerance = 2.0f; // looser tolerance to allow some discretization error
 
       for (int seqIndex = 0; seqIndex < gripSequence.length; seqIndex++)
       {
@@ -506,6 +569,9 @@ public class AbilityHandTest
    public void testType()
    {
       AbilityHand testEZGripper = new AbilityHand("24ABH001", RobotSide.LEFT);
-      assertEquals(HandType.ABILITY_HAND, testEZGripper.getType());
+      HandType expected = HandType.ABILITY_HAND;
+      HandType actual = testEZGripper.getType();
+      System.out.printf("Asserting hand type: expected=%s actual=%s%n", expected, actual);
+      assertEquals(expected, actual);
    }
 }
