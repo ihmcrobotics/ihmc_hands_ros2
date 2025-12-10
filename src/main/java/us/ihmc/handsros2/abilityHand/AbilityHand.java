@@ -183,7 +183,7 @@ public class AbilityHand implements HandInterface
       for (int i = 0; i < ACTUATOR_COUNT; i++)
       {
          {
-            float breakFrequency = 0.2f;
+            float breakFrequency = 1.0f;
             float tau = 1.0f / (2.0f * (float) Math.PI * breakFrequency);
             float alpha = dt / (tau + dt);
             float rawVelocity = actuatorVelocities.get(i);
@@ -193,7 +193,7 @@ public class AbilityHand implements HandInterface
          }
 
          {
-            float breakFrequency = 0.3f;
+            float breakFrequency = 1.0f;
             float tau = 1.0f / (2.0f * (float) Math.PI * breakFrequency);
             float alpha = dt / (tau + dt);
             float rawCommand = positionCommands.get(i);
@@ -224,36 +224,15 @@ public class AbilityHand implements HandInterface
 
             for (int i = 0; i < ACTUATOR_COUNT; i++)
             {
-               positionCommands.set(i, step(i, goalPositions.get(i)));
+               float direction = Math.signum(goalPositions.get(i) - positionCommands.get(i));
+               float step = direction * goalVelocities.get(i) * (float) controlDT.getValue();
+               positionCommands.getYoDouble(i).add(step);
                velocityCommands.set(i, 0.0f); // Just keeping these 0 in case
             }
          }
       }
 
       previousControlMode = currentControlMode;
-   }
-
-   private float step(int actuatorIndex, float targetPosition)
-   {
-      float currentGoal = goalPositions.get(actuatorIndex);
-
-      float dt = (float) controlDT.getValue();
-      float positionError = targetPosition - currentGoal;
-      float direction = Math.signum(positionError);
-      float step = currentGoal + direction * goalVelocities.get(actuatorIndex) * dt;
-
-      // Clamp to target position if close
-      if (Math.abs(positionError) < DEADZONE)
-         step = targetPosition;
-
-      // Because the Ability hand uses a signed int 16 internal representation,
-      // any commanded position has to be at least a 0.005 increment or it won't move.
-      // Math:
-      // 150 deg / 32767 (int16 max) = 0.00458 minimum command delta
-      float minDelta = 0.1f;
-      if (step != currentGoal && Math.abs(step - currentGoal) < minDelta)
-         step = currentGoal + minDelta * Math.signum(step - currentGoal);
-      return step;
    }
 
    /**
@@ -297,19 +276,6 @@ public class AbilityHand implements HandInterface
             }
          }
       }
-   }
-
-   private float stepCurrent(int actuatorIndex, float targetPosition)
-   {
-      float currentPosition = actuatorPositions.get(actuatorIndex);
-      float positionError = targetPosition - currentPosition;
-
-      if (Math.abs(positionError) < DEADZONE)
-         return 0.0f;
-
-      float direction = Math.signum(positionError);
-
-      return 0.05f * direction;
    }
 
    /**
@@ -471,29 +437,11 @@ public class AbilityHand implements HandInterface
     */
    public float getCommandValue(int index)
    {
-      return positionCommands.get(index);
-   }
-
-   /**
-    * Retrieves the velocity command value at the specified index.
-    *
-    * @param index the index of the velocity command to retrieve
-    * @return the velocity command value at the specified index
-    */
-   public float getVelocityCommandValue(int index)
-   {
-      return velocityCommands.get(index);
-   }
-
-   /**
-    * Get the filtered command value at the specified index.
-    *
-    * @param index Index to read the value from.
-    * @return The filtered command value.
-    */
-   public float getFilteredCommandValue(int index)
-   {
-      return filteredCommandValues.get(index);
+      return switch (getControlMode().getEnumValue())
+      {
+         case VELOCITY -> velocityCommands.get(index);
+         case POSITION, GRIP -> filteredCommandValues.get(index);
+      };
    }
 
    /**
