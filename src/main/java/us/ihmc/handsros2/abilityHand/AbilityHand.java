@@ -9,7 +9,7 @@ import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoEnum;
-import us.ihmc.yoVariables.variable.YoLong;
+import us.ihmc.yoVariables.variable.YoInteger;
 
 import static us.ihmc.handsros2.abilityHand.AbilityHandModel.AbilityHandJointName.*;
 
@@ -89,9 +89,9 @@ public class AbilityHand implements HandInterface
    /** High-level multi-stage grip pattern. */
    private final YoEnum<AbilityHandGrip> grip;
    private final YoEnum<AbilityHandGrip> previousGrip;
-   private final YoLong gripStage;
+   private final YoInteger gripStage;
 
-   /** Goal positions per actuator, used by POSITION, VEL_TO_POS, and GRIP modes. */
+   /** Goal positions per actuator, used by POSITION and GRIP modes. */
    private final YoFloatArray goalPositions;
    /** Goal velocities per actuator, used as maximum velocities in trajectories and velocity mode. */
    private final YoFloatArray goalVelocities;
@@ -138,7 +138,7 @@ public class AbilityHand implements HandInterface
       grip.set(null);
       previousGrip = new YoEnum<>(prefix + "PreviousGrip", registry, AbilityHandGrip.class, true);
       previousGrip.set(null);
-      gripStage = new YoLong(prefix + "GripStage", registry);
+      gripStage = new YoInteger(prefix + "GripStage", registry);
 
       positionCommands = new YoFloatArray(prefix + "PositionCommand", registry, 0, 0, 0, 0, 0, 0);
       velocityCommands = new YoFloatArray(prefix + "VelocityCommand", registry, 0, 0, 0, 0, 0, 0);
