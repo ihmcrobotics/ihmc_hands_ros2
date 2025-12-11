@@ -3,7 +3,6 @@ package us.ihmc.handsros2.abilityHand;
 import ihmc_hands_ros2.msg.dds.AbilityHandCommand;
 import ihmc_hands_ros2.msg.dds.AbilityHandState;
 import us.ihmc.handsros2.HandMessageListener;
-import us.ihmc.handsros2.HandROS2HardwareCommunication;
 import us.ihmc.ros2.ROS2NodeBuilder;
 import us.ihmc.ros2.ROS2Publisher;
 import us.ihmc.ros2.ROS2Subscription;
@@ -17,10 +16,10 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * <p>High level ROS 2 communication for the {@link AbilityHandInterface}. Communicates with low-level hardware control process.</p>
+ * <p>High level ROS 2 communication for the {@link AbilityHand}. Communicates with low-level hardware control process.</p>
  * <p>Subscribes to {@link AbilityHandState} messages and publishes {@link AbilityHandCommand} messages.</p>
  */
-public class AbilityHandROS2HardwareCommunication implements HandROS2HardwareCommunication<AbilityHandCommand, AbilityHandState>
+public class AbilityHandROS2HardwareCommunication
 {
    private final List<String> registeredHandIdentifiers;
 
@@ -69,7 +68,6 @@ public class AbilityHandROS2HardwareCommunication implements HandROS2HardwareCom
     *
     * @return Set of identifiers of the available hands.
     */
-   @Override
    public Set<String> getAvailableHands()
    {
       return commandMessages.keySet();
@@ -83,7 +81,6 @@ public class AbilityHandROS2HardwareCommunication implements HandROS2HardwareCom
     *
     * @return List of identifiers of the available hands.
     */
-   @Override
    public List<String> getAvailableHandList()
    {
       return registeredHandIdentifiers;
@@ -96,7 +93,6 @@ public class AbilityHandROS2HardwareCommunication implements HandROS2HardwareCom
     * @param messageToPack Message to pack with the latest state.
     * @return {@code true} if a state message was available. {@code false} if no state had been received.
     */
-   @Override
    public boolean readState(String identifier, AbilityHandState messageToPack)
    {
       return stateListener.readLatestMessage(identifier, messageToPack);
@@ -108,7 +104,6 @@ public class AbilityHandROS2HardwareCommunication implements HandROS2HardwareCom
     * @param identifier Identifier specifying the hand.
     * @return A copy of the latest state message.
     */
-   @Override
    public AbilityHandState readState(String identifier)
    {
       AbilityHandState stateMessage = new AbilityHandState();
@@ -126,7 +121,6 @@ public class AbilityHandROS2HardwareCommunication implements HandROS2HardwareCom
     * @param identifier Identifier specifying the hand.
     * @return A reference to the command message for the specified hand.
     */
-   @Override
    public AbilityHandCommand getCommand(String identifier)
    {
       return commandMessages.get(identifier);
@@ -138,7 +132,6 @@ public class AbilityHandROS2HardwareCommunication implements HandROS2HardwareCom
     * @param identifier Identifier specifying the hand.
     * @return {@code true} if the message was published. {@code false} if the hand specified wasn't found.
     */
-   @Override
    public boolean publishCommand(String identifier)
    {
       AbilityHandCommand commandMessage = commandMessages.get(identifier);
@@ -151,15 +144,17 @@ public class AbilityHandROS2HardwareCommunication implements HandROS2HardwareCom
       return false;
    }
 
-   /** {@inheritDoc} */
-   @Override
+   /**
+    * Start the communication.
+    */
    public void start()
    {
       node.spin();
    }
 
-   /** {@inheritDoc} */
-   @Override
+   /**
+    * Shut the communication down. {@link #start()} cannot be called again after this method.
+    */
    public void shutdown()
    {
       node.stopSpinning();

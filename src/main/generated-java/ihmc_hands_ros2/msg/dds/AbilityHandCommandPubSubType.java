@@ -15,7 +15,7 @@ public class AbilityHandCommandPubSubType implements us.ihmc.pubsub.TopicDataTyp
    @Override
    public final java.lang.String getDefinitionChecksum()
    {
-   		return "769a7a65742e2e249ca3dd5c3bee025f6aff2cb2c7f7ecfa3111be48a7c47275";
+   		return "6d9a8c4e42ade4f4411fab07c116c3f7733bd4c3dd0f47642874c3f8061a04cb";
    }
    
    @Override
@@ -55,11 +55,11 @@ public class AbilityHandCommandPubSubType implements us.ihmc.pubsub.TopicDataTyp
       current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4) + 32 + 1;
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
 
+      current_alignment += ((6) * 4) + us.ihmc.idl.CDR.alignment(current_alignment, 4);
+
+      current_alignment += ((6) * 4) + us.ihmc.idl.CDR.alignment(current_alignment, 4);
+
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
-
-      current_alignment += ((6) * 4) + us.ihmc.idl.CDR.alignment(current_alignment, 4);
-
-      current_alignment += ((6) * 4) + us.ihmc.idl.CDR.alignment(current_alignment, 4);
 
 
       return current_alignment - initial_alignment;
@@ -79,11 +79,11 @@ public class AbilityHandCommandPubSubType implements us.ihmc.pubsub.TopicDataTyp
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
 
 
+      current_alignment += ((6) * 4) + us.ihmc.idl.CDR.alignment(current_alignment, 4);
+      current_alignment += ((6) * 4) + us.ihmc.idl.CDR.alignment(current_alignment, 4);
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
 
 
-      current_alignment += ((6) * 4) + us.ihmc.idl.CDR.alignment(current_alignment, 4);
-      current_alignment += ((6) * 4) + us.ihmc.idl.CDR.alignment(current_alignment, 4);
 
       return current_alignment - initial_alignment;
    }
@@ -96,17 +96,17 @@ public class AbilityHandCommandPubSubType implements us.ihmc.pubsub.TopicDataTyp
 
       cdr.write_type_9(data.getControlMode());
 
-      cdr.write_type_9(data.getGrip());
+      for(int i0 = 0; i0 < data.getGoalVelocities().length; ++i0)
+      {
+        	cdr.write_type_5(data.getGoalVelocities()[i0]);	
+      }
 
       for(int i0 = 0; i0 < data.getGoalPositions().length; ++i0)
       {
         	cdr.write_type_5(data.getGoalPositions()[i0]);	
       }
 
-      for(int i0 = 0; i0 < data.getGoalVelocities().length; ++i0)
-      {
-        	cdr.write_type_5(data.getGoalVelocities()[i0]);	
-      }
+      cdr.write_type_9(data.getGrip());
 
    }
 
@@ -115,7 +115,11 @@ public class AbilityHandCommandPubSubType implements us.ihmc.pubsub.TopicDataTyp
       cdr.read_type_d(data.getIdentifier());	
       data.setControlMode(cdr.read_type_9());
       	
-      data.setGrip(cdr.read_type_9());
+      for(int i0 = 0; i0 < data.getGoalVelocities().length; ++i0)
+      {
+        	data.getGoalVelocities()[i0] = cdr.read_type_5();
+        	
+      }
       	
       for(int i0 = 0; i0 < data.getGoalPositions().length; ++i0)
       {
@@ -123,11 +127,7 @@ public class AbilityHandCommandPubSubType implements us.ihmc.pubsub.TopicDataTyp
         	
       }
       	
-      for(int i0 = 0; i0 < data.getGoalVelocities().length; ++i0)
-      {
-        	data.getGoalVelocities()[i0] = cdr.read_type_5();
-        	
-      }
+      data.setGrip(cdr.read_type_9());
       	
 
    }
@@ -137,9 +137,9 @@ public class AbilityHandCommandPubSubType implements us.ihmc.pubsub.TopicDataTyp
    {
       ser.write_type_d("identifier", data.getIdentifier());
       ser.write_type_9("control_mode", data.getControlMode());
-      ser.write_type_9("grip", data.getGrip());
-      ser.write_type_f("goal_positions", data.getGoalPositions());
       ser.write_type_f("goal_velocities", data.getGoalVelocities());
+      ser.write_type_f("goal_positions", data.getGoalPositions());
+      ser.write_type_9("grip", data.getGrip());
    }
 
    @Override
@@ -147,9 +147,9 @@ public class AbilityHandCommandPubSubType implements us.ihmc.pubsub.TopicDataTyp
    {
       ser.read_type_d("identifier", data.getIdentifier());
       data.setControlMode(ser.read_type_9("control_mode"));
-      data.setGrip(ser.read_type_9("grip"));
-      ser.read_type_f("goal_positions", data.getGoalPositions());
       ser.read_type_f("goal_velocities", data.getGoalVelocities());
+      ser.read_type_f("goal_positions", data.getGoalPositions());
+      data.setGrip(ser.read_type_9("grip"));
    }
 
    public static void staticCopy(ihmc_hands_ros2.msg.dds.AbilityHandCommand src, ihmc_hands_ros2.msg.dds.AbilityHandCommand dest)

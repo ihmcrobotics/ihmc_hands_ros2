@@ -3,19 +3,16 @@ package us.ihmc.handsros2.abilityHand;
 import ihmc_hands_ros2.msg.dds.AbilityHandCommand;
 import ihmc_hands_ros2.msg.dds.AbilityHandState;
 import us.ihmc.handsros2.HandMessageListener;
-import us.ihmc.handsros2.HandROS2ControllerCommunication;
-import us.ihmc.handsros2.abilityHand.AbilityHandManager.ControlMode;
-import us.ihmc.handsros2.abilityHand.AbilityHandManager.Grip;
 import us.ihmc.ros2.ROS2NodeBuilder;
 import us.ihmc.ros2.ROS2Publisher;
 import us.ihmc.ros2.ROS2Subscription;
 import us.ihmc.ros2.RealtimeROS2Node;
 
 /**
- * <p>Hardware side ROS 2 communication for the {@link AbilityHandInterface}. Communicates with external controller.</p>
+ * <p>Hardware side ROS 2 communication for the {@link AbilityHand}. Communicates with external controller.</p>
  * <p>Subscribes to {@link AbilityHandCommand} messages and publishes {@link AbilityHandState} messages.</p>
  */
-public class AbilityHandROS2ControllerCommunication implements HandROS2ControllerCommunication<AbilityHandManager>
+public class AbilityHandROS2ControllerCommunication
 {
    private final RealtimeROS2Node node;
 
@@ -46,49 +43,60 @@ public class AbilityHandROS2ControllerCommunication implements HandROS2Controlle
       commandSubscription = node.createSubscription(AbilityHandROS2API.COMMAND_TOPIC, commandListener);
    }
 
-   /** {@inheritDoc} */
-   @Override
-   public void readCommand(AbilityHandManager managerToUpdate)
+   /**
+    * Update the hand manager with the latest command.
+    *
+    * @param hand The hand manager to update.
+    */
+   public void readCommand(AbilityHand hand)
    {
-      if (commandListener.readLatestMessage(managerToUpdate.getHand().getIdentifier(), commandMessage))
+      if (commandListener.readLatestMessage(hand.getIdentifier(), commandMessage))
       {
-         managerToUpdate.setControlMode(ControlMode.fromByte(commandMessage.getControlMode()));
-         managerToUpdate.setGrip(Grip.fromByte(commandMessage.getGrip()));
-         managerToUpdate.setGoalPositions(commandMessage.getGoalPositions());
-         managerToUpdate.setGoalVelocities(commandMessage.getGoalVelocities());
+         AbilityHandControlMode controlMode = AbilityHandControlMode.fromByte(commandMessage.getControlMode());
+         hand.setControlMode(controlMode);
+         if (controlMode == AbilityHandControlMode.POSITION)
+            hand.setGoalPositions(commandMessage.getGoalPositions());
+         if (controlMode == AbilityHandControlMode.GRIP)
+            hand.setGrip(AbilityHandGrip.fromByte(commandMessage.getGrip()));
+         hand.setGoalVelocities(commandMessage.getGoalVelocities());
       }
    }
 
-   /** {@inheritDoc} */
-   @Override
-   public void publishState(AbilityHandManager managerToPublish)
+   /**
+    * Publish the hand's state.
+    *
+    * @param hand Manager of the hand to publish.
+    */
+   public void publishState(AbilityHand hand)
    {
-      stateMessage.setIdentifier(managerToPublish.getHand().getIdentifier());
-      stateMessage.setHandSide(managerToPublish.getHand().getSide().toByte());
-      for (int i = 0; i < AbilityHandInterface.ACTUATOR_COUNT; ++i)
+      stateMessage.setIdentifier(hand.getIdentifier());
+      stateMessage.setHandSide(hand.getSide().toByte());
+      for (int i = 0; i < AbilityHand.ACTUATOR_COUNT; ++i)
       {
-         stateMessage.getActuatorPositions()[i] = managerToPublish.getHand().getActuatorPosition(i);
-         stateMessage.getActuatorVelocities()[i] = managerToPublish.getHand().getActuatorVelocity(i);
-         stateMessage.getActuatorCurrents()[i] = managerToPublish.getHand().getActuatorCurrent(i);
-         stateMessage.getGoalPositions()[i] = managerToPublish.getGoalPosition(i);
-         stateMessage.getGoalVelocities()[i] = managerToPublish.getGoalVelocity(i);
+         stateMessage.getActuatorPositions()[i] = hand.getActuatorPosition(i);
+         stateMessage.getActuatorVelocities()[i] = hand.getFilteredActuatorVelocity(i);
+         stateMessage.getActuatorCurrents()[i] = hand.getActuatorCurrent(i);
+         stateMessage.getGoalPositions()[i] = hand.getGoalPosition(i);
+         stateMessage.getGoalVelocities()[i] = hand.getGoalVelocity(i);
       }
-      stateMessage.setGripStage(managerToPublish.getGripStage());
-      for (int i = 0; i < AbilityHandInterface.TOUCH_SENSOR_COUNT; ++i)
-         stateMessage.getTouchSensorReadings()[i] = managerToPublish.getHand().getSensedPressure(i);
+      stateMessage.setGripStage(hand.getGripStage());
+      for (int i = 0; i < AbilityHand.TOUCH_SENSOR_COUNT; ++i)
+         stateMessage.getTouchSensorReadings()[i] = hand.getSensedPressure(i);
 
       statePublisher.publish(stateMessage);
    }
 
-   /** {@inheritDoc} */
-   @Override
+   /**
+    * Initialize the communication.
+    */
    public void start()
    {
       node.spin();
    }
 
-   /** {@inheritDoc} */
-   @Override
+   /**
+    * Shut the communication down. {@link #start()} cannot be called again after this method.
+    */
    public void shutdown()
    {
       node.stopSpinning();

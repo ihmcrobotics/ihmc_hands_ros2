@@ -3,7 +3,7 @@ package us.ihmc.handsros2.ezGripper;
 import ihmc_hands_ros2.msg.dds.EZGripperCommand;
 import ihmc_hands_ros2.msg.dds.EZGripperState;
 import org.junit.jupiter.api.Test;
-import us.ihmc.handsros2.ezGripper.EZGripperManager.OperationMode;
+import us.ihmc.handsros2.ezGripper.EZGripper.OperationMode;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.ros2.ROS2Node;
 import us.ihmc.ros2.ROS2NodeBuilder;
@@ -61,9 +61,8 @@ public class EZGripperROS2CommunicationTest
          }
       });
 
-      // Initialize a test gripper and its manager
-      TestEZGripper testGripper = new TestEZGripper(IDENTIFIER, GRIPPER_SIDE);
-      EZGripperManager manager = new EZGripperManager(testGripper);
+      // Initialize a test gripper
+      EZGripper testGripper = new EZGripper(IDENTIFIER, GRIPPER_SIDE);
 
       // Set the state of the gripper
       testGripper.setCurrentPosition(CURRENT_POSITION);
@@ -75,7 +74,7 @@ public class EZGripperROS2CommunicationTest
       EZGripperROS2ControllerCommunication controllerCommunication = new EZGripperROS2ControllerCommunication("test_controller_comm", domainId);
 
       // Publish before starting. Nothing should happen
-      controllerCommunication.publishState(manager);
+      controllerCommunication.publishState(testGripper);
 
       // Assert that no messages were received
       assertFalse(received.get());
@@ -85,7 +84,7 @@ public class EZGripperROS2CommunicationTest
       LockSupport.parkNanos((long) 1E8);
 
       publisher.publish(command);
-      controllerCommunication.publishState(manager);
+      controllerCommunication.publishState(testGripper);
 
       // Wait for the state message to be received
       synchronized (received)
@@ -95,8 +94,8 @@ public class EZGripperROS2CommunicationTest
       }
 
       // Read values
-      controllerCommunication.readCommand(manager);
-      manager.update();
+      controllerCommunication.readCommand(testGripper);
+      testGripper.update();
 
       // Assert that the messages were received
       assertTrue(received.get());
