@@ -6,15 +6,15 @@ package us.ihmc.handsros2.abilityHand;
  */
 public enum AbilityHandGrip
 {
-   OPEN(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{1, 1, 1, 1, 1, -93}}),
+   OPEN(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{5, 5, 5, 5, 5, -93}}),
    CLOSE(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{65, 65, 65, 65, 42, -93}}),
-   PINCH(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{61, 64, 1, 1, 53, -76}}),
-   FLAT(new int[][] {{0, 1, 2, 3, 4}, {5}}, new float[][] {{1, 1, 1, 1, 1}, {-3}}),
+   PINCH(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{61, 64, 5, 5, 53, -76}}),
+   FLAT(new int[][] {{0, 1, 2, 3, 4}, {5}}, new float[][] {{5, 5, 5, 5, 5}, {-5}}),
    HOOK(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{70, 70, 70, 70, 10, -10}}),
    RELAX(new int[][] {{4}, {0, 1, 2, 3, 5}}, new float[][] {{30}, {30, 30, 30, 30, -30}}),
-   DOOR_LEVER_OPEN(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{38, 47, 53, 60, 60, -4}}),
-   DOOR_LEVER_CLOSE(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{65, 71, 78, 81, 60, -4}}),
-   DOOR_LEVER_CRUSH(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{105, 105, 105, 105, 33, -4}}),
+   DOOR_LEVER_OPEN(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{38, 47, 53, 60, 60, -5}}),
+   DOOR_LEVER_CLOSE(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{65, 71, 78, 81, 60, -5}}),
+   DOOR_LEVER_CRUSH(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{105, 105, 105, 105, 33, -5}}),
    KEY_OPEN(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{90, 90, 90, 90, 0, -20}}),
    KEY_CLOSE(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{90, 90, 90, 90, 80, -20}}),
    ;
