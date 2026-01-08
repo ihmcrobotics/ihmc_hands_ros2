@@ -1,6 +1,3 @@
-# The hand's serial number. E.g. 24ABH265
-string<=32 identifier
-
 byte POSITION_CONTROL=0
 byte VELOCITY_CONTROL=1
 byte GRIP_CONTROL=2
