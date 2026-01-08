@@ -2,6 +2,8 @@
 
 **/build
 **/out
+**/log
+**/install
 **/gradle
 **/.gradle
 **/.idea
