@@ -64,7 +64,7 @@ public class AbilityHandROS2HardwareCommunication
     *
     * @param side        Side specifying the hand.
     * @param stateToPack State message to pack with the latest state.
-    * @return {@code true} if a new state message was available.
+    * @return {@code true} if a state message was available.
     */
    public boolean readState(RobotSide side, AbilityHandState stateToPack)
    {
@@ -81,8 +81,7 @@ public class AbilityHandROS2HardwareCommunication
     * Read the latest state message of the specified hand.
     *
     * @param side Side specifying the hand.
-    * @return A copy of the latest state message, if a new one was received.
-    *       {@code null} if no new message has been received since the last read.
+    * @return A copy of the latest state message. {@code null} if no message has been received.
     */
    public AbilityHandState readState(RobotSide side)
    {
