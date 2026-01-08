@@ -2,26 +2,27 @@ package us.ihmc.handsros2.abilityHand;
 
 import ihmc_hands_ros2.msg.dds.AbilityHandCommand;
 import ihmc_hands_ros2.msg.dds.AbilityHandState;
-import us.ihmc.handsros2.HandMessageListener;
+import us.ihmc.robotics.robotSide.RobotSide;
+import us.ihmc.robotics.robotSide.SideDependentList;
+import us.ihmc.ros2.QueuedROS2Subscription;
 import us.ihmc.ros2.ROS2NodeBuilder;
 import us.ihmc.ros2.ROS2Publisher;
-import us.ihmc.ros2.ROS2Subscription;
 import us.ihmc.ros2.RealtimeROS2Node;
 
 /**
  * <p>Hardware side ROS 2 communication for the {@link AbilityHand}. Communicates with external controller.</p>
  * <p>Subscribes to {@link AbilityHandCommand} messages and publishes {@link AbilityHandState} messages.</p>
  */
+@SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
 public class AbilityHandROS2ControllerCommunication
 {
    private final RealtimeROS2Node node;
 
    private final AbilityHandState stateMessage;
-   private final ROS2Publisher<AbilityHandState> statePublisher;
+   private final SideDependentList<ROS2Publisher<AbilityHandState>> statePublishers;
 
    private final AbilityHandCommand commandMessage;
-   private final HandMessageListener<AbilityHandCommand> commandListener;
-   private final ROS2Subscription<AbilityHandCommand> commandSubscription;
+   private final SideDependentList<QueuedROS2Subscription<AbilityHandCommand>> commandSubscriptions;
 
    public AbilityHandROS2ControllerCommunication(String nodeName)
    {
@@ -36,21 +37,20 @@ public class AbilityHandROS2ControllerCommunication
       node = nodeBuilder.buildRealtime(nodeName);
 
       stateMessage = new AbilityHandState();
-      statePublisher = node.createPublisher(AbilityHandROS2API.STATE_TOPIC);
+      statePublishers = new SideDependentList<>(side -> node.createPublisher(AbilityHandROS2API.STATE_TOPICS.get(side)));
 
       commandMessage = new AbilityHandCommand();
-      commandListener = new HandMessageListener<>(AbilityHandCommand::new);
-      commandSubscription = node.createSubscription(AbilityHandROS2API.COMMAND_TOPIC, commandListener);
+      commandSubscriptions = new SideDependentList<>(side -> node.createQueuedSubscription(AbilityHandROS2API.COMMAND_TOPICS.get(side)));
    }
 
    /**
-    * Update the hand manager with the latest command.
+    * Update the hand with the latest command.
     *
-    * @param hand The hand manager to update.
+    * @param hand The hand to update.
     */
    public void readCommand(AbilityHand hand)
    {
-      if (commandListener.readLatestMessage(hand.getIdentifier(), commandMessage))
+      if (commandSubscriptions.get(hand.getSide()).flushAndGetLatest(commandMessage))
       {
          AbilityHandControlMode controlMode = AbilityHandControlMode.fromByte(commandMessage.getControlMode());
          hand.setControlMode(controlMode);
@@ -65,12 +65,10 @@ public class AbilityHandROS2ControllerCommunication
    /**
     * Publish the hand's state.
     *
-    * @param hand Manager of the hand to publish.
+    * @param hand Hand to publish.
     */
    public void publishState(AbilityHand hand)
    {
-      stateMessage.setIdentifier(hand.getIdentifier());
-      stateMessage.setHandSide(hand.getSide().toByte());
       for (int i = 0; i < AbilityHand.ACTUATOR_COUNT; ++i)
       {
          stateMessage.getActuatorPositions()[i] = hand.getActuatorPosition(i);
@@ -83,7 +81,7 @@ public class AbilityHandROS2ControllerCommunication
       for (int i = 0; i < AbilityHand.TOUCH_SENSOR_COUNT; ++i)
          stateMessage.getTouchSensorReadings()[i] = hand.getSensedPressure(i);
 
-      statePublisher.publish(stateMessage);
+      statePublishers.get(hand.getSide()).publish(stateMessage);
    }
 
    /**
@@ -101,8 +99,11 @@ public class AbilityHandROS2ControllerCommunication
    {
       node.stopSpinning();
 
-      statePublisher.remove();
-      commandSubscription.remove();
+      for (RobotSide side : RobotSide.values)
+      {
+         statePublishers.get(side).remove();
+         commandSubscriptions.get(side).remove();
+      }
 
       node.destroy();
    }

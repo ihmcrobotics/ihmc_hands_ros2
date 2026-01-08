@@ -1,4 +1,5 @@
 package us.ihmc.handsros2.abilityHand;
+
 import ihmc_hands_ros2.msg.dds.AbilityHandCommand;
 import ihmc_hands_ros2.msg.dds.AbilityHandState;
 import org.junit.jupiter.api.Test;
@@ -29,7 +30,6 @@ public class AbilityHandROS2CommunicationTest
       final float[] COMMAND_VALUES = new float[] {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, -5.0f};
       final float[] ACTUATOR_POSITIONS = new float[] {5.0f, 4.0f, 3.0f, 2.0f, 1.0f, 0.0f};
       final int[] TOUCH_SENSOR_READINGS = new int[30];
-      final String SERIAL_NUMBER = "24ABH000";
 
       for (int i = 0; i < TOUCH_SENSOR_COUNT; ++i)
          TOUCH_SENSOR_READINGS[i] = i;
@@ -39,17 +39,16 @@ public class AbilityHandROS2CommunicationTest
 
       // Create a command message and its publisher
       AbilityHandCommand command = new AbilityHandCommand();
-      command.setIdentifier(SERIAL_NUMBER);
       command.setControlMode(AbilityHandControlMode.POSITION.toByte());
       System.arraycopy(COMMAND_VALUES, 0, command.getGoalPositions(), 0, ACTUATOR_COUNT);
       for (int i = 0; i < 6; ++i)
          command.getGoalVelocities()[i] = 30.0f;
-      ROS2Publisher<AbilityHandCommand> publisher = node.createPublisher(AbilityHandROS2API.COMMAND_TOPIC);
+      ROS2Publisher<AbilityHandCommand> publisher = node.createPublisher(AbilityHandROS2API.COMMAND_TOPICS.get(HAND_SIDE));
 
       // Create a stats subscription
       AtomicBoolean received = new AtomicBoolean(false);
       AbilityHandState stateReceived = new AbilityHandState();
-      ROS2Subscription<AbilityHandState> subscription = node.createSubscription2(AbilityHandROS2API.STATE_TOPIC, stateMessage ->
+      ROS2Subscription<AbilityHandState> subscription = node.createSubscription2(AbilityHandROS2API.STATE_TOPICS.get(HAND_SIDE), stateMessage ->
       {
          stateReceived.set(stateMessage);
 
@@ -61,7 +60,7 @@ public class AbilityHandROS2CommunicationTest
       });
 
       // Initialize a test hand
-      AbilityHand hand = new AbilityHand(SERIAL_NUMBER, HAND_SIDE);
+      AbilityHand hand = new AbilityHand(HAND_SIDE);
       hand.setActuatorPositions(ACTUATOR_POSITIONS); // Set the state of the hand
       hand.setRawFSRValues(TOUCH_SENSOR_READINGS);
 
@@ -164,16 +163,6 @@ public class AbilityHandROS2CommunicationTest
       System.out.printf("Asserting command type: expected=%s actual=%s%n", COMMAND_TYPE, hand.getCommandType());
       assertEquals(COMMAND_TYPE, hand.getCommandType());
 
-      RobotSide expectedSide = HAND_SIDE;
-      RobotSide actualSide = RobotSide.fromByte(stateReceived.getHandSide());
-      System.out.printf("Asserting hand side: expected=%s actual=%s%n", expectedSide, actualSide);
-      assertEquals(expectedSide, actualSide);
-
-      String expectedSerial = SERIAL_NUMBER;
-      String actualSerial = stateReceived.getIdentifierAsString();
-      System.out.printf("Asserting serial number: expected=%s actual=%s%n", expectedSerial, actualSerial);
-      assertEquals(expectedSerial, actualSerial);
-
       // Shut things down
       controllerCommunication.shutdown();
       subscription.remove();
@@ -192,7 +181,6 @@ public class AbilityHandROS2CommunicationTest
       final float[] ACTUATOR_VELOCITIES = new float[] {1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f};
       final float[] ACTUATOR_CURRENTS = new float[] {7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f};
       final float[] TOUCH_SENSOR_READINGS = new float[30];
-      final String SERIAL_NUMBER = "24ABH001";
 
       for (int i = 0; i < TOUCH_SENSOR_COUNT; ++i)
          TOUCH_SENSOR_READINGS[i] = TOUCH_SENSOR_COUNT - i;
@@ -202,18 +190,16 @@ public class AbilityHandROS2CommunicationTest
 
       // Create a state message and its publisher
       AbilityHandState state = new AbilityHandState();
-      state.setIdentifier(SERIAL_NUMBER);
-      state.setHandSide(HAND_SIDE.toByte());
       System.arraycopy(ACTUATOR_POSITIONS, 0, state.getActuatorPositions(), 0, ACTUATOR_COUNT);
       System.arraycopy(ACTUATOR_VELOCITIES, 0, state.getActuatorVelocities(), 0, ACTUATOR_COUNT);
       System.arraycopy(ACTUATOR_CURRENTS, 0, state.getActuatorCurrents(), 0, ACTUATOR_COUNT);
       System.arraycopy(TOUCH_SENSOR_READINGS, 0, state.getTouchSensorReadings(), 0, TOUCH_SENSOR_COUNT);
-      ROS2Publisher<AbilityHandState> statePublisher = node.createPublisher(AbilityHandROS2API.STATE_TOPIC);
+      ROS2Publisher<AbilityHandState> statePublisher = node.createPublisher(AbilityHandROS2API.STATE_TOPICS.get(HAND_SIDE));
 
       // Create a subscription to command messages
       AtomicBoolean received = new AtomicBoolean(false);
       AbilityHandCommand commandReceived = new AbilityHandCommand();
-      ROS2Subscription<AbilityHandCommand> subscription = node.createSubscription2(AbilityHandROS2API.COMMAND_TOPIC, commandMessage ->
+      ROS2Subscription<AbilityHandCommand> subscription = node.createSubscription2(AbilityHandROS2API.COMMAND_TOPICS.get(HAND_SIDE), commandMessage ->
       {
          commandReceived.set(commandMessage);
 
@@ -233,28 +219,20 @@ public class AbilityHandROS2CommunicationTest
       statePublisher.publish(state);
       LockSupport.parkNanos((long) 1E8);
 
-      // Now the communications class should have received the state message
-      assertEquals(1, communication.getAvailableHands().size());
-      assertEquals(SERIAL_NUMBER, communication.getAvailableHandList().get(0));
-
       // Assert the state received is correct
-      AbilityHandState stateReceived = communication.readState(SERIAL_NUMBER);
+      AbilityHandState stateReceived = communication.readState(HAND_SIDE);
       assertNotNull(stateReceived);
-      assertEquals(SERIAL_NUMBER, stateReceived.getIdentifierAsString());
-      assertEquals(HAND_SIDE, RobotSide.fromByte(stateReceived.getHandSide()));
       assertArrayEquals(ACTUATOR_POSITIONS, stateReceived.getActuatorPositions());
       assertArrayEquals(ACTUATOR_VELOCITIES, stateReceived.getActuatorVelocities());
       assertArrayEquals(ACTUATOR_CURRENTS, stateReceived.getActuatorCurrents());
       assertArrayEquals(TOUCH_SENSOR_READINGS, stateReceived.getTouchSensorReadings());
 
-      // Make sure the communications created a command message for the hand
-      assertNotNull(communication.getCommand(SERIAL_NUMBER));
-      assertEquals(SERIAL_NUMBER, communication.getCommand(SERIAL_NUMBER).getIdentifierAsString());
-
-      // Set the command message and publish it
-      communication.getCommand(SERIAL_NUMBER).setControlMode(CONTROL_MODE.toByte());
-      System.arraycopy(GOAL_POSITIONS, 0, communication.getCommand(SERIAL_NUMBER).getGoalPositions(), 0, ACTUATOR_COUNT);
-      communication.publishCommand(SERIAL_NUMBER);
+      // Publish a command
+      AbilityHandCommand command = new AbilityHandCommand();
+      command.setControlMode(CONTROL_MODE.toByte());
+      System.arraycopy(GOAL_POSITIONS, 0, command.getGoalPositions(), 0, ACTUATOR_COUNT);
+      boolean published = communication.publishCommand(HAND_SIDE, command);
+      assertTrue(published);
 
       // Wait for the subscription to receive it
       synchronized (received)
@@ -265,7 +243,6 @@ public class AbilityHandROS2CommunicationTest
 
       // Make sure subscription received it correctly
       assertTrue(received.get());
-      assertEquals(SERIAL_NUMBER, commandReceived.getIdentifierAsString());
       assertEquals(CONTROL_MODE, AbilityHandControlMode.fromByte(commandReceived.getControlMode()));
       assertArrayEquals(GOAL_POSITIONS, commandReceived.getGoalPositions());
 

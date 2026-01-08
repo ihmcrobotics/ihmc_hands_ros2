@@ -8,16 +8,6 @@ import us.ihmc.pubsub.TopicDataType;
 
 public class AbilityHandState extends Packet<AbilityHandState> implements Settable<AbilityHandState>, EpsilonComparable<AbilityHandState>
 {
-   public static final byte LEFT = (byte) 0;
-   public static final byte RIGHT = (byte) 1;
-   /**
-            * The hand's serial number. E.g. 24ABH265
-            */
-   public java.lang.StringBuilder identifier_;
-   /**
-            * Specifies whether the hand is a left or right hand
-            */
-   public byte hand_side_ = (byte) 255;
    /**
             * The actuator positions in degrees
             */
@@ -49,7 +39,6 @@ public class AbilityHandState extends Packet<AbilityHandState> implements Settab
 
    public AbilityHandState()
    {
-      identifier_ = new java.lang.StringBuilder(32);
       actuator_positions_ = new float[6];
 
       actuator_velocities_ = new float[6];
@@ -72,11 +61,6 @@ public class AbilityHandState extends Packet<AbilityHandState> implements Settab
 
    public void set(AbilityHandState other)
    {
-      identifier_.setLength(0);
-      identifier_.append(other.identifier_);
-
-      hand_side_ = other.hand_side_;
-
       for(int i1 = 0; i1 < actuator_positions_.length; ++i1)
       {
             actuator_positions_[i1] = other.actuator_positions_[i1];
@@ -115,45 +99,6 @@ public class AbilityHandState extends Packet<AbilityHandState> implements Settab
 
       }
 
-   }
-
-   /**
-            * The hand's serial number. E.g. 24ABH265
-            */
-   public void setIdentifier(java.lang.String identifier)
-   {
-      identifier_.setLength(0);
-      identifier_.append(identifier);
-   }
-
-   /**
-            * The hand's serial number. E.g. 24ABH265
-            */
-   public java.lang.String getIdentifierAsString()
-   {
-      return getIdentifier().toString();
-   }
-   /**
-            * The hand's serial number. E.g. 24ABH265
-            */
-   public java.lang.StringBuilder getIdentifier()
-   {
-      return identifier_;
-   }
-
-   /**
-            * Specifies whether the hand is a left or right hand
-            */
-   public void setHandSide(byte hand_side)
-   {
-      hand_side_ = hand_side;
-   }
-   /**
-            * Specifies whether the hand is a left or right hand
-            */
-   public byte getHandSide()
-   {
-      return hand_side_;
    }
 
 
@@ -243,10 +188,6 @@ public class AbilityHandState extends Packet<AbilityHandState> implements Settab
       if(other == null) return false;
       if(other == this) return true;
 
-      if (!us.ihmc.idl.IDLTools.epsilonEqualsStringBuilder(this.identifier_, other.identifier_, epsilon)) return false;
-
-      if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.hand_side_, other.hand_side_, epsilon)) return false;
-
       for(int i13 = 0; i13 < actuator_positions_.length; ++i13)
       {
                 if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.actuator_positions_[i13], other.actuator_positions_[i13], epsilon)) return false;
@@ -292,10 +233,6 @@ public class AbilityHandState extends Packet<AbilityHandState> implements Settab
 
       AbilityHandState otherMyClass = (AbilityHandState) other;
 
-      if (!us.ihmc.idl.IDLTools.equals(this.identifier_, otherMyClass.identifier_)) return false;
-
-      if(this.hand_side_ != otherMyClass.hand_side_) return false;
-
       for(int i25 = 0; i25 < actuator_positions_.length; ++i25)
       {
                 if(this.actuator_positions_[i25] != otherMyClass.actuator_positions_[i25]) return false;
@@ -338,10 +275,6 @@ public class AbilityHandState extends Packet<AbilityHandState> implements Settab
       StringBuilder builder = new StringBuilder();
 
       builder.append("AbilityHandState {");
-      builder.append("identifier=");
-      builder.append(this.identifier_);      builder.append(", ");
-      builder.append("hand_side=");
-      builder.append(this.hand_side_);      builder.append(", ");
       builder.append("actuator_positions=");
       builder.append(java.util.Arrays.toString(this.actuator_positions_));      builder.append(", ");
       builder.append("actuator_velocities=");

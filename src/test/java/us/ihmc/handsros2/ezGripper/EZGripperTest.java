@@ -10,7 +10,7 @@ public class EZGripperTest
 {
    private static EZGripper createTestGripper()
    {
-      return new EZGripper("LeftEZGripper", RobotSide.LEFT)
+      return new EZGripper(RobotSide.LEFT)
       {
          @Override
          public boolean updateCalibration()
@@ -114,7 +114,7 @@ public class EZGripperTest
    @Test
    public void testEZGripperType()
    {
-      EZGripper testEZGripper = new EZGripper("EZGripper", RobotSide.LEFT);
+      EZGripper testEZGripper = new EZGripper(RobotSide.LEFT);
       assertEquals(HandType.EZ_GRIPPER, testEZGripper.getType());
    }
 }

@@ -33,24 +33,22 @@ public class EZGripperROS2CommunicationTest
       final float CURRENT_EFFORT = 0.1f;
       final byte TEMPERATURE = 40;
       final int REALTIME_TICK = 5000;
-      final String IDENTIFIER = GRIPPER_SIDE.name() + "EZGripper";
 
       // Create a node
       ROS2Node node = new ROS2NodeBuilder().domainId(domainId).build("ezgripperTestNode");
 
       // Create a command message and its publisher
       EZGripperCommand command = new EZGripperCommand();
-      command.setIdentifier(IDENTIFIER);
       command.setOperationMode(OPERATION_MODE.toByte());
       command.setGoalPosition(GOAL_POSITION);
       command.setMaxEffort(MAX_EFFORT);
       command.setTorqueOn(TORQUE_ON);
-      ROS2Publisher<EZGripperCommand> publisher = node.createPublisher(EZGripperROS2API.COMMAND_TOPIC);
+      ROS2Publisher<EZGripperCommand> publisher = node.createPublisher(EZGripperROS2API.COMMAND_TOPICS.get(GRIPPER_SIDE));
 
       // Create a stats subscription
       AtomicBoolean received = new AtomicBoolean(false);
       EZGripperState stateReceived = new EZGripperState();
-      ROS2Subscription<EZGripperState> subscription = node.createSubscription2(EZGripperROS2API.STATE_TOPIC, stateMessage ->
+      ROS2Subscription<EZGripperState> subscription = node.createSubscription2(EZGripperROS2API.STATE_TOPICS.get(GRIPPER_SIDE), stateMessage ->
       {
          stateReceived.set(stateMessage);
 
@@ -62,7 +60,7 @@ public class EZGripperROS2CommunicationTest
       });
 
       // Initialize a test gripper
-      EZGripper testGripper = new EZGripper(IDENTIFIER, GRIPPER_SIDE);
+      EZGripper testGripper = new EZGripper(GRIPPER_SIDE);
 
       // Set the state of the gripper
       testGripper.setCurrentPosition(CURRENT_POSITION);
@@ -103,8 +101,6 @@ public class EZGripperROS2CommunicationTest
       assertEquals(testGripper.getCurrentEffort(), stateReceived.getCurrentEffort());
       assertEquals(testGripper.getTemperature(), stateReceived.getTemperature());
       assertEquals(testGripper.getRealtimeTick(), stateReceived.getRealtimeTick());
-      assertEquals(GRIPPER_SIDE, RobotSide.fromByte(stateReceived.getRobotSide()));
-      assertEquals(IDENTIFIER, stateReceived.getIdentifierAsString());
 
       // Shut things down
       controllerCommunication.shutdown();
@@ -125,24 +121,21 @@ public class EZGripperROS2CommunicationTest
       final float CURRENT_POSITION = 0.3f;
       final float CURRENT_EFFORT = 0.1f;
       final byte TEMPERATURE = 40;
-      final String IDENTIFIER = GRIPPER_SIDE.name() + "EZGripper1";
 
       // Create a node
       ROS2Node node = new ROS2NodeBuilder().domainId(domainId).build("abilityTestNode");
 
       // Create a state message and its publisher
       EZGripperState state = new EZGripperState();
-      state.setIdentifier(IDENTIFIER);
-      state.setRobotSide(GRIPPER_SIDE.toByte());
       state.setCurrentPosition(CURRENT_POSITION);
       state.setCurrentEffort(CURRENT_EFFORT);
       state.setTemperature(TEMPERATURE);
-      ROS2Publisher<EZGripperState> statePublisher = node.createPublisher(EZGripperROS2API.STATE_TOPIC);
+      ROS2Publisher<EZGripperState> statePublisher = node.createPublisher(EZGripperROS2API.STATE_TOPICS.get(GRIPPER_SIDE));
 
       // Create a subscription to command messages
       AtomicBoolean received = new AtomicBoolean(false);
       EZGripperCommand commandReceived = new EZGripperCommand();
-      ROS2Subscription<EZGripperCommand> subscription = node.createSubscription2(EZGripperROS2API.COMMAND_TOPIC, commandMessage ->
+      ROS2Subscription<EZGripperCommand> subscription = node.createSubscription2(EZGripperROS2API.COMMAND_TOPICS.get(GRIPPER_SIDE), commandMessage ->
       {
          commandReceived.set(commandMessage);
 
@@ -162,28 +155,21 @@ public class EZGripperROS2CommunicationTest
       statePublisher.publish(state);
       LockSupport.parkNanos((long) 1E8);
 
-      // Now the communications class should have received the state message
-      assertEquals(1, communication.getAvailableHands().size());
-      assertEquals(IDENTIFIER, communication.getAvailableHandList().get(0));
-
       // Assert the state received is correct
-      EZGripperState stateReceived = communication.readState(IDENTIFIER);
+      EZGripperState stateReceived = communication.readState(GRIPPER_SIDE);
       assertNotNull(stateReceived);
-      assertEquals(GRIPPER_SIDE, RobotSide.fromByte(stateReceived.getRobotSide()));
       assertEquals(CURRENT_POSITION, stateReceived.getCurrentPosition());
       assertEquals(CURRENT_EFFORT, stateReceived.getCurrentEffort());
       assertEquals(TEMPERATURE, stateReceived.getTemperature());
 
-      // Make sure the communications created a command message for the gripper
-      assertNotNull(communication.getCommand(IDENTIFIER));
-      assertEquals(IDENTIFIER, communication.getCommand(IDENTIFIER).getIdentifierAsString());
-
-      // Set the command message and publish it
-      communication.getCommand(IDENTIFIER).setOperationMode(OPERATION_MODE.toByte());
-      communication.getCommand(IDENTIFIER).setGoalPosition(GOAL_POSITION);
-      communication.getCommand(IDENTIFIER).setMaxEffort(MAX_EFFORT);
-      communication.getCommand(IDENTIFIER).setTorqueOn(TORQUE_ON);
-      communication.publishCommand(IDENTIFIER);
+      // Publish a command message
+      EZGripperCommand command = new EZGripperCommand();
+      command.setOperationMode(OPERATION_MODE.toByte());
+      command.setGoalPosition(GOAL_POSITION);
+      command.setMaxEffort(MAX_EFFORT);
+      command.setTorqueOn(TORQUE_ON);
+      boolean published = communication.publishCommand(GRIPPER_SIDE, command);
+      assertTrue(published);
 
       // Wait for the subscription to receive it
       synchronized (received)
@@ -194,7 +180,6 @@ public class EZGripperROS2CommunicationTest
 
       // Make sure subscription received it correctly
       assertTrue(received.get());
-      assertEquals(IDENTIFIER, commandReceived.getIdentifierAsString());
       assertEquals(OPERATION_MODE, OperationMode.fromByte(commandReceived.getOperationMode()));
       assertEquals(GOAL_POSITION, commandReceived.getGoalPosition());
       assertEquals(MAX_EFFORT, commandReceived.getMaxEffort());

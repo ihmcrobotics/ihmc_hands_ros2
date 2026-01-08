@@ -2,20 +2,20 @@ package us.ihmc.handsros2.ezGripper;
 
 import us.ihmc.handsros2.HandInterface;
 import us.ihmc.handsros2.HandType;
+import us.ihmc.handsros2.ezGripper.EZGripperModel.EZGripperJointName;
 import us.ihmc.robotics.robotSide.RobotSide;
+import us.ihmc.robotics.stateMachine.core.State;
+import us.ihmc.robotics.stateMachine.core.StateMachine;
+import us.ihmc.robotics.stateMachine.factories.StateMachineFactory;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 import us.ihmc.yoVariables.variable.YoEnum;
 import us.ihmc.yoVariables.variable.YoInteger;
-import us.ihmc.robotics.stateMachine.core.State;
-import us.ihmc.robotics.stateMachine.core.StateMachine;
-import us.ihmc.robotics.stateMachine.factories.StateMachineFactory;
-
-import static us.ihmc.handsros2.ezGripper.EZGripperModel.EZGripperJointName.*;
-import us.ihmc.handsros2.ezGripper.EZGripperModel.EZGripperJointName;
 
 import java.util.List;
+
+import static us.ihmc.handsros2.ezGripper.EZGripperModel.EZGripperJointName.*;
 
 /**
  * Manages and controls a SAKE Robotics EZ Gripper.
@@ -44,8 +44,7 @@ public class EZGripper implements HandInterface
 
    public static final int DISABLE_AUTO_COOLDOWN = 255;
 
-   private final String identifier;
-   private final RobotSide robotSide;
+   private final RobotSide side;
 
    private final YoDouble goalPosition;
    private final YoDouble maxEffort;
@@ -65,18 +64,17 @@ public class EZGripper implements HandInterface
    private final YoEnum<OperationMode> operationMode;
    private final StateMachine<OperationMode, State> stateMachine;
 
-   public EZGripper(String identifier, RobotSide robotSide)
+   public EZGripper(RobotSide side)
    {
-      this(new YoRegistry("EZGripper_" + identifier + "_" + robotSide.name()), identifier, robotSide);
+      this(new YoRegistry(side.name() + "_EZGripper"), side);
    }
 
-   public EZGripper(YoRegistry registry, String identifier, RobotSide robotSide)
+   public EZGripper(YoRegistry registry, RobotSide side)
    {
-      this.identifier = identifier;
-      this.robotSide = robotSide;
+      this.side = side;
       this.registry = registry;
 
-      String prefix = robotSide.name() + "EZGripper";
+      String prefix = side.name() + "_EZGripper_";
 
       // Low level control
       goalPosition = new YoDouble(prefix + "GoalPosition", registry);
@@ -108,9 +106,11 @@ public class EZGripper implements HandInterface
       factory.addState(OperationMode.POSITION_CONTROL, new PositionControlState());
 
       // Position control goes to calibration or error reset if demanded
-      factory.addTransition(OperationMode.POSITION_CONTROL, OperationMode.CALIBRATION,
+      factory.addTransition(OperationMode.POSITION_CONTROL,
+                            OperationMode.CALIBRATION,
                             nanoTime -> desiredOperationMode.getValue() == OperationMode.CALIBRATION);
-      factory.addTransition(OperationMode.POSITION_CONTROL, OperationMode.ERROR_RESET,
+      factory.addTransition(OperationMode.POSITION_CONTROL,
+                            OperationMode.ERROR_RESET,
                             nanoTime -> desiredOperationMode.getValue() == OperationMode.ERROR_RESET);
       factory.addTransition(OperationMode.POSITION_CONTROL, OperationMode.COOLDOWN, nanoTime -> desiredOperationMode.getValue() == OperationMode.COOLDOWN);
 
@@ -275,16 +275,19 @@ public class EZGripper implements HandInterface
       operationMode.set(stateMachine.getCurrentStateKey());
    }
 
-   public String getIdentifier()
-   {
-      return identifier;
-   }
-
+   /** {@inheritDoc} */
+   @Override
    public RobotSide getSide()
    {
-      return robotSide;
+      return side;
    }
 
+   /**
+    * Get the type of this hand.
+    *
+    * @return {@link HandType#EZ_GRIPPER}
+    */
+   @Override
    public HandType getType()
    {
       return HandType.EZ_GRIPPER;
@@ -450,6 +453,7 @@ public class EZGripper implements HandInterface
       this.errorCode.set(Byte.toUnsignedInt(errorCode));
    }
 
+   @Override
    public void readJointAngles(double[] jointAngles)
    {
       double angle = JOINT_RANGE * (1.0f - getCurrentPosition());
@@ -460,6 +464,7 @@ public class EZGripper implements HandInterface
       jointAngles[KNUCKLE_L1_L2_2.getIndex(getSide())] = 0.0;
    }
 
+   @Override
    public int getJointCount()
    {
       return EZGripperJointName.values.length;

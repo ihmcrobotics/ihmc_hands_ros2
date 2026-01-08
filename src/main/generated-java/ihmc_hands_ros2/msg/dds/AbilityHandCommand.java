@@ -23,10 +23,6 @@ public class AbilityHandCommand extends Packet<AbilityHandCommand> implements Se
    public static final byte KEY_OPEN_GRIP = (byte) 9;
    public static final byte KEY_CLOSE_GRIP = (byte) 10;
    /**
-            * The hand's serial number. E.g. 24ABH265
-            */
-   public java.lang.StringBuilder identifier_;
-   /**
             * Specifies the control mode (ordinal of AbilityHandControlMode)
             * Default = position control
             */
@@ -47,7 +43,6 @@ public class AbilityHandCommand extends Packet<AbilityHandCommand> implements Se
 
    public AbilityHandCommand()
    {
-      identifier_ = new java.lang.StringBuilder(32);
       goal_velocities_ = new float[6];
 
       goal_positions_ = new float[6];
@@ -62,9 +57,6 @@ public class AbilityHandCommand extends Packet<AbilityHandCommand> implements Se
 
    public void set(AbilityHandCommand other)
    {
-      identifier_.setLength(0);
-      identifier_.append(other.identifier_);
-
       control_mode_ = other.control_mode_;
 
       for(int i1 = 0; i1 < goal_velocities_.length; ++i1)
@@ -81,30 +73,6 @@ public class AbilityHandCommand extends Packet<AbilityHandCommand> implements Se
 
       grip_ = other.grip_;
 
-   }
-
-   /**
-            * The hand's serial number. E.g. 24ABH265
-            */
-   public void setIdentifier(java.lang.String identifier)
-   {
-      identifier_.setLength(0);
-      identifier_.append(identifier);
-   }
-
-   /**
-            * The hand's serial number. E.g. 24ABH265
-            */
-   public java.lang.String getIdentifierAsString()
-   {
-      return getIdentifier().toString();
-   }
-   /**
-            * The hand's serial number. E.g. 24ABH265
-            */
-   public java.lang.StringBuilder getIdentifier()
-   {
-      return identifier_;
    }
 
    /**
@@ -176,8 +144,6 @@ public class AbilityHandCommand extends Packet<AbilityHandCommand> implements Se
       if(other == null) return false;
       if(other == this) return true;
 
-      if (!us.ihmc.idl.IDLTools.epsilonEqualsStringBuilder(this.identifier_, other.identifier_, epsilon)) return false;
-
       if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.control_mode_, other.control_mode_, epsilon)) return false;
 
       for(int i5 = 0; i5 < goal_velocities_.length; ++i5)
@@ -205,8 +171,6 @@ public class AbilityHandCommand extends Packet<AbilityHandCommand> implements Se
 
       AbilityHandCommand otherMyClass = (AbilityHandCommand) other;
 
-      if (!us.ihmc.idl.IDLTools.equals(this.identifier_, otherMyClass.identifier_)) return false;
-
       if(this.control_mode_ != otherMyClass.control_mode_) return false;
 
       for(int i9 = 0; i9 < goal_velocities_.length; ++i9)
@@ -231,8 +195,6 @@ public class AbilityHandCommand extends Packet<AbilityHandCommand> implements Se
       StringBuilder builder = new StringBuilder();
 
       builder.append("AbilityHandCommand {");
-      builder.append("identifier=");
-      builder.append(this.identifier_);      builder.append(", ");
       builder.append("control_mode=");
       builder.append(this.control_mode_);      builder.append(", ");
       builder.append("goal_velocities=");
