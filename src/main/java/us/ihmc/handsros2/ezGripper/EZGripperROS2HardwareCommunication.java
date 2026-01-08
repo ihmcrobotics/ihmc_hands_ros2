@@ -2,12 +2,14 @@ package us.ihmc.handsros2.ezGripper;
 
 import ihmc_hands_ros2.msg.dds.EZGripperCommand;
 import ihmc_hands_ros2.msg.dds.EZGripperState;
+import us.ihmc.handsros2.LatestMessageSubscription;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
-import us.ihmc.ros2.QueuedROS2Subscription;
 import us.ihmc.ros2.ROS2NodeBuilder;
 import us.ihmc.ros2.ROS2Publisher;
 import us.ihmc.ros2.RealtimeROS2Node;
+
+import java.util.function.LongSupplier;
 
 /**
  * <p>Controller side ROS 2 communication for the {@link EZGripper}. Communicates with low-level hardware control process.</p>
@@ -18,8 +20,10 @@ public class EZGripperROS2HardwareCommunication
 {
    private final RealtimeROS2Node node;
 
-   private final SideDependentList<QueuedROS2Subscription<EZGripperState>> stateSubscriptions;
+   private final SideDependentList<LatestMessageSubscription<EZGripperState>> stateSubscriptions;
    private final SideDependentList<ROS2Publisher<EZGripperCommand>> commandPublishers;
+
+   private final EZGripperState stateMessage = new EZGripperState();
 
    public EZGripperROS2HardwareCommunication(String nodeName)
    {
@@ -28,13 +32,31 @@ public class EZGripperROS2HardwareCommunication
 
    public EZGripperROS2HardwareCommunication(String nodeName, int domainId)
    {
+      this(nodeName, domainId, System::currentTimeMillis);
+   }
+
+   public EZGripperROS2HardwareCommunication(String nodeName, int domainId, LongSupplier epochMillisSupplier)
+   {
       ROS2NodeBuilder nodeBuilder = new ROS2NodeBuilder();
       if (domainId >= 0)
          nodeBuilder.domainId(domainId);
       node = nodeBuilder.buildRealtime(nodeName);
 
-      stateSubscriptions = new SideDependentList<>(side -> node.createQueuedSubscription(EZGripperROS2API.STATE_TOPICS.get(side)));
+      stateSubscriptions = new SideDependentList<>(side -> new LatestMessageSubscription<>(node,
+                                                                                           EZGripperROS2API.STATE_TOPICS.get(side),
+                                                                                           EZGripperState::new,
+                                                                                           epochMillisSupplier));
       commandPublishers = new SideDependentList<>(side -> node.createPublisher(EZGripperROS2API.COMMAND_TOPICS.get(side)));
+   }
+
+   public boolean isHandConnected(RobotSide side, long timeoutMillis)
+   {
+      return isHandConnected(side, timeoutMillis, System.currentTimeMillis());
+   }
+
+   public boolean isHandConnected(RobotSide side, long timeoutMillis, long epochMillis)
+   {
+      return epochMillis - stateSubscriptions.get(side).getLatestMessageTimestamp() < timeoutMillis;
    }
 
    /**
@@ -46,7 +68,13 @@ public class EZGripperROS2HardwareCommunication
     */
    public boolean readState(RobotSide side, EZGripperState stateToPack)
    {
-      return stateSubscriptions.get(side).flushAndGetLatest(stateToPack);
+      if (stateSubscriptions.get(side).hasReceivedAMessage())
+      {
+         stateSubscriptions.get(side).readLatestMessage(stateToPack);
+         return true;
+      }
+
+      return false;
    }
 
    /**

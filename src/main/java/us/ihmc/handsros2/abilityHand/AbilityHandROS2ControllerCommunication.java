@@ -2,9 +2,9 @@ package us.ihmc.handsros2.abilityHand;
 
 import ihmc_hands_ros2.msg.dds.AbilityHandCommand;
 import ihmc_hands_ros2.msg.dds.AbilityHandState;
+import us.ihmc.handsros2.LatestMessageSubscription;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
-import us.ihmc.ros2.QueuedROS2Subscription;
 import us.ihmc.ros2.ROS2NodeBuilder;
 import us.ihmc.ros2.ROS2Publisher;
 import us.ihmc.ros2.RealtimeROS2Node;
@@ -22,7 +22,7 @@ public class AbilityHandROS2ControllerCommunication
    private final SideDependentList<ROS2Publisher<AbilityHandState>> statePublishers;
 
    private final AbilityHandCommand commandMessage;
-   private final SideDependentList<QueuedROS2Subscription<AbilityHandCommand>> commandSubscriptions;
+   private final SideDependentList<LatestMessageSubscription<AbilityHandCommand>> commandSubscriptions;
 
    public AbilityHandROS2ControllerCommunication(String nodeName)
    {
@@ -40,7 +40,9 @@ public class AbilityHandROS2ControllerCommunication
       statePublishers = new SideDependentList<>(side -> node.createPublisher(AbilityHandROS2API.STATE_TOPICS.get(side)));
 
       commandMessage = new AbilityHandCommand();
-      commandSubscriptions = new SideDependentList<>(side -> node.createQueuedSubscription(AbilityHandROS2API.COMMAND_TOPICS.get(side)));
+      commandSubscriptions = new SideDependentList<>(side -> new LatestMessageSubscription<>(node,
+                                                                                             AbilityHandROS2API.COMMAND_TOPICS.get(side),
+                                                                                             AbilityHandCommand::new));
    }
 
    /**
@@ -50,8 +52,9 @@ public class AbilityHandROS2ControllerCommunication
     */
    public void readCommand(AbilityHand hand)
    {
-      if (commandSubscriptions.get(hand.getSide()).flushAndGetLatest(commandMessage))
+      if (commandSubscriptions.get(hand.getSide()).hasReceivedAMessage())
       {
+         commandSubscriptions.get(hand.getSide()).readLatestMessage(commandMessage);
          AbilityHandControlMode controlMode = AbilityHandControlMode.fromByte(commandMessage.getControlMode());
          hand.setControlMode(controlMode);
          if (controlMode == AbilityHandControlMode.POSITION)

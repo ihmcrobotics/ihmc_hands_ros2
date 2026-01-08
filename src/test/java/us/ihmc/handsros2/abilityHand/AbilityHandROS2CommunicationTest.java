@@ -211,7 +211,7 @@ public class AbilityHandROS2CommunicationTest
       });
 
       // Create the communication instance
-      AbilityHandROS2HardwareCommunication communication = new AbilityHandROS2HardwareCommunication("test_hardware_comm", domainId);
+      AbilityHandROS2HardwareCommunication communication = new AbilityHandROS2HardwareCommunication("test_hardware_comm", domainId, () -> 0);
       communication.start();
       LockSupport.parkNanos((long) 1E8);
 
@@ -222,6 +222,8 @@ public class AbilityHandROS2CommunicationTest
       // Assert the state received is correct
       AbilityHandState stateReceived = communication.readState(HAND_SIDE);
       assertNotNull(stateReceived);
+      assertTrue(communication.isHandConnected(HAND_SIDE, 1000, 500));
+      assertFalse(communication.isHandConnected(HAND_SIDE, 1000, 1500));
       assertArrayEquals(ACTUATOR_POSITIONS, stateReceived.getActuatorPositions());
       assertArrayEquals(ACTUATOR_VELOCITIES, stateReceived.getActuatorVelocities());
       assertArrayEquals(ACTUATOR_CURRENTS, stateReceived.getActuatorCurrents());

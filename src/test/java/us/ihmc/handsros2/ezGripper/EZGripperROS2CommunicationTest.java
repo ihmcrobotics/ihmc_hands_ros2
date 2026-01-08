@@ -147,7 +147,7 @@ public class EZGripperROS2CommunicationTest
       });
 
       // Create the communication instance
-      EZGripperROS2HardwareCommunication communication = new EZGripperROS2HardwareCommunication("test_hardware_comm", domainId);
+      EZGripperROS2HardwareCommunication communication = new EZGripperROS2HardwareCommunication("test_hardware_comm", domainId, () -> 0);
       communication.start();
       LockSupport.parkNanos((long) 1E8);
 
@@ -158,6 +158,8 @@ public class EZGripperROS2CommunicationTest
       // Assert the state received is correct
       EZGripperState stateReceived = communication.readState(GRIPPER_SIDE);
       assertNotNull(stateReceived);
+      assertTrue(communication.isHandConnected(GRIPPER_SIDE, 1000, 500));
+      assertFalse(communication.isHandConnected(GRIPPER_SIDE, 1000, 1500));
       assertEquals(CURRENT_POSITION, stateReceived.getCurrentPosition());
       assertEquals(CURRENT_EFFORT, stateReceived.getCurrentEffort());
       assertEquals(TEMPERATURE, stateReceived.getTemperature());
