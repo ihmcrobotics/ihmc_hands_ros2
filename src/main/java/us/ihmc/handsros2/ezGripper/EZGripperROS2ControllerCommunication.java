@@ -2,27 +2,28 @@ package us.ihmc.handsros2.ezGripper;
 
 import ihmc_hands_ros2.msg.dds.EZGripperCommand;
 import ihmc_hands_ros2.msg.dds.EZGripperState;
-import us.ihmc.handsros2.HandMessageListener;
+import us.ihmc.handsros2.LatestMessageSubscription;
 import us.ihmc.handsros2.ezGripper.EZGripper.OperationMode;
+import us.ihmc.robotics.robotSide.RobotSide;
+import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.ros2.ROS2NodeBuilder;
 import us.ihmc.ros2.ROS2Publisher;
-import us.ihmc.ros2.ROS2Subscription;
 import us.ihmc.ros2.RealtimeROS2Node;
 
 /**
  * <p>Hardware side ROS 2 communication for the {@link EZGripper}. Communicates with external controller.</p>
  * <p>Subscribes to {@link EZGripperCommand} messages and publishes {@link EZGripperState} messages.</p>
  */
+@SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
 public class EZGripperROS2ControllerCommunication
 {
    private final RealtimeROS2Node node;
 
    private final EZGripperState stateMessage;
-   private final ROS2Publisher<EZGripperState> statePublisher;
+   private final SideDependentList<ROS2Publisher<EZGripperState>> statePublishers;
 
    private final EZGripperCommand commandMessage;
-   private final HandMessageListener<EZGripperCommand> commandListener;
-   private final ROS2Subscription<EZGripperCommand> commandSubscription;
+   private final SideDependentList<LatestMessageSubscription<EZGripperCommand>> commandSubscriptions;
 
    public EZGripperROS2ControllerCommunication(String nodeName)
    {
@@ -37,11 +38,12 @@ public class EZGripperROS2ControllerCommunication
       node = nodeBuilder.buildRealtime(nodeName);
 
       stateMessage = new EZGripperState();
-      statePublisher = node.createPublisher(EZGripperROS2API.STATE_TOPIC);
+      statePublishers = new SideDependentList<>(side -> node.createPublisher(EZGripperROS2API.STATE_TOPICS.get(side)));
 
       commandMessage = new EZGripperCommand();
-      commandListener = new HandMessageListener<>(EZGripperCommand::new);
-      commandSubscription = node.createSubscription(EZGripperROS2API.COMMAND_TOPIC, commandListener);
+      commandSubscriptions = new SideDependentList<>(side -> new LatestMessageSubscription<>(node,
+                                                                                             EZGripperROS2API.COMMAND_TOPICS.get(side),
+                                                                                             EZGripperCommand::new));
    }
 
    /**
@@ -51,8 +53,9 @@ public class EZGripperROS2ControllerCommunication
     */
    public void readCommand(EZGripper gripper)
    {
-      if (commandListener.readLatestMessage(gripper.getIdentifier(), commandMessage))
+      if (commandSubscriptions.get(gripper.getSide()).hasReceivedAMessage())
       {
+         commandSubscriptions.get(gripper.getSide()).readLatestMessage(commandMessage);
          gripper.setOperationMode(OperationMode.fromByte(commandMessage.getOperationMode()));
 
          gripper.setTemperatureLimit(commandMessage.getTemperatureLimit());
@@ -69,8 +72,6 @@ public class EZGripperROS2ControllerCommunication
     */
    public void publishState(EZGripper hand)
    {
-      stateMessage.setIdentifier(hand.getIdentifier());
-      stateMessage.setRobotSide(hand.getSide().toByte());
       stateMessage.setOperationMode(hand.getOperationMode().toByte());
       stateMessage.setTemperature(hand.getTemperature());
       stateMessage.setCurrentPosition(hand.getCurrentPosition());
@@ -79,7 +80,7 @@ public class EZGripperROS2ControllerCommunication
       stateMessage.setRealtimeTick(hand.getRealtimeTick());
       stateMessage.setIsCalibrated(hand.isCalibrated());
 
-      statePublisher.publish(stateMessage);
+      statePublishers.get(hand.getSide()).publish(stateMessage);
    }
 
    /**
@@ -97,8 +98,11 @@ public class EZGripperROS2ControllerCommunication
    {
       node.stopSpinning();
 
-      statePublisher.remove();
-      commandSubscription.remove();
+      for (RobotSide side : RobotSide.values)
+      {
+         statePublishers.get(side).remove();
+         commandSubscriptions.get(side).remove();
+      }
 
       node.destroy();
    }

@@ -21,10 +21,6 @@ module ihmc_hands_ros2
       struct EZGripperCommand
       {
         /**
-         * An identifier for the hand. Up to 8 characters long
-         */
-        string<32> identifier;
-        /**
          * Specifies the desired operation mode.
          */
         @defaultValue(value=255)

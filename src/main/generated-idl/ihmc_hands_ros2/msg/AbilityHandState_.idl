@@ -7,25 +7,10 @@ module ihmc_hands_ros2
   {
     module dds
     {
-      const octet LEFT =
-      0;
-
-      const octet RIGHT =
-      1;
-
 
       @TypeCode(type="ihmc_hands_ros2::msg::dds_::AbilityHandState_")
       struct AbilityHandState
       {
-        /**
-         * The hand's serial number. E.g. 24ABH265
-         */
-        string<32> identifier;
-        /**
-         * Specifies whether the hand is a left or right hand
-         */
-        @defaultValue(value=255)
-        octet hand_side;
         /**
          * The actuator positions in degrees
          */

@@ -54,7 +54,7 @@ public enum EZGripperError
    public static List<EZGripperError> getErrorList(byte errorCode)
    {
       List<EZGripperError> errorList = new ArrayList<>();
-      for (EZGripperError error : values())
+      for (EZGripperError error : values)
          if ((errorCode & error.errorCode) != 0)
             errorList.add(error);
 

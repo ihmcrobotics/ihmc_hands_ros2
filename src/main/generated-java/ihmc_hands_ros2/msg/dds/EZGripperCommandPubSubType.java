@@ -15,7 +15,7 @@ public class EZGripperCommandPubSubType implements us.ihmc.pubsub.TopicDataType<
    @Override
    public final java.lang.String getDefinitionChecksum()
    {
-   		return "57500095c954959d100e6016fb4283ef16903454bc9f09f6ce5a0ba92c99536c";
+   		return "e0a30c8c397491d986d2f7d51956c60508fbd566c1d5466f1df14c757b553766";
    }
    
    @Override
@@ -52,7 +52,6 @@ public class EZGripperCommandPubSubType implements us.ihmc.pubsub.TopicDataType<
    {
       int initial_alignment = current_alignment;
 
-      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4) + 32 + 1;
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
 
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
@@ -76,8 +75,6 @@ public class EZGripperCommandPubSubType implements us.ihmc.pubsub.TopicDataType<
    {
       int initial_alignment = current_alignment;
 
-      current_alignment += 4 + us.ihmc.idl.CDR.alignment(current_alignment, 4) + data.getIdentifier().length() + 1;
-
       current_alignment += 1 + us.ihmc.idl.CDR.alignment(current_alignment, 1);
 
 
@@ -99,10 +96,6 @@ public class EZGripperCommandPubSubType implements us.ihmc.pubsub.TopicDataType<
 
    public static void write(ihmc_hands_ros2.msg.dds.EZGripperCommand data, us.ihmc.idl.CDR cdr)
    {
-      if(data.getIdentifier().length() <= 32)
-      cdr.write_type_d(data.getIdentifier());else
-          throw new RuntimeException("identifier field exceeds the maximum length: %d > %d".formatted(data.getIdentifier().length(), 32));
-
       cdr.write_type_9(data.getOperationMode());
 
       cdr.write_type_9(data.getTemperatureLimit());
@@ -117,7 +110,6 @@ public class EZGripperCommandPubSubType implements us.ihmc.pubsub.TopicDataType<
 
    public static void read(ihmc_hands_ros2.msg.dds.EZGripperCommand data, us.ihmc.idl.CDR cdr)
    {
-      cdr.read_type_d(data.getIdentifier());	
       data.setOperationMode(cdr.read_type_9());
       	
       data.setTemperatureLimit(cdr.read_type_9());
@@ -134,7 +126,6 @@ public class EZGripperCommandPubSubType implements us.ihmc.pubsub.TopicDataType<
    @Override
    public final void serialize(ihmc_hands_ros2.msg.dds.EZGripperCommand data, us.ihmc.idl.InterchangeSerializer ser)
    {
-      ser.write_type_d("identifier", data.getIdentifier());
       ser.write_type_9("operation_mode", data.getOperationMode());
       ser.write_type_9("temperature_limit", data.getTemperatureLimit());
       ser.write_type_5("goal_position", data.getGoalPosition());
@@ -145,7 +136,6 @@ public class EZGripperCommandPubSubType implements us.ihmc.pubsub.TopicDataType<
    @Override
    public final void deserialize(us.ihmc.idl.InterchangeSerializer ser, ihmc_hands_ros2.msg.dds.EZGripperCommand data)
    {
-      ser.read_type_d("identifier", data.getIdentifier());
       data.setOperationMode(ser.read_type_9("operation_mode"));
       data.setTemperatureLimit(ser.read_type_9("temperature_limit"));
       data.setGoalPosition(ser.read_type_5("goal_position"));

@@ -59,8 +59,7 @@ public class AbilityHand implements HandInterface
 
    private static final float DEADZONE = 3.0f; // TODO: Reduce with current control
 
-   private final String identifier;
-   private final RobotSide handSide;
+   private final RobotSide side;
 
    /** Command type used for low-level interface. */
    private final YoEnum<AbilityHandCommandType> commandType;
@@ -108,27 +107,24 @@ public class AbilityHand implements HandInterface
    /**
     * Creates a new AbilityHand with its own {@link YoRegistry}.
     *
-    * @param identifier user-facing identifier of this hand
-    * @param handSide   side of the robot this hand is attached to
+    * @param side side of the hand
     */
-   public AbilityHand(String identifier, RobotSide handSide)
+   public AbilityHand(RobotSide side)
    {
-      this(new YoRegistry("AbilityHand_" + identifier + "_" + handSide.name()), identifier, handSide);
+      this(new YoRegistry(side.name() + "_AbilityHand"), side);
    }
 
    /**
     * Creates a new AbilityHand with YoVariables for state, commands, goals, and modes.
     *
-    * @param registry   YoRegistry to register YoVariables into
-    * @param identifier user-facing identifier of this hand
-    * @param handSide   side of the robot this hand is attached to
+    * @param registry YoRegistry to register YoVariables into
+    * @param side     side of the hand
     */
-   public AbilityHand(YoRegistry registry, String identifier, RobotSide handSide)
+   public AbilityHand(YoRegistry registry, RobotSide side)
    {
-      this.identifier = identifier;
-      this.handSide = handSide;
+      this.side = side;
 
-      String prefix = handSide.name() + "AbilityHand_" + identifier + "_";
+      String prefix = side.name() + "_AbilityHand_";
 
       commandType = new YoEnum<>(prefix + "CommandType", registry, AbilityHandCommandType.class);
       commandType.set(AbilityHandCommandType.VELOCITY);
@@ -278,26 +274,11 @@ public class AbilityHand implements HandInterface
       }
    }
 
-   /**
-    * Get the hand object identifier.
-    *
-    * @return The identifier of this hand.
-    */
-   @Override
-   public String getIdentifier()
-   {
-      return identifier;
-   }
-
-   /**
-    * Get the robot side this hand is attached to.
-    *
-    * @return the robot side
-    */
+   /** {@inheritDoc} */
    @Override
    public RobotSide getSide()
    {
-      return handSide;
+      return side;
    }
 
    /**
@@ -305,6 +286,7 @@ public class AbilityHand implements HandInterface
     *
     * @return {@link HandType#ABILITY_HAND}
     */
+   @Override
    public HandType getType()
    {
       return HandType.ABILITY_HAND;
@@ -582,21 +564,23 @@ public class AbilityHand implements HandInterface
    }
 
    /** {@inheritDoc} */
+   @Override
    public void readJointAngles(double[] jointAngles)
    {
-      jointAngles[INDEX_Q1.getIndex(handSide)] = Math.toRadians(actuatorPositions.get(0));
-      jointAngles[INDEX_Q2.getIndex(handSide)] = Q2_JOINT_MULTIPLIER * Math.toRadians(actuatorPositions.get(0)) + Q2_JOINT_OFFSET;
-      jointAngles[MIDDLE_Q1.getIndex(handSide)] = Math.toRadians(actuatorPositions.get(1));
-      jointAngles[MIDDLE_Q2.getIndex(handSide)] = Q2_JOINT_MULTIPLIER * Math.toRadians(actuatorPositions.get(1)) + Q2_JOINT_OFFSET;
-      jointAngles[RING_Q1.getIndex(handSide)] = Math.toRadians(actuatorPositions.get(2));
-      jointAngles[RING_Q2.getIndex(handSide)] = Q2_JOINT_MULTIPLIER * Math.toRadians(actuatorPositions.get(2)) + Q2_JOINT_OFFSET;
-      jointAngles[PINKY_Q1.getIndex(handSide)] = Math.toRadians(actuatorPositions.get(3));
-      jointAngles[PINKY_Q2.getIndex(handSide)] = Q2_JOINT_MULTIPLIER * Math.toRadians(actuatorPositions.get(3)) + Q2_JOINT_OFFSET;
-      jointAngles[THUMB_Q1.getIndex(handSide)] = Math.toRadians(actuatorPositions.get(5));
-      jointAngles[THUMB_Q2.getIndex(handSide)] = Math.toRadians(actuatorPositions.get(4));
+      jointAngles[INDEX_Q1.getIndex(side)] = Math.toRadians(actuatorPositions.get(0));
+      jointAngles[INDEX_Q2.getIndex(side)] = Q2_JOINT_MULTIPLIER * Math.toRadians(actuatorPositions.get(0)) + Q2_JOINT_OFFSET;
+      jointAngles[MIDDLE_Q1.getIndex(side)] = Math.toRadians(actuatorPositions.get(1));
+      jointAngles[MIDDLE_Q2.getIndex(side)] = Q2_JOINT_MULTIPLIER * Math.toRadians(actuatorPositions.get(1)) + Q2_JOINT_OFFSET;
+      jointAngles[RING_Q1.getIndex(side)] = Math.toRadians(actuatorPositions.get(2));
+      jointAngles[RING_Q2.getIndex(side)] = Q2_JOINT_MULTIPLIER * Math.toRadians(actuatorPositions.get(2)) + Q2_JOINT_OFFSET;
+      jointAngles[PINKY_Q1.getIndex(side)] = Math.toRadians(actuatorPositions.get(3));
+      jointAngles[PINKY_Q2.getIndex(side)] = Q2_JOINT_MULTIPLIER * Math.toRadians(actuatorPositions.get(3)) + Q2_JOINT_OFFSET;
+      jointAngles[THUMB_Q1.getIndex(side)] = Math.toRadians(actuatorPositions.get(5));
+      jointAngles[THUMB_Q2.getIndex(side)] = Math.toRadians(actuatorPositions.get(4));
    }
 
    /** {@inheritDoc} */
+   @Override
    public int getJointCount()
    {
       return AbilityHandJointName.values.length;

@@ -7,12 +7,6 @@ module ihmc_hands_ros2
   {
     module dds
     {
-      const octet LEFT =
-      0;
-
-      const octet RIGHT =
-      1;
-
       const octet POSITION_CONTROL =
       0;
 
@@ -29,15 +23,6 @@ module ihmc_hands_ros2
       @TypeCode(type="ihmc_hands_ros2::msg::dds_::EZGripperState_")
       struct EZGripperState
       {
-        /**
-         * An identifier for the hand. Up to 8 characters long
-         */
-        string<32> identifier;
-        /**
-         * Specifies the side of the robot of the gripper being referred to
-         */
-        @defaultValue(value=255)
-        octet robot_side;
         /**
          * Specifies the current operation mode.
          */

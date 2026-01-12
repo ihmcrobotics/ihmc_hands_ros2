@@ -1,12 +1,3 @@
-# An identifier for the hand. Up to 8 characters long
-string<=32 identifier
-
-byte LEFT=0
-byte RIGHT=1
-
-# Specifies the side of the robot of the gripper being referred to
-byte robot_side 255
-
 byte POSITION_CONTROL=0
 byte CALIBRATION=1
 byte ERROR_RESET=2

@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Test;
 import us.ihmc.handsros2.HandType;
 import us.ihmc.robotics.robotSide.RobotSide;
 
+import java.util.Arrays;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static us.ihmc.handsros2.abilityHand.AbilityHand.ACTUATOR_COUNT;
 
@@ -12,7 +14,7 @@ public class AbilityHandTest
    @Test
    public void testPositionControl()
    {
-      AbilityHand hand = new AbilityHand("", RobotSide.LEFT);
+      AbilityHand hand = new AbilityHand(RobotSide.LEFT);
       hand.setControlMode(AbilityHandControlMode.POSITION);
       hand.setActuatorPositions(new float[] {30f, 30f, 30f, 30f, 30f, -30f});
       float[] goalPositions = {10f, 20f, 30f, 40f, 50f, -10f};
@@ -24,8 +26,6 @@ public class AbilityHandTest
 
       float[][] actuatorPositions = new float[ACTUATOR_COUNT][numberOfSteps];
       float[][] fingerVelocities = new float[ACTUATOR_COUNT][numberOfSteps];
-
-      float currentTime = 0.0f;
 
       for (int stepIndex = 0; stepIndex < numberOfSteps; stepIndex++)
       {
@@ -46,8 +46,6 @@ public class AbilityHandTest
             actuatorPositions[fingerIndex][stepIndex] = hand.getActuatorPosition(fingerIndex);
             fingerVelocities[fingerIndex][stepIndex] = hand.getActuatorVelocity(fingerIndex);
          }
-
-         currentTime += timeStep;
       }
 
       // Compute global min/max for positions and velocities
@@ -87,7 +85,7 @@ public class AbilityHandTest
    @Test
    public void testVelocityControl()
    {
-      AbilityHand hand = new AbilityHand("", RobotSide.LEFT);
+      AbilityHand hand = new AbilityHand(RobotSide.LEFT);
       hand.setActuatorPositions(new float[] {30f, 30f, 30f, 30f, 30f, -30f});
       float[] goalPositions = {10f, 20f, 30f, 40f, 50f, -10f};
       hand.setGoalPositions(goalPositions);
@@ -181,7 +179,7 @@ public class AbilityHandTest
    @Test
    public void testCloseGrip()
    {
-      AbilityHand hand = new AbilityHand("24ABH000", RobotSide.LEFT);
+      AbilityHand hand = new AbilityHand(RobotSide.LEFT);
 
       // Thumb (index 4) must clear first: simulate it at the clear position already
       float[] initialPositions = {0f, 2f, 7f, 15f, 90f, 10f};
@@ -291,7 +289,7 @@ public class AbilityHandTest
    @Test
    public void testMultipleGripsSequence()
    {
-      AbilityHand hand = new AbilityHand("24ABH000", RobotSide.LEFT);
+      AbilityHand hand = new AbilityHand(RobotSide.LEFT);
       // Start from some nontrivial configuration
       float[] initialPositions = {0f, 10f, 20f, 30f, 0f, 0f};
       hand.setActuatorPositions(initialPositions);
@@ -400,7 +398,7 @@ public class AbilityHandTest
       }
 
       // After the loop, also plot the final segment (no switch follows it)
-      if (priorGrip != null && numberOfSteps - segmentStartStep > 0)
+      if (priorGrip != null)
       {
          int segLen = numberOfSteps - segmentStartStep;
 
@@ -514,13 +512,11 @@ public class AbilityHandTest
 
          // Position canvas
          char[] posCanvas = new char[plotWidth];
-         for (int i = 0; i < plotWidth; i++)
-            posCanvas[i] = ' ';
+         Arrays.fill(posCanvas, ' ');
 
          // Velocity canvas
          char[] velCanvas = new char[plotWidth];
-         for (int i = 0; i < plotWidth; i++)
-            velCanvas[i] = ' ';
+         Arrays.fill(velCanvas, ' ');
 
          // Place each finger marker based on position
          for (int fingerIndex = 0; fingerIndex < fingerPositions.length; fingerIndex++)
@@ -568,7 +564,7 @@ public class AbilityHandTest
    @Test
    public void testType()
    {
-      AbilityHand testEZGripper = new AbilityHand("24ABH001", RobotSide.LEFT);
+      AbilityHand testEZGripper = new AbilityHand(RobotSide.LEFT);
       HandType expected = HandType.ABILITY_HAND;
       HandType actual = testEZGripper.getType();
       System.out.printf("Asserting hand type: expected=%s actual=%s%n", expected, actual);

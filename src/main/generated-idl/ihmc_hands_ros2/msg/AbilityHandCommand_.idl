@@ -54,10 +54,6 @@ module ihmc_hands_ros2
       struct AbilityHandCommand
       {
         /**
-         * The hand's serial number. E.g. 24ABH265
-         */
-        string<32> identifier;
-        /**
          * Specifies the control mode (ordinal of AbilityHandControlMode)
          * Default = position control
          */

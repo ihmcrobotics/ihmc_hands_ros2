@@ -12,10 +12,6 @@ public class EZGripperCommand extends Packet<EZGripperCommand> implements Settab
    public static final byte CALIBRATION = (byte) 1;
    public static final byte ERROR_RESET = (byte) 2;
    /**
-            * An identifier for the hand. Up to 8 characters long
-            */
-   public java.lang.StringBuilder identifier_;
-   /**
             * Specifies the desired operation mode.
             */
    public byte operation_mode_ = (byte) 255;
@@ -44,7 +40,6 @@ public class EZGripperCommand extends Packet<EZGripperCommand> implements Settab
 
    public EZGripperCommand()
    {
-      identifier_ = new java.lang.StringBuilder(32);
    }
 
    public EZGripperCommand(EZGripperCommand other)
@@ -55,9 +50,6 @@ public class EZGripperCommand extends Packet<EZGripperCommand> implements Settab
 
    public void set(EZGripperCommand other)
    {
-      identifier_.setLength(0);
-      identifier_.append(other.identifier_);
-
       operation_mode_ = other.operation_mode_;
 
       temperature_limit_ = other.temperature_limit_;
@@ -68,30 +60,6 @@ public class EZGripperCommand extends Packet<EZGripperCommand> implements Settab
 
       torque_on_ = other.torque_on_;
 
-   }
-
-   /**
-            * An identifier for the hand. Up to 8 characters long
-            */
-   public void setIdentifier(java.lang.String identifier)
-   {
-      identifier_.setLength(0);
-      identifier_.append(identifier);
-   }
-
-   /**
-            * An identifier for the hand. Up to 8 characters long
-            */
-   public java.lang.String getIdentifierAsString()
-   {
-      return getIdentifier().toString();
-   }
-   /**
-            * An identifier for the hand. Up to 8 characters long
-            */
-   public java.lang.StringBuilder getIdentifier()
-   {
-      return identifier_;
    }
 
    /**
@@ -199,8 +167,6 @@ public class EZGripperCommand extends Packet<EZGripperCommand> implements Settab
       if(other == null) return false;
       if(other == this) return true;
 
-      if (!us.ihmc.idl.IDLTools.epsilonEqualsStringBuilder(this.identifier_, other.identifier_, epsilon)) return false;
-
       if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.operation_mode_, other.operation_mode_, epsilon)) return false;
 
       if (!us.ihmc.idl.IDLTools.epsilonEqualsPrimitive(this.temperature_limit_, other.temperature_limit_, epsilon)) return false;
@@ -224,8 +190,6 @@ public class EZGripperCommand extends Packet<EZGripperCommand> implements Settab
 
       EZGripperCommand otherMyClass = (EZGripperCommand) other;
 
-      if (!us.ihmc.idl.IDLTools.equals(this.identifier_, otherMyClass.identifier_)) return false;
-
       if(this.operation_mode_ != otherMyClass.operation_mode_) return false;
 
       if(this.temperature_limit_ != otherMyClass.temperature_limit_) return false;
@@ -246,8 +210,6 @@ public class EZGripperCommand extends Packet<EZGripperCommand> implements Settab
       StringBuilder builder = new StringBuilder();
 
       builder.append("EZGripperCommand {");
-      builder.append("identifier=");
-      builder.append(this.identifier_);      builder.append(", ");
       builder.append("operation_mode=");
       builder.append(this.operation_mode_);      builder.append(", ");
       builder.append("temperature_limit=");

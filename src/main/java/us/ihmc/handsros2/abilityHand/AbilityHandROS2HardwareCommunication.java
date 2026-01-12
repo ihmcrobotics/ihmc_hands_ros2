@@ -2,146 +2,105 @@ package us.ihmc.handsros2.abilityHand;
 
 import ihmc_hands_ros2.msg.dds.AbilityHandCommand;
 import ihmc_hands_ros2.msg.dds.AbilityHandState;
-import us.ihmc.handsros2.HandMessageListener;
+import us.ihmc.handsros2.LatestMessageSubscription;
+import us.ihmc.robotics.robotSide.RobotSide;
+import us.ihmc.robotics.robotSide.SideDependentList;
 import us.ihmc.ros2.ROS2NodeBuilder;
 import us.ihmc.ros2.ROS2Publisher;
-import us.ihmc.ros2.ROS2Subscription;
 import us.ihmc.ros2.RealtimeROS2Node;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.LongSupplier;
 
 /**
  * <p>High level ROS 2 communication for the {@link AbilityHand}. Communicates with low-level hardware control process.</p>
  * <p>Subscribes to {@link AbilityHandState} messages and publishes {@link AbilityHandCommand} messages.</p>
  */
+@SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
 public class AbilityHandROS2HardwareCommunication
 {
-   private final List<String> registeredHandIdentifiers;
-
    private final RealtimeROS2Node node;
 
-   private final HandMessageListener<AbilityHandState> stateListener;
-   private final ROS2Subscription<AbilityHandState> stateSubscription;
+   private final SideDependentList<LatestMessageSubscription<AbilityHandState>> stateSubscriptions;
+   private final SideDependentList<ROS2Publisher<AbilityHandCommand>> commandPublishers;
 
-   private final Map<String, AbilityHandCommand> commandMessages;
-   private final ROS2Publisher<AbilityHandCommand> commandPublisher;
+   private final AbilityHandState stateMessage = new AbilityHandState();
+
+   public AbilityHandROS2HardwareCommunication(String nodeName, int domainId)
+   {
+      this(nodeName, domainId, System::currentTimeMillis);
+   }
 
    public AbilityHandROS2HardwareCommunication(String nodeName)
    {
       this(nodeName, -1);
    }
 
-   public AbilityHandROS2HardwareCommunication(String nodeName, int domainId)
+   public AbilityHandROS2HardwareCommunication(String nodeName, int domainId, LongSupplier epochMillisSupplier)
    {
-      registeredHandIdentifiers = Collections.synchronizedList(new ArrayList<>(2));
-      commandMessages = new ConcurrentHashMap<>(2);
-
       ROS2NodeBuilder nodeBuilder = new ROS2NodeBuilder();
       if (domainId >= 0)
          nodeBuilder.domainId(domainId);
       node = nodeBuilder.buildRealtime(nodeName);
 
-      stateListener = new HandMessageListener<>(AbilityHandState::new);
-      stateListener.onNewHandRegistered(this::registerNewHand);
-      stateSubscription = node.createSubscription(AbilityHandROS2API.STATE_TOPIC, stateListener);
-
-      commandPublisher = node.createPublisher(AbilityHandROS2API.COMMAND_TOPIC);
+      stateSubscriptions = new SideDependentList<>(side -> new LatestMessageSubscription<>(node,
+                                                                                           AbilityHandROS2API.STATE_TOPICS.get(side),
+                                                                                           AbilityHandState::new,
+                                                                                           epochMillisSupplier));
+      commandPublishers = new SideDependentList<>(side -> node.createPublisher(AbilityHandROS2API.COMMAND_TOPICS.get(side)));
    }
 
-   private void registerNewHand(StringBuilder newHandIdentifier)
+   public boolean isHandConnected(RobotSide side, long timeoutMillis)
    {
-      String identifier = newHandIdentifier.toString();
-      AbilityHandCommand commandMessage = new AbilityHandCommand();
-      commandMessage.setIdentifier(identifier);
-      commandMessages.put(identifier, commandMessage);
-      registeredHandIdentifiers.add(identifier);
+      return isHandConnected(side, timeoutMillis, System.currentTimeMillis());
    }
 
-   /**
-    * <p>Get the identifiers of the available hands.</p>
-    * <p>Treat the set as read-only.</p>
-    *
-    * @return Set of identifiers of the available hands.
-    */
-   public Set<String> getAvailableHands()
+   public boolean isHandConnected(RobotSide side, long timeoutMillis, long epochMillis)
    {
-      return commandMessages.keySet();
-   }
-
-   /**
-    * <p>Get a synchronized list of the identifiers of the available hands.</p>
-    * <p>The list is created using {@link Collections#synchronizedList(List)},
-    * thus a synchronized block must be used when iterating over the list.</p>
-    * <p>Treat the list as read-only.</p>
-    *
-    * @return List of identifiers of the available hands.
-    */
-   public List<String> getAvailableHandList()
-   {
-      return registeredHandIdentifiers;
+      return epochMillis - stateSubscriptions.get(side).getLatestMessageTimestamp() < timeoutMillis;
    }
 
    /**
     * Read the latest state message of the specified hand.
     *
-    * @param identifier    Identifier specifying the hand.
-    * @param messageToPack Message to pack with the latest state.
-    * @return {@code true} if a state message was available. {@code false} if no state had been received.
+    * @param side        Side specifying the hand.
+    * @param stateToPack State message to pack with the latest state.
+    * @return {@code true} if a state message was available.
     */
-   public boolean readState(String identifier, AbilityHandState messageToPack)
+   public boolean readState(RobotSide side, AbilityHandState stateToPack)
    {
-      return stateListener.readLatestMessage(identifier, messageToPack);
+      if (stateSubscriptions.get(side).hasReceivedAMessage())
+      {
+         stateSubscriptions.get(side).readLatestMessage(stateToPack);
+         return true;
+      }
+
+      return false;
    }
 
    /**
     * Read the latest state message of the specified hand.
     *
-    * @param identifier Identifier specifying the hand.
-    * @return A copy of the latest state message.
+    * @param side Side specifying the hand.
+    * @return A copy of the latest state message. {@code null} if no message has been received.
     */
-   public AbilityHandState readState(String identifier)
+   public AbilityHandState readState(RobotSide side)
    {
       AbilityHandState stateMessage = new AbilityHandState();
-      if (readState(identifier, stateMessage))
+      if (readState(side, stateMessage))
          return stateMessage;
 
       return null;
    }
 
    /**
-    * <p>Get the command message for the specified hand.</p>
-    * <p>Use this method to set the desired command values.
-    * Then publish the command using {@link #publishCommand(String)}.</p>
-    *
-    * @param identifier Identifier specifying the hand.
-    * @return A reference to the command message for the specified hand.
-    */
-   public AbilityHandCommand getCommand(String identifier)
-   {
-      return commandMessages.get(identifier);
-   }
-
-   /**
     * Publish the command for the specified hand.
     *
-    * @param identifier Identifier specifying the hand.
-    * @return {@code true} if the message was published. {@code false} if the hand specified wasn't found.
+    * @param side Side specifying the hand.
+    * @return {@code true} if the message was published.
     */
-   public boolean publishCommand(String identifier)
+   public boolean publishCommand(RobotSide side, AbilityHandCommand command)
    {
-      AbilityHandCommand commandMessage = commandMessages.get(identifier);
-      if (commandMessage != null)
-      {
-         commandPublisher.publish(commandMessage);
-         return true;
-      }
-
-      return false;
+      return commandPublishers.get(side).publish(command);
    }
 
    /**
@@ -159,8 +118,11 @@ public class AbilityHandROS2HardwareCommunication
    {
       node.stopSpinning();
 
-      commandPublisher.remove();
-      stateSubscription.remove();
+      for (RobotSide side : RobotSide.values)
+      {
+         commandPublishers.get(side).remove();
+         stateSubscriptions.get(side).remove();
+      }
 
       node.destroy();
    }
