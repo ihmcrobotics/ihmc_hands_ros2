@@ -21,6 +21,18 @@ public class AbilityHandModel implements HandModel
       public static final double Q2_JOINT_MULTIPLIER = 1.05851325;
       public static final double Q2_JOINT_OFFSET = 0.72349796;
 
+      /** Get q2 joint position, derived, for the main 4 fingers. */
+      public static double getQ2Position(double q1PositionRadians)
+      {
+         return Q2_JOINT_MULTIPLIER * q1PositionRadians + Q2_JOINT_OFFSET;
+      }
+
+      /** Get q2 joint velocity, derived, for the main 4 fingers. */
+      public static double getQ2Velocity(double q1VelocityRadians)
+      {
+         return Q2_JOINT_MULTIPLIER * q1VelocityRadians;
+      }
+
       @Override
       public FingerName getFinger(RobotSide robotSide)
       {
