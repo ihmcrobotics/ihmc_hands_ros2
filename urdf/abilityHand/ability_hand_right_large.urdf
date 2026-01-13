@@ -367,7 +367,7 @@
       <visual name="pinky_mesh_2">
          <origin rpy="0 0 0" xyz="0 0 0" />
          <geometry>
-            <mesh filename="package://abilityHand/idx-F2.obj" />
+            <mesh filename="package://abilityHand/idx-F2-Lg.obj" />
          </geometry>
       </visual>
       <collision name="pinky_mesh_coll_2">
