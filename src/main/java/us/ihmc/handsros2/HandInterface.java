@@ -1,5 +1,6 @@
 package us.ihmc.handsros2;
 
+import us.ihmc.robotics.partNames.HandJointName;
 import us.ihmc.robotics.robotSide.RobotSide;
 
 public interface HandInterface
@@ -27,18 +28,25 @@ public interface HandInterface
    void update();
 
    /**
-    * Read the current joint angles into the passed in array.
+    * Get the position of a joint. 0.0 is returned if unknown.
     *
-    * @param jointAngles Array to pack the joint angles into.
+    * @param jointName Name of the joint to query.
+    * @return Position of the queried joint. 0.0 when unknown.
     */
-   void readJointAngles(double[] jointAngles);
+   default double getJointPosition(HandJointName jointName)
+   {
+      return 0.0;
+   }
 
    /**
-    * Get the number of joints in the hand.
-    * The length of the joint angle array passed into
-    * {@link #readJointAngles(double[])} should be at least this long.
+    * Get the velocity of the joint at the specified index.
+    * 0.0 is returned if unknown.
     *
-    * @return The number of joints in the hand.
+    * @param jointIndex Index of the joint to query.
+    * @return Velocity of the queried joint. 0.0 when unknown.
     */
-   int getJointCount();
+   default double getJointVelocity(HandJointName jointIndex)
+   {
+      return 0.0;
+   }
 }

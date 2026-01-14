@@ -3,6 +3,7 @@ package us.ihmc.handsros2.ezGripper;
 import us.ihmc.handsros2.HandInterface;
 import us.ihmc.handsros2.HandType;
 import us.ihmc.handsros2.ezGripper.EZGripperModel.EZGripperJointName;
+import us.ihmc.robotics.partNames.HandJointName;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.stateMachine.core.State;
 import us.ihmc.robotics.stateMachine.core.StateMachine;
@@ -454,20 +455,13 @@ public class EZGripper implements HandInterface
    }
 
    @Override
-   public void readJointAngles(double[] jointAngles)
+   public double getJointPosition(HandJointName jointName)
    {
-      double angle = JOINT_RANGE * (1.0f - getCurrentPosition());
-      jointAngles[KNUCKLE_PALM_L1_1.getIndex(getSide())] = angle;
-      jointAngles[KNUCKLE_PALM_L1_2.getIndex(getSide())] = angle;
-      // We can't know the angle of the fingertips
-      jointAngles[KNUCKLE_L1_L2_1.getIndex(getSide())] = 0.0;
-      jointAngles[KNUCKLE_L1_L2_2.getIndex(getSide())] = 0.0;
-   }
-
-   @Override
-   public int getJointCount()
-   {
-      return EZGripperJointName.values.length;
+      return switch ((EZGripperJointName) jointName)
+      {
+         case KNUCKLE_PALM_L1_1, KNUCKLE_PALM_L1_2 -> JOINT_RANGE * (1.0f - getCurrentPosition());
+         case KNUCKLE_L1_L2_1, KNUCKLE_L1_L2_2 -> 0.0;
+      };
    }
 
    public YoRegistry getRegistry()
