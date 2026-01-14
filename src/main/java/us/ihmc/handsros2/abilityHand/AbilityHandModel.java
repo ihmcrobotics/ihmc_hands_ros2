@@ -4,6 +4,7 @@ import us.ihmc.handsros2.HandModel;
 import us.ihmc.robotics.partNames.FingerName;
 import us.ihmc.robotics.partNames.HandJointName;
 import us.ihmc.robotics.robotSide.RobotSide;
+import us.ihmc.robotics.robotSide.SideDependentList;
 
 public class AbilityHandModel implements HandModel
 {
@@ -33,6 +34,9 @@ public class AbilityHandModel implements HandModel
          return Q2_JOINT_MULTIPLIER * q1VelocityRadians;
       }
 
+      @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+      private final SideDependentList<String> jointNames = new SideDependentList<>(side -> side.getLowerCaseName() + "_ability_hand_" + name().toLowerCase());
+
       @Override
       public FingerName getFinger(RobotSide robotSide)
       {
@@ -61,7 +65,7 @@ public class AbilityHandModel implements HandModel
       @Override
       public String getJointName(RobotSide robotSide)
       {
-         return robotSide.getLowerCaseName() + "_ability_hand_" + name().toLowerCase();
+         return jointNames.get(robotSide);
       }
    }
 

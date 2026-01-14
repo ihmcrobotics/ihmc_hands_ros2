@@ -5,6 +5,7 @@ import us.ihmc.handsros2.HandType;
 import us.ihmc.handsros2.YoFloatArray;
 import us.ihmc.handsros2.YoIntegerArray;
 import us.ihmc.handsros2.abilityHand.AbilityHandModel.AbilityHandJointName;
+import us.ihmc.robotics.partNames.HandJointName;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.yoVariables.registry.YoRegistry;
 import us.ihmc.yoVariables.variable.YoDouble;
@@ -565,24 +566,39 @@ public class AbilityHand implements HandInterface
 
    /** {@inheritDoc} */
    @Override
-   public void readJointAngles(double[] jointAngles)
+   public double getJointPosition(HandJointName jointName)
    {
-      jointAngles[INDEX_Q1.getIndex(side)] = Math.toRadians(actuatorPositions.get(0));
-      jointAngles[INDEX_Q2.getIndex(side)] = Q2_JOINT_MULTIPLIER * Math.toRadians(actuatorPositions.get(0)) + Q2_JOINT_OFFSET;
-      jointAngles[MIDDLE_Q1.getIndex(side)] = Math.toRadians(actuatorPositions.get(1));
-      jointAngles[MIDDLE_Q2.getIndex(side)] = Q2_JOINT_MULTIPLIER * Math.toRadians(actuatorPositions.get(1)) + Q2_JOINT_OFFSET;
-      jointAngles[RING_Q1.getIndex(side)] = Math.toRadians(actuatorPositions.get(2));
-      jointAngles[RING_Q2.getIndex(side)] = Q2_JOINT_MULTIPLIER * Math.toRadians(actuatorPositions.get(2)) + Q2_JOINT_OFFSET;
-      jointAngles[PINKY_Q1.getIndex(side)] = Math.toRadians(actuatorPositions.get(3));
-      jointAngles[PINKY_Q2.getIndex(side)] = Q2_JOINT_MULTIPLIER * Math.toRadians(actuatorPositions.get(3)) + Q2_JOINT_OFFSET;
-      jointAngles[THUMB_Q1.getIndex(side)] = Math.toRadians(actuatorPositions.get(5));
-      jointAngles[THUMB_Q2.getIndex(side)] = Math.toRadians(actuatorPositions.get(4));
+      return switch ((AbilityHandJointName) jointName)
+      {
+         case INDEX_Q1 -> Math.toRadians(actuatorPositions.get(0));
+         case INDEX_Q2 -> Q2_JOINT_MULTIPLIER * Math.toRadians(actuatorPositions.get(0)) + Q2_JOINT_OFFSET;
+         case MIDDLE_Q1 -> Math.toRadians(actuatorPositions.get(1));
+         case MIDDLE_Q2 -> Q2_JOINT_MULTIPLIER * Math.toRadians(actuatorPositions.get(1)) + Q2_JOINT_OFFSET;
+         case RING_Q1 -> Math.toRadians(actuatorPositions.get(2));
+         case RING_Q2 -> Q2_JOINT_MULTIPLIER * Math.toRadians(actuatorPositions.get(2)) + Q2_JOINT_OFFSET;
+         case PINKY_Q1 -> Math.toRadians(actuatorPositions.get(3));
+         case PINKY_Q2 -> Q2_JOINT_MULTIPLIER * Math.toRadians(actuatorPositions.get(3)) + Q2_JOINT_OFFSET;
+         case THUMB_Q1 -> Math.toRadians(actuatorPositions.get(5));
+         case THUMB_Q2 -> Math.toRadians(actuatorPositions.get(4));
+      };
    }
 
    /** {@inheritDoc} */
    @Override
-   public int getJointCount()
+   public double getJointVelocity(HandJointName jointName)
    {
-      return AbilityHandJointName.values.length;
+      return switch ((AbilityHandJointName) jointName)
+      {
+         case INDEX_Q1 -> Math.toRadians(filteredActuatorVelocities.get(0));
+         case INDEX_Q2 -> Q2_JOINT_MULTIPLIER * Math.toRadians(filteredActuatorVelocities.get(0));
+         case MIDDLE_Q1 -> Math.toRadians(filteredActuatorVelocities.get(1));
+         case MIDDLE_Q2 -> Q2_JOINT_MULTIPLIER * Math.toRadians(filteredActuatorVelocities.get(1));
+         case RING_Q1 -> Math.toRadians(filteredActuatorVelocities.get(2));
+         case RING_Q2 -> Q2_JOINT_MULTIPLIER * Math.toRadians(filteredActuatorVelocities.get(2));
+         case PINKY_Q1 -> Math.toRadians(filteredActuatorVelocities.get(3));
+         case PINKY_Q2 -> Q2_JOINT_MULTIPLIER * Math.toRadians(filteredActuatorVelocities.get(3));
+         case THUMB_Q1 -> Math.toRadians(filteredActuatorVelocities.get(5));
+         case THUMB_Q2 -> Math.toRadians(filteredActuatorVelocities.get(4));
+      };
    }
 }

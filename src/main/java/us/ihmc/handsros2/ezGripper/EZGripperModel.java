@@ -4,6 +4,7 @@ import us.ihmc.handsros2.HandModel;
 import us.ihmc.robotics.partNames.FingerName;
 import us.ihmc.robotics.partNames.HandJointName;
 import us.ihmc.robotics.robotSide.RobotSide;
+import us.ihmc.robotics.robotSide.SideDependentList;
 
 @SuppressWarnings("ClassCanBeRecord")
 public class EZGripperModel implements HandModel
@@ -20,6 +21,9 @@ public class EZGripperModel implements HandModel
 
       // Taken from the EZGripper URDF
       public static final double JOINT_RANGE = 1.94;
+
+      @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+      private final SideDependentList<String> jointNames = new SideDependentList<>(side -> side.getLowerCaseName() + "_ezgripper_" + name().toLowerCase());
 
       @Override
       public int getIndex(RobotSide robotSide)
@@ -40,7 +44,7 @@ public class EZGripperModel implements HandModel
       @Override
       public String getJointName(RobotSide robotSide)
       {
-         return robotSide.getLowerCaseName() + "_ezgripper_" + name().toLowerCase();
+         return jointNames.get(robotSide);
       }
 
       @Override
