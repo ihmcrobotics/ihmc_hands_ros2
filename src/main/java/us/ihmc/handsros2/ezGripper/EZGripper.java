@@ -454,6 +454,7 @@ public class EZGripper implements HandInterface
       this.errorCode.set(Byte.toUnsignedInt(errorCode));
    }
 
+   /** {@inheritDoc} */
    @Override
    public double getJointPosition(HandJointName jointName)
    {

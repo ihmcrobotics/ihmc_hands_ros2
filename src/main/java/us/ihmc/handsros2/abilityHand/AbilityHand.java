@@ -564,6 +564,7 @@ public class AbilityHand implements HandInterface
       return (121591f / (40960000f / rawADCValue + 10000f)) + 0.878894f;
    }
 
+   /** {@inheritDoc} */
    @Override
    public double getJointPosition(HandJointName jointName)
    {
@@ -582,6 +583,7 @@ public class AbilityHand implements HandInterface
       };
    }
 
+   /** {@inheritDoc} */
    @Override
    public double getJointVelocity(HandJointName jointName)
    {
