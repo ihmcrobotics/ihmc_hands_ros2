@@ -21,7 +21,7 @@
       <visual name="wrist_mesh">
          <origin rpy="0 0 0" xyz="0 0 0" />
          <geometry>
-            <mesh filename="package://abilityHand/wristmesh.obj" />
+            <mesh filename="package://abilityHand/wristmesh_lp.obj" />
          </geometry>
       </visual>
       <inertial>
@@ -32,7 +32,7 @@
       <visual name="palm_mesh">
          <origin rpy="3.14148426 0.08848813 3.14036612" xyz="24.0476665e-3 3.78124745e-3 32.32964923e-3" />
          <geometry>
-            <mesh filename="package://abilityHand/FB_palm_ref.obj" />
+            <mesh filename="package://abilityHand/FB_palm_ref_lp.obj" />
          </geometry>
       </visual>
       <collision name="palm_mesh_coll">
