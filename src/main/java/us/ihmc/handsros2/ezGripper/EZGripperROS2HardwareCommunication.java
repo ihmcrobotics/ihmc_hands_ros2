@@ -1,13 +1,12 @@
 package us.ihmc.handsros2.ezGripper;
 
-import ihmc_hands_ros2.msg.dds.EZGripperCommand;
-import ihmc_hands_ros2.msg.dds.EZGripperState;
+import ihmc_hands_ros2.EZGripperCommand;
+import ihmc_hands_ros2.EZGripperState;
 import us.ihmc.handsros2.LatestMessageSubscription;
+import us.ihmc.jros2.AsyncROS2Node;
+import us.ihmc.jros2.ROS2Publisher;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
-import us.ihmc.ros2.ROS2NodeBuilder;
-import us.ihmc.ros2.ROS2Publisher;
-import us.ihmc.ros2.RealtimeROS2Node;
 
 import java.util.function.LongSupplier;
 
@@ -18,7 +17,7 @@ import java.util.function.LongSupplier;
 @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
 public class EZGripperROS2HardwareCommunication
 {
-   private final RealtimeROS2Node node;
+   private final AsyncROS2Node node;
 
    private final SideDependentList<LatestMessageSubscription<EZGripperState>> stateSubscriptions;
    private final SideDependentList<ROS2Publisher<EZGripperCommand>> commandPublishers;
@@ -37,10 +36,7 @@ public class EZGripperROS2HardwareCommunication
 
    public EZGripperROS2HardwareCommunication(String nodeName, int domainId, LongSupplier epochMillisSupplier)
    {
-      ROS2NodeBuilder nodeBuilder = new ROS2NodeBuilder();
-      if (domainId >= 0)
-         nodeBuilder.domainId(domainId);
-      node = nodeBuilder.buildRealtime(nodeName);
+      node = domainId >= 0 ? new AsyncROS2Node(nodeName, domainId) : new AsyncROS2Node(nodeName);
 
       stateSubscriptions = new SideDependentList<>(side -> new LatestMessageSubscription<>(node,
                                                                                            EZGripperROS2API.STATE_TOPICS.get(side),
@@ -100,7 +96,8 @@ public class EZGripperROS2HardwareCommunication
     */
    public boolean publishCommand(RobotSide side, EZGripperCommand command)
    {
-      return commandPublishers.get(side).publish(command);
+      commandPublishers.get(side).publish(command);
+      return true;
    }
 
    /**
@@ -108,7 +105,6 @@ public class EZGripperROS2HardwareCommunication
     */
    public void start()
    {
-      node.spin();
    }
 
    /**
@@ -116,14 +112,12 @@ public class EZGripperROS2HardwareCommunication
     */
    public void shutdown()
    {
-      node.stopSpinning();
-
       for (RobotSide side : RobotSide.values)
       {
-         commandPublishers.get(side).remove();
+         node.destroyPublisher(commandPublishers.get(side));
          stateSubscriptions.get(side).remove();
       }
 
-      node.destroy();
+      node.close();
    }
 }

@@ -1,14 +1,13 @@
 package us.ihmc.handsros2.ezGripper;
 
-import ihmc_hands_ros2.msg.dds.EZGripperCommand;
-import ihmc_hands_ros2.msg.dds.EZGripperState;
+import ihmc_hands_ros2.EZGripperCommand;
+import ihmc_hands_ros2.EZGripperState;
 import us.ihmc.handsros2.LatestMessageSubscription;
 import us.ihmc.handsros2.ezGripper.EZGripper.OperationMode;
+import us.ihmc.jros2.AsyncROS2Node;
+import us.ihmc.jros2.ROS2Publisher;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
-import us.ihmc.ros2.ROS2NodeBuilder;
-import us.ihmc.ros2.ROS2Publisher;
-import us.ihmc.ros2.RealtimeROS2Node;
 
 /**
  * <p>Hardware side ROS 2 communication for the {@link EZGripper}. Communicates with external controller.</p>
@@ -17,7 +16,7 @@ import us.ihmc.ros2.RealtimeROS2Node;
 @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
 public class EZGripperROS2ControllerCommunication
 {
-   private final RealtimeROS2Node node;
+   private final AsyncROS2Node node;
 
    private final EZGripperState stateMessage;
    private final SideDependentList<ROS2Publisher<EZGripperState>> statePublishers;
@@ -32,10 +31,7 @@ public class EZGripperROS2ControllerCommunication
 
    public EZGripperROS2ControllerCommunication(String nodeName, int domainId)
    {
-      ROS2NodeBuilder nodeBuilder = new ROS2NodeBuilder();
-      if (domainId >= 0)
-         nodeBuilder.domainId(domainId);
-      node = nodeBuilder.buildRealtime(nodeName);
+      node = domainId >= 0 ? new AsyncROS2Node(nodeName, domainId) : new AsyncROS2Node(nodeName);
 
       stateMessage = new EZGripperState();
       statePublishers = new SideDependentList<>(side -> node.createPublisher(EZGripperROS2API.STATE_TOPICS.get(side)));
@@ -88,7 +84,6 @@ public class EZGripperROS2ControllerCommunication
     */
    public void start()
    {
-      node.spin();
    }
 
    /**
@@ -96,14 +91,12 @@ public class EZGripperROS2ControllerCommunication
     */
    public void shutdown()
    {
-      node.stopSpinning();
-
       for (RobotSide side : RobotSide.values)
       {
-         statePublishers.get(side).remove();
+         node.destroyPublisher(statePublishers.get(side));
          commandSubscriptions.get(side).remove();
       }
 
-      node.destroy();
+      node.close();
    }
 }
