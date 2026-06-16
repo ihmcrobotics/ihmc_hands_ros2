@@ -2,22 +2,17 @@ package us.ihmc.handsros2;
 
 import us.ihmc.jros2.ROS2Message;
 import us.ihmc.jros2.ROS2Node;
+import us.ihmc.jros2.ROS2QoSProfile;
 import us.ihmc.jros2.ROS2Subscription;
 import us.ihmc.jros2.ROS2Topic;
 
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
 public class LatestMessageSubscription<T extends ROS2Message<T>>
 {
-   private final T latestMessage;
-   private final ReadWriteLock lock = new ReentrantReadWriteLock();
-
    private final ROS2Node node;
    private final ROS2Subscription<T> subscription;
-
    private final LongSupplier timeSupplier;
 
    private boolean hasReceivedMessage = false;
@@ -30,42 +25,26 @@ public class LatestMessageSubscription<T extends ROS2Message<T>>
 
    public LatestMessageSubscription(ROS2Node node, ROS2Topic<T> topic, Supplier<T> messageBuilder, LongSupplier epochMillisSupplier)
    {
+      this(node, topic, ROS2QoSProfile.DEFAULT, epochMillisSupplier);
+   }
+
+   public LatestMessageSubscription(ROS2Node node, ROS2Topic<T> topic, ROS2QoSProfile qosProfile, LongSupplier epochMillisSupplier)
+   {
       this.node = node;
-      latestMessage = messageBuilder.get();
       timeSupplier = epochMillisSupplier;
-
-      subscription = node.createSubscriptionSampler(topic, this::onMessage);
+      subscription = node.createSubscription(topic, qosProfile);
    }
 
-   private void onMessage(T incoming)
+   public boolean readLatestMessage(T messageToPack)
    {
-      lock.writeLock().lock();
-      try
+      if (subscription.readLatest(messageToPack) > 0)
       {
-         latestMessage.set(incoming);
-      }
-      finally
-      {
-         lock.writeLock().unlock();
-      }
-
-      latestMessageTimestamp = timeSupplier.getAsLong();
-
-      if (!hasReceivedMessage)
+         latestMessageTimestamp = timeSupplier.getAsLong();
          hasReceivedMessage = true;
-   }
+         return true;
+      }
 
-   public void readLatestMessage(T messageToPack)
-   {
-      lock.readLock().lock();
-      try
-      {
-         messageToPack.set(latestMessage);
-      }
-      finally
-      {
-         lock.readLock().unlock();
-      }
+      return false;
    }
 
    public long getLatestMessageTimestamp()

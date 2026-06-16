@@ -49,9 +49,8 @@ public class EZGripperROS2ControllerCommunication
     */
    public void readCommand(EZGripper gripper)
    {
-      if (commandSubscriptions.get(gripper.getSide()).hasReceivedAMessage())
+      if (commandSubscriptions.get(gripper.getSide()).readLatestMessage(commandMessage))
       {
-         commandSubscriptions.get(gripper.getSide()).readLatestMessage(commandMessage);
          gripper.setOperationMode(OperationMode.fromByte(commandMessage.getOperationMode()));
 
          gripper.setTemperatureLimit(commandMessage.getTemperatureLimit());

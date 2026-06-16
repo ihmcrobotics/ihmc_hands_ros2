@@ -48,9 +48,8 @@ public class AbilityHandROS2ControllerCommunication
     */
    public void readCommand(AbilityHand hand)
    {
-      if (commandSubscriptions.get(hand.getSide()).hasReceivedAMessage())
+      if (commandSubscriptions.get(hand.getSide()).readLatestMessage(commandMessage))
       {
-         commandSubscriptions.get(hand.getSide()).readLatestMessage(commandMessage);
          AbilityHandControlMode controlMode = AbilityHandControlMode.fromByte(commandMessage.getControlMode());
          hand.setControlMode(controlMode);
          if (controlMode == AbilityHandControlMode.POSITION)

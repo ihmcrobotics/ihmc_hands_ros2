@@ -64,13 +64,7 @@ public class AbilityHandROS2HardwareCommunication
     */
    public boolean readState(RobotSide side, AbilityHandState stateToPack)
    {
-      if (stateSubscriptions.get(side).hasReceivedAMessage())
-      {
-         stateSubscriptions.get(side).readLatestMessage(stateToPack);
-         return true;
-      }
-
-      return false;
+      return stateSubscriptions.get(side).readLatestMessage(stateToPack);
    }
 
    /**
