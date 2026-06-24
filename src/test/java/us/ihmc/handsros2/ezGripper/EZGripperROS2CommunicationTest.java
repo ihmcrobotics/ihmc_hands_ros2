@@ -1,5 +1,7 @@
 package us.ihmc.handsros2.ezGripper;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import ihmc_hands_ros2.EZGripperCommand;
 import ihmc_hands_ros2.EZGripperState;
 import org.junit.jupiter.api.Test;
@@ -12,8 +14,6 @@ import us.ihmc.robotics.robotSide.RobotSide;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 public class EZGripperROS2CommunicationTest
 {

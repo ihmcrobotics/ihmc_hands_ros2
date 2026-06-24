@@ -1,5 +1,9 @@
 package us.ihmc.handsros2.abilityHand;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static us.ihmc.handsros2.abilityHand.AbilityHand.ACTUATOR_COUNT;
+import static us.ihmc.handsros2.abilityHand.AbilityHand.TOUCH_SENSOR_COUNT;
+
 import ihmc_hands_ros2.AbilityHandCommand;
 import ihmc_hands_ros2.AbilityHandState;
 import org.junit.jupiter.api.Test;
@@ -11,10 +15,6 @@ import us.ihmc.robotics.robotSide.RobotSide;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static us.ihmc.handsros2.abilityHand.AbilityHand.ACTUATOR_COUNT;
-import static us.ihmc.handsros2.abilityHand.AbilityHand.TOUCH_SENSOR_COUNT;
 
 public class AbilityHandROS2CommunicationTest
 {
