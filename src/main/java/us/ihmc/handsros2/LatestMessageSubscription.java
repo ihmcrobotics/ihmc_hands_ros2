@@ -25,7 +25,7 @@ public class LatestMessageSubscription<T extends ROS2Message<T>>
 
    public LatestMessageSubscription(ROS2Node node, ROS2Topic<T> topic, Supplier<T> messageBuilder, LongSupplier epochMillisSupplier)
    {
-      this(node, topic, ROS2QoSProfile.DEFAULT, epochMillisSupplier);
+      this(node, topic, topic.getQoS(), epochMillisSupplier);
    }
 
    public LatestMessageSubscription(ROS2Node node, ROS2Topic<T> topic, ROS2QoSProfile qosProfile, LongSupplier epochMillisSupplier)

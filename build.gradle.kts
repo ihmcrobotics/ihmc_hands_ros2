@@ -23,7 +23,7 @@ ihmc {
 }
 
 mainDependencies {
-   api("us.ihmc:jros2:1.3.0")
+   api("us.ihmc:jros2:source")
    api("us.ihmc:ihmc-robotics-tools:0.15.8")
 }
 
