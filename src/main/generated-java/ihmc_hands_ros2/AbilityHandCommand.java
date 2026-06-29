@@ -87,6 +87,12 @@ public class AbilityHandCommand implements ROS2Message<AbilityHandCommand>
 
    }
 
+   public AbilityHandCommand(AbilityHandCommand from)
+   {
+      this();
+      set(from);
+   }
+
    @Override
    public int calculateSizeBytes(int currentAlignment)
    {

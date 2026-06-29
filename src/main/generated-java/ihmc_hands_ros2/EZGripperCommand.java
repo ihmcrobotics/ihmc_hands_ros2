@@ -79,6 +79,12 @@ public class EZGripperCommand implements ROS2Message<EZGripperCommand>
 
    }
 
+   public EZGripperCommand(EZGripperCommand from)
+   {
+      this();
+      set(from);
+   }
+
    @Override
    public int calculateSizeBytes(int currentAlignment)
    {

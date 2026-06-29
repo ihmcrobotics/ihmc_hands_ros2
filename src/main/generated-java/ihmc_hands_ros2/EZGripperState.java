@@ -90,6 +90,12 @@ public class EZGripperState implements ROS2Message<EZGripperState>
 
    }
 
+   public EZGripperState(EZGripperState from)
+   {
+      this();
+      set(from);
+   }
+
    @Override
    public int calculateSizeBytes(int currentAlignment)
    {
