@@ -1,21 +1,20 @@
 package us.ihmc.handsros2.abilityHand;
 
-import ihmc_hands_ros2.msg.dds.AbilityHandCommand;
-import ihmc_hands_ros2.msg.dds.AbilityHandState;
+import static org.junit.jupiter.api.Assertions.*;
+import static us.ihmc.handsros2.abilityHand.AbilityHand.ACTUATOR_COUNT;
+import static us.ihmc.handsros2.abilityHand.AbilityHand.TOUCH_SENSOR_COUNT;
+
+import ihmc_hands_ros2.AbilityHandCommand;
+import ihmc_hands_ros2.AbilityHandState;
 import org.junit.jupiter.api.Test;
+import us.ihmc.jros2.ROS2Node;
+import us.ihmc.jros2.ROS2Publisher;
+import us.ihmc.jros2.ROS2Subscription;
 import us.ihmc.robotics.robotSide.RobotSide;
-import us.ihmc.ros2.ROS2Node;
-import us.ihmc.ros2.ROS2NodeBuilder;
-import us.ihmc.ros2.ROS2Publisher;
-import us.ihmc.ros2.ROS2Subscription;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static us.ihmc.handsros2.abilityHand.AbilityHand.ACTUATOR_COUNT;
-import static us.ihmc.handsros2.abilityHand.AbilityHand.TOUCH_SENSOR_COUNT;
 
 public class AbilityHandROS2CommunicationTest
 {
@@ -34,10 +33,8 @@ public class AbilityHandROS2CommunicationTest
       for (int i = 0; i < TOUCH_SENSOR_COUNT; ++i)
          TOUCH_SENSOR_READINGS[i] = i;
 
-      // Create a node
-      ROS2Node node = new ROS2NodeBuilder().domainId(domainId).build("abilityTestNode");
+      ROS2Node node = new ROS2Node("abilityTestNode", domainId);
 
-      // Create a command message and its publisher
       AbilityHandCommand command = new AbilityHandCommand();
       command.setControlMode(AbilityHandControlMode.POSITION.toByte());
       System.arraycopy(COMMAND_VALUES, 0, command.getGoalPositions(), 0, ACTUATOR_COUNT);
@@ -45,11 +42,14 @@ public class AbilityHandROS2CommunicationTest
          command.getGoalVelocities()[i] = 30.0f;
       ROS2Publisher<AbilityHandCommand> publisher = node.createPublisher(AbilityHandROS2API.COMMAND_TOPICS.get(HAND_SIDE));
 
-      // Create a stats subscription
       AtomicBoolean received = new AtomicBoolean(false);
       AbilityHandState stateReceived = new AbilityHandState();
-      ROS2Subscription<AbilityHandState> subscription = node.createSubscription2(AbilityHandROS2API.STATE_TOPICS.get(HAND_SIDE), stateMessage ->
+      ROS2Subscription<AbilityHandState> subscription = node.createSubscription(AbilityHandROS2API.STATE_TOPICS.get(HAND_SIDE), reader ->
       {
+         AbilityHandState stateMessage = reader.read();
+         if (stateMessage == null)
+            return;
+
          stateReceived.set(stateMessage);
 
          synchronized (received)
@@ -59,35 +59,27 @@ public class AbilityHandROS2CommunicationTest
          }
       });
 
-      // Initialize a test hand
       AbilityHand hand = new AbilityHand(HAND_SIDE);
-      hand.setActuatorPositions(ACTUATOR_POSITIONS); // Set the state of the hand
+      hand.setActuatorPositions(ACTUATOR_POSITIONS);
       hand.setRawFSRValues(TOUCH_SENSOR_READINGS);
 
-      // Create an instance of the communication class
       AbilityHandROS2ControllerCommunication controllerCommunication = new AbilityHandROS2ControllerCommunication("test_controller_comm", domainId);
 
-      // Publish before starting. Nothing should happen
       controllerCommunication.publishState(hand);
 
-      // Assert that no messages were received
       assertFalse(received.get());
 
-      // Start and publish again. Should receive message
-      controllerCommunication.start();
       LockSupport.parkNanos((long) 1E8);
 
       publisher.publish(command);
       controllerCommunication.publishState(hand);
 
-      // Wait for the state message to be received
       synchronized (received)
       {
          if (!received.get())
             received.wait(1000);
       }
 
-      // Read values
       controllerCommunication.readCommand(hand);
 
       for (int i = 0; i < ACTUATOR_COUNT; ++i)
@@ -135,7 +127,6 @@ public class AbilityHandROS2CommunicationTest
                            hand.getCommandValue(5));
       }
 
-      // Assert that the messages were received
       System.out.printf("Asserting that a state message was received: received=%s%n", received.get());
       assertTrue(received.get());
 
@@ -163,11 +154,10 @@ public class AbilityHandROS2CommunicationTest
       System.out.printf("Asserting command type: expected=%s actual=%s%n", COMMAND_TYPE, hand.getCommandType());
       assertEquals(COMMAND_TYPE, hand.getCommandType());
 
-      // Shut things down
       controllerCommunication.shutdown();
-      subscription.remove();
-      publisher.remove();
-      node.destroy();
+      node.destroySubscription(subscription);
+      node.destroyPublisher(publisher);
+      node.close();
    }
 
    @Test
@@ -185,10 +175,8 @@ public class AbilityHandROS2CommunicationTest
       for (int i = 0; i < TOUCH_SENSOR_COUNT; ++i)
          TOUCH_SENSOR_READINGS[i] = TOUCH_SENSOR_COUNT - i;
 
-      // Create a node
-      ROS2Node node = new ROS2NodeBuilder().domainId(domainId).build("abilityTestNode");
+      ROS2Node node = new ROS2Node("abilityTestNode", domainId);
 
-      // Create a state message and its publisher
       AbilityHandState state = new AbilityHandState();
       System.arraycopy(ACTUATOR_POSITIONS, 0, state.getActuatorPositions(), 0, ACTUATOR_COUNT);
       System.arraycopy(ACTUATOR_VELOCITIES, 0, state.getActuatorVelocities(), 0, ACTUATOR_COUNT);
@@ -196,11 +184,14 @@ public class AbilityHandROS2CommunicationTest
       System.arraycopy(TOUCH_SENSOR_READINGS, 0, state.getTouchSensorReadings(), 0, TOUCH_SENSOR_COUNT);
       ROS2Publisher<AbilityHandState> statePublisher = node.createPublisher(AbilityHandROS2API.STATE_TOPICS.get(HAND_SIDE));
 
-      // Create a subscription to command messages
       AtomicBoolean received = new AtomicBoolean(false);
       AbilityHandCommand commandReceived = new AbilityHandCommand();
-      ROS2Subscription<AbilityHandCommand> subscription = node.createSubscription2(AbilityHandROS2API.COMMAND_TOPICS.get(HAND_SIDE), commandMessage ->
+      ROS2Subscription<AbilityHandCommand> subscription = node.createSubscription(AbilityHandROS2API.COMMAND_TOPICS.get(HAND_SIDE), reader ->
       {
+         AbilityHandCommand commandMessage = reader.read();
+         if (commandMessage == null)
+            return;
+
          commandReceived.set(commandMessage);
 
          synchronized (received)
@@ -210,16 +201,12 @@ public class AbilityHandROS2CommunicationTest
          }
       });
 
-      // Create the communication instance
       AbilityHandROS2HardwareCommunication communication = new AbilityHandROS2HardwareCommunication("test_hardware_comm", domainId, () -> 0);
-      communication.start();
       LockSupport.parkNanos((long) 1E8);
 
-      // Publish a state message
       statePublisher.publish(state);
       LockSupport.parkNanos((long) 1E8);
 
-      // Assert the state received is correct
       AbilityHandState stateReceived = communication.readState(HAND_SIDE);
       assertNotNull(stateReceived);
       assertTrue(communication.isHandConnected(HAND_SIDE, 1000, 500));
@@ -229,29 +216,25 @@ public class AbilityHandROS2CommunicationTest
       assertArrayEquals(ACTUATOR_CURRENTS, stateReceived.getActuatorCurrents());
       assertArrayEquals(TOUCH_SENSOR_READINGS, stateReceived.getTouchSensorReadings());
 
-      // Publish a command
       AbilityHandCommand command = new AbilityHandCommand();
       command.setControlMode(CONTROL_MODE.toByte());
       System.arraycopy(GOAL_POSITIONS, 0, command.getGoalPositions(), 0, ACTUATOR_COUNT);
       boolean published = communication.publishCommand(HAND_SIDE, command);
       assertTrue(published);
 
-      // Wait for the subscription to receive it
       synchronized (received)
       {
          if (!received.get())
             received.wait(1000);
       }
 
-      // Make sure subscription received it correctly
       assertTrue(received.get());
       assertEquals(CONTROL_MODE, AbilityHandControlMode.fromByte(commandReceived.getControlMode()));
       assertArrayEquals(GOAL_POSITIONS, commandReceived.getGoalPositions());
 
-      // Shut things down
       communication.shutdown();
-      statePublisher.remove();
-      subscription.remove();
-      node.destroy();
+      node.destroyPublisher(statePublisher);
+      node.destroySubscription(subscription);
+      node.close();
    }
 }

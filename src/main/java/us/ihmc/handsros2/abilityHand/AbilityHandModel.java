@@ -74,4 +74,10 @@ public class AbilityHandModel implements HandModel
    {
       return AbilityHandJointName.values;
    }
+
+   /** Joint name in the robot URDF / full robot model. Override when the hand URDF differs from the default Ability Hand naming. */
+   public String getAbilityHandJointName(RobotSide robotSide, AbilityHandJointName jointName)
+   {
+      return jointName.getJointName(robotSide);
+   }
 }
