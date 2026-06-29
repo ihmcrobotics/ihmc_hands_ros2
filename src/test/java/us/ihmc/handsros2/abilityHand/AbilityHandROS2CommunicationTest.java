@@ -69,7 +69,6 @@ public class AbilityHandROS2CommunicationTest
 
       assertFalse(received.get());
 
-      controllerCommunication.start();
       LockSupport.parkNanos((long) 1E8);
 
       publisher.publish(command);
@@ -203,7 +202,6 @@ public class AbilityHandROS2CommunicationTest
       });
 
       AbilityHandROS2HardwareCommunication communication = new AbilityHandROS2HardwareCommunication("test_hardware_comm", domainId, () -> 0);
-      communication.start();
       LockSupport.parkNanos((long) 1E8);
 
       statePublisher.publish(state);

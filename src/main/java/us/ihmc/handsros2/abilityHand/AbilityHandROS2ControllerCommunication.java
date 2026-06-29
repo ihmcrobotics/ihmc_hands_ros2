@@ -83,14 +83,7 @@ public class AbilityHandROS2ControllerCommunication
    }
 
    /**
-    * Initialize the communication.
-    */
-   public void start()
-   {
-   }
-
-   /**
-    * Shut the communication down. {@link #start()} cannot be called again after this method.
+    * Shut the communication down. The communication cannot be used after this method.
     */
    public void shutdown()
    {
