@@ -7,7 +7,7 @@ plugins {
 
 ihmc {
    group = "us.ihmc"
-   version = "0.2.4"
+   version = "0.3.0"
    vcsUrl = "https://github.com/ihmcrobotics/ihmc_hands_ros2"
    openSource = true
 
