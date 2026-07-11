@@ -1,13 +1,12 @@
 package us.ihmc.handsros2.abilityHand;
 
-import ihmc_hands_ros2.msg.dds.AbilityHandCommand;
-import ihmc_hands_ros2.msg.dds.AbilityHandState;
+import ihmc_hands_ros2.AbilityHandCommand;
+import ihmc_hands_ros2.AbilityHandState;
 import us.ihmc.handsros2.LatestMessageSubscription;
+import us.ihmc.jros2.AsyncROS2Node;
+import us.ihmc.jros2.ROS2Publisher;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
-import us.ihmc.ros2.ROS2NodeBuilder;
-import us.ihmc.ros2.ROS2Publisher;
-import us.ihmc.ros2.RealtimeROS2Node;
 
 /**
  * <p>Hardware side ROS 2 communication for the {@link AbilityHand}. Communicates with external controller.</p>
@@ -16,7 +15,7 @@ import us.ihmc.ros2.RealtimeROS2Node;
 @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
 public class AbilityHandROS2ControllerCommunication
 {
-   private final RealtimeROS2Node node;
+   private final AsyncROS2Node node;
 
    private final AbilityHandState stateMessage;
    private final SideDependentList<ROS2Publisher<AbilityHandState>> statePublishers;
@@ -31,10 +30,7 @@ public class AbilityHandROS2ControllerCommunication
 
    public AbilityHandROS2ControllerCommunication(String nodeName, int domainId)
    {
-      ROS2NodeBuilder nodeBuilder = new ROS2NodeBuilder();
-      if (domainId >= 0)
-         nodeBuilder.domainId(domainId);
-      node = nodeBuilder.buildRealtime(nodeName);
+      node = domainId >= 0 ? new AsyncROS2Node(nodeName, domainId) : new AsyncROS2Node(nodeName);
 
       stateMessage = new AbilityHandState();
       statePublishers = new SideDependentList<>(side -> node.createPublisher(AbilityHandROS2API.STATE_TOPICS.get(side)));
@@ -52,9 +48,8 @@ public class AbilityHandROS2ControllerCommunication
     */
    public void readCommand(AbilityHand hand)
    {
-      if (commandSubscriptions.get(hand.getSide()).hasReceivedAMessage())
+      if (commandSubscriptions.get(hand.getSide()).readLatestMessage(commandMessage))
       {
-         commandSubscriptions.get(hand.getSide()).readLatestMessage(commandMessage);
          AbilityHandControlMode controlMode = AbilityHandControlMode.fromByte(commandMessage.getControlMode());
          hand.setControlMode(controlMode);
          if (controlMode == AbilityHandControlMode.POSITION)
@@ -88,26 +83,16 @@ public class AbilityHandROS2ControllerCommunication
    }
 
    /**
-    * Initialize the communication.
-    */
-   public void start()
-   {
-      node.spin();
-   }
-
-   /**
-    * Shut the communication down. {@link #start()} cannot be called again after this method.
+    * Shut the communication down. The communication cannot be used after this method.
     */
    public void shutdown()
    {
-      node.stopSpinning();
-
       for (RobotSide side : RobotSide.values)
       {
-         statePublishers.get(side).remove();
+         node.destroyPublisher(statePublishers.get(side));
          commandSubscriptions.get(side).remove();
       }
 
-      node.destroy();
+      node.close();
    }
 }
