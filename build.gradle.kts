@@ -2,7 +2,7 @@ import us.ihmc.jros2.generator.jros2GenTask
 
 plugins {
    id("us.ihmc.ihmc-build")
-   id("us.ihmc.jros2.generator") version "1.5.0"
+   id("us.ihmc.jros2.generator") version "1.5.1"
 }
 
 ihmc {
@@ -23,7 +23,7 @@ ihmc {
 }
 
 mainDependencies {
-   api("us.ihmc:jros2:1.5.0")
+   api("us.ihmc:jros2:1.5.1")
    api("us.ihmc:ihmc-robotics-tools:0.15.8")
 }
 
