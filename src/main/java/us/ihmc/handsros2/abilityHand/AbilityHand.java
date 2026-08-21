@@ -137,10 +137,10 @@ public class AbilityHand implements HandInterface
       previousGrip.set(null);
       gripStage = new YoInteger(prefix + "GripStage", registry);
 
-      positionCommands = new YoFloatArray(prefix + "PositionCommand", registry, 0, 0, 0, 0, 0, 0);
+      positionCommands = new YoFloatArray(prefix + "PositionCommand", registry, 90.0f, 90.0f, 90.0f, 90.0f, 80.0f, -20.0f);
       velocityCommands = new YoFloatArray(prefix + "VelocityCommand", registry, 0, 0, 0, 0, 0, 0);
       filteredCommandValues = new YoFloatArray(prefix + "FilteredCommand", registry, 0, 0, 0, 0, 0, 0);
-      actuatorPositions = new YoFloatArray(prefix + "ActuatorPosition", registry, 0, 0, 0, 0, 0, 0);
+      actuatorPositions = new YoFloatArray(prefix + "ActuatorPosition", registry, 90.0f, 90.0f, 90.0f, 90.0f, 80.0f, -20.0f);
       actuatorVelocities = new YoFloatArray(prefix + "ActuatorVelocity", registry, 0, 0, 0, 0, 0, 0);
       filteredActuatorVelocities = new YoFloatArray(prefix + "FilteredActuatorVelocity", registry, 0, 0, 0, 0, 0, 0);
       actuatorCurrents = new YoFloatArray(prefix + "ActuatorCurrent", registry, 0, 0, 0, 0, 0, 0);
@@ -148,7 +148,7 @@ public class AbilityHand implements HandInterface
       int[] fsrInitial = new int[TOUCH_SENSOR_COUNT];
       rawFSRReadings = new YoIntegerArray(prefix + "RawFSR", registry, fsrInitial);
 
-      goalPositions = new YoFloatArray(prefix + "GoalPosition", registry, 30.0f, 30.0f, 30.0f, 30.0f, 30.0f, -30.0f);
+      goalPositions = new YoFloatArray(prefix + "GoalPosition", registry, 90.0f, 90.0f, 90.0f, 90.0f, 80.0f, -20.0f);
       goalVelocities = new YoFloatArray(prefix + "GoalVelocity", registry, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
 
       controlDT = new YoDouble(prefix + "_controlDT", registry);
