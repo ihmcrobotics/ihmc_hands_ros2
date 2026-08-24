@@ -8,7 +8,6 @@ import us.ihmc.jros2.AsyncROS2Node;
 import us.ihmc.jros2.ROS2Publisher;
 import us.ihmc.jros2.ROS2QoSProfile;
 import us.ihmc.jros2.ROS2Topic;
-import us.ihmc.log.LogTools;
 import us.ihmc.robotics.robotSide.RobotSide;
 import us.ihmc.robotics.robotSide.SideDependentList;
 
@@ -32,6 +31,7 @@ public class AbilityHandROS2ControllerCommunication
 
    private final HandConfigurationCommandMessage configurationMessage;
    private final SideDependentList<LatestMessageSubscription<HandConfigurationCommandMessage>> configurationSubscriptions;
+   private final float[] goalVelocities = new float[AbilityHand.ACTUATOR_COUNT];
 
    public AbilityHandROS2ControllerCommunication(String nodeName)
    {
@@ -63,33 +63,47 @@ public class AbilityHandROS2ControllerCommunication
     */
    public void readCommand(AbilityHand hand)
    {
-      if (commandSubscriptions.get(hand.getSide()).readLatestMessage(commandMessage))
+      try
       {
-         AbilityHandControlMode controlMode = AbilityHandControlMode.fromByte(commandMessage.getControlMode());
-         hand.setControlMode(controlMode);
-         if (controlMode == AbilityHandControlMode.POSITION)
-            hand.setGoalPositions(commandMessage.getGoalPositions());
-         if (controlMode == AbilityHandControlMode.GRIP)
-            hand.setGrip(AbilityHandGrip.fromByte(commandMessage.getGrip()));
-         hand.setGoalVelocities(commandMessage.getGoalVelocities());
-      }
+         if (commandSubscriptions.get(hand.getSide()).readLatestMessage(commandMessage))
+            applyAbilityHandCommand(hand);
 
-      if (configurationSubscriptions.get(hand.getSide()).readLatestMessage(configurationMessage))
-         applyConfiguration(hand, configurationMessage.getConfiguration());
+         if (configurationSubscriptions.get(hand.getSide()).readLatestMessage(configurationMessage))
+            applyConfiguration(hand, configurationMessage.getConfiguration());
+      }
+      catch (Exception ignored)
+      {
+         // Invalid or unmatched hand messages must not propagate into the EtherCAT cycle.
+      }
    }
 
-   private static void applyConfiguration(AbilityHand hand, int configuration)
+   private void applyAbilityHandCommand(AbilityHand hand)
+   {
+      byte controlModeOrdinal = commandMessage.getControlMode();
+      if (controlModeOrdinal < 0 || controlModeOrdinal >= AbilityHandControlMode.values.length)
+         return;
+
+      AbilityHandControlMode controlMode = AbilityHandControlMode.fromByte(controlModeOrdinal);
+      hand.setControlMode(controlMode);
+      if (controlMode == AbilityHandControlMode.POSITION)
+         hand.setGoalPositions(commandMessage.getGoalPositions());
+      if (controlMode == AbilityHandControlMode.GRIP)
+      {
+         byte gripOrdinal = commandMessage.getGrip();
+         if (gripOrdinal >= 0 && gripOrdinal < AbilityHandGrip.values.length)
+            hand.setGrip(AbilityHandGrip.fromByte(gripOrdinal));
+      }
+      hand.setGoalVelocities(commandMessage.getGoalVelocities());
+   }
+
+   private void applyConfiguration(AbilityHand hand, int configuration)
    {
       if (configuration <= 0 || configuration >= AbilityHandGrip.values.length)
-      {
-         LogTools.warn("Unknown Ability Hand configuration command: {}", configuration);
          return;
-      }
 
       AbilityHandGrip grip = AbilityHandGrip.fromByte((byte) configuration);
       hand.setControlMode(AbilityHandControlMode.GRIP);
       hand.setGrip(grip);
-      float[] goalVelocities = new float[AbilityHand.ACTUATOR_COUNT];
       for (int i = 0; i < goalVelocities.length; i++)
          goalVelocities[i] = DEFAULT_VELOCITY_DEG_PER_SEC;
       hand.setGoalVelocities(goalVelocities);
@@ -114,19 +128,26 @@ public class AbilityHandROS2ControllerCommunication
     */
    public void publishState(AbilityHand hand)
    {
-      for (int i = 0; i < AbilityHand.ACTUATOR_COUNT; ++i)
+      try
       {
-         stateMessage.getActuatorPositions()[i] = hand.getActuatorPosition(i);
-         stateMessage.getActuatorVelocities()[i] = hand.getFilteredActuatorVelocity(i);
-         stateMessage.getActuatorCurrents()[i] = hand.getActuatorCurrent(i);
-         stateMessage.getGoalPositions()[i] = hand.getGoalPosition(i);
-         stateMessage.getGoalVelocities()[i] = hand.getGoalVelocity(i);
-      }
-      stateMessage.setGripStage(hand.getGripStage());
-      for (int i = 0; i < AbilityHand.TOUCH_SENSOR_COUNT; ++i)
-         stateMessage.getTouchSensorReadings()[i] = hand.getSensedPressure(i);
+         for (int i = 0; i < AbilityHand.ACTUATOR_COUNT; ++i)
+         {
+            stateMessage.getActuatorPositions()[i] = hand.getActuatorPosition(i);
+            stateMessage.getActuatorVelocities()[i] = hand.getFilteredActuatorVelocity(i);
+            stateMessage.getActuatorCurrents()[i] = hand.getActuatorCurrent(i);
+            stateMessage.getGoalPositions()[i] = hand.getGoalPosition(i);
+            stateMessage.getGoalVelocities()[i] = hand.getGoalVelocity(i);
+         }
+         stateMessage.setGripStage(hand.getGripStage());
+         for (int i = 0; i < AbilityHand.TOUCH_SENSOR_COUNT; ++i)
+            stateMessage.getTouchSensorReadings()[i] = hand.getSensedPressure(i);
 
-      statePublishers.get(hand.getSide()).publish(stateMessage);
+         statePublishers.get(hand.getSide()).publish(stateMessage);
+      }
+      catch (Exception ignored)
+      {
+         // Hand state publish must not propagate into the EtherCAT cycle.
+      }
    }
 
    /**

@@ -420,7 +420,11 @@ public class AbilityHand implements HandInterface
     */
    public float getCommandValue(int index)
    {
-      return switch (getControlMode().getEnumValue())
+      AbilityHandControlMode mode = getControlMode().getEnumValue();
+      if (mode == null)
+         return 0.0f;
+
+      return switch (mode)
       {
          case VELOCITY -> velocityCommands.get(index);
          case POSITION, GRIP -> filteredCommandValues.get(index);
