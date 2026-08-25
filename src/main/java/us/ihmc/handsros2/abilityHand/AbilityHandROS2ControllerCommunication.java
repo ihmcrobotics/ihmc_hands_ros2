@@ -78,6 +78,23 @@ public class AbilityHandROS2ControllerCommunication
       }
    }
 
+   /**
+    * Drop queued command / configuration messages without applying them. Used when no Psyonic is
+    * answering so a later connect cannot replay a stale grip into the EtherCAT PDOs.
+    */
+   public void discardPendingCommands(RobotSide side)
+   {
+      try
+      {
+         commandSubscriptions.get(side).readLatestMessage(commandMessage);
+         configurationSubscriptions.get(side).readLatestMessage(configurationMessage);
+      }
+      catch (Exception ignored)
+      {
+         // Discard must never take down the EtherCAT cycle.
+      }
+   }
+
    private void applyAbilityHandCommand(AbilityHand hand)
    {
       byte controlModeOrdinal = commandMessage.getControlMode();
