@@ -25,6 +25,7 @@ ihmc {
 mainDependencies {
    api("us.ihmc:jros2:1.5.1")
    api("us.ihmc:ihmc-robotics-tools:0.15.8")
+   api("us.ihmc:ihmc-interfaces-jros2:source")
 }
 
 testDependencies {

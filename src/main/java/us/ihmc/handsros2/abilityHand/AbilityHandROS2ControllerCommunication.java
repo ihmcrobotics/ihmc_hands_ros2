@@ -49,15 +49,26 @@ public class AbilityHandROS2ControllerCommunication
    public void readCommand(AbilityHand hand)
    {
       if (commandSubscriptions.get(hand.getSide()).readLatestMessage(commandMessage))
+         applyAbilityHandCommand(hand);
+   }
+
+   private void applyAbilityHandCommand(AbilityHand hand)
+   {
+      byte controlModeOrdinal = commandMessage.getControlMode();
+      if (controlModeOrdinal < 0 || controlModeOrdinal >= AbilityHandControlMode.values.length)
+         return;
+
+      AbilityHandControlMode controlMode = AbilityHandControlMode.fromByte(controlModeOrdinal);
+      hand.setControlMode(controlMode);
+      if (controlMode == AbilityHandControlMode.POSITION)
+         hand.setGoalPositions(commandMessage.getGoalPositions());
+      if (controlMode == AbilityHandControlMode.GRIP)
       {
-         AbilityHandControlMode controlMode = AbilityHandControlMode.fromByte(commandMessage.getControlMode());
-         hand.setControlMode(controlMode);
-         if (controlMode == AbilityHandControlMode.POSITION)
-            hand.setGoalPositions(commandMessage.getGoalPositions());
-         if (controlMode == AbilityHandControlMode.GRIP)
-            hand.setGrip(AbilityHandGrip.fromByte(commandMessage.getGrip()));
-         hand.setGoalVelocities(commandMessage.getGoalVelocities());
+         byte gripOrdinal = commandMessage.getGrip();
+         if (gripOrdinal >= 0 && gripOrdinal < AbilityHandGrip.values.length)
+            hand.setGrip(AbilityHandGrip.fromByte(gripOrdinal));
       }
+      hand.setGoalVelocities(commandMessage.getGoalVelocities());
    }
 
    /**

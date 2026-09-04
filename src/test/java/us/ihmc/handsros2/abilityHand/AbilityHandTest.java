@@ -562,6 +562,30 @@ public class AbilityHandTest
    }
 
    @Test
+   public void testHandleGripIsOrdinal11()
+   {
+      assertEquals(11, AbilityHandGrip.HANDLE.toByte());
+      assertEquals(AbilityHandGrip.HANDLE, AbilityHandGrip.fromByte((byte) 11));
+      assertEquals(1, AbilityHandGrip.HANDLE.getNumberOfStages());
+      assertArrayEquals(new float[] {93, 93, 93, 93, 38, -55},
+                        new float[] {AbilityHandGrip.HANDLE.getStageFingerPosition(0, 0),
+                                     AbilityHandGrip.HANDLE.getStageFingerPosition(0, 1),
+                                     AbilityHandGrip.HANDLE.getStageFingerPosition(0, 2),
+                                     AbilityHandGrip.HANDLE.getStageFingerPosition(0, 3),
+                                     AbilityHandGrip.HANDLE.getStageFingerPosition(0, 4),
+                                     AbilityHandGrip.HANDLE.getStageFingerPosition(0, 5)});
+
+      AbilityHand hand = new AbilityHand(RobotSide.RIGHT);
+      hand.setControlMode(AbilityHandControlMode.GRIP);
+      hand.setGrip(AbilityHandGrip.HANDLE);
+      hand.setGoalVelocities(new float[] {180f, 180f, 180f, 180f, 180f, 180f});
+      hand.update(0.02f);
+      for (int i = 0; i < 5; i++)
+         assertEquals(93.0f, hand.getGoalPosition(i), 1.0e-4f);
+      assertEquals(-55.0f, hand.getGoalPosition(5), 1.0e-4f);
+   }
+
+   @Test
    public void testType()
    {
       AbilityHand testEZGripper = new AbilityHand(RobotSide.LEFT);

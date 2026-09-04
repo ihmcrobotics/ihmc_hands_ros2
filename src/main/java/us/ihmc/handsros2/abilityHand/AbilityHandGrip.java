@@ -17,7 +17,7 @@ public enum AbilityHandGrip
    DOOR_LEVER_CRUSH(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{105, 105, 105, 105, 33, -4}}),
    KEY_OPEN(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{90, 90, 90, 90, 0, -20}}),
    KEY_CLOSE(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{90, 90, 90, 90, 80, -20}}),
-   HANDLE(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{95, 95, 95, 95, 53, -56}}),
+   HANDLE(new int[][] {{0, 1, 2, 3, 4, 5}}, new float[][] {{93, 93, 93, 93, 38, -55}}),
    ;
 
    public static final AbilityHandGrip[] values = values();
