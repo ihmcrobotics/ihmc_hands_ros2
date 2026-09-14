@@ -37,6 +37,7 @@ byte DOOR_LEVER_CLOSE_GRIP=7
 byte DOOR_LEVER_CRUSH_GRIP=8
 byte KEY_OPEN_GRIP=9
 byte KEY_CLOSE_GRIP=10
+byte HANDLE_GRIP=11
 
 # Grip to execute in GRIP_CONTROL mode
 byte grip
@@ -74,6 +75,7 @@ public class AbilityHandCommand implements ROS2Message<AbilityHandCommand>
    public static final byte DOOR_LEVER_CRUSH_GRIP = 8;
    public static final byte KEY_OPEN_GRIP = 9;
    public static final byte KEY_CLOSE_GRIP = 10;
+   public static final byte HANDLE_GRIP = 11;
    /**
       Grip to execute in GRIP_CONTROL mode
    */
@@ -224,6 +226,8 @@ public class AbilityHandCommand implements ROS2Message<AbilityHandCommand>
       builder.append(KEY_OPEN_GRIP);
       builder.append("KEY_CLOSE_GRIP=");
       builder.append(KEY_CLOSE_GRIP);
+      builder.append("HANDLE_GRIP=");
+      builder.append(HANDLE_GRIP);
       builder.append("grip_=");
       builder.append(grip_);
 

@@ -24,6 +24,7 @@ byte DOOR_LEVER_CLOSE_GRIP=7
 byte DOOR_LEVER_CRUSH_GRIP=8
 byte KEY_OPEN_GRIP=9
 byte KEY_CLOSE_GRIP=10
+byte HANDLE_GRIP=11
 
 # Grip to execute in GRIP_CONTROL mode
 byte grip
