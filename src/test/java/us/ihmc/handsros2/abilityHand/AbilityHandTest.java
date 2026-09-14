@@ -15,8 +15,9 @@ public class AbilityHandTest
    public void testPositionControl()
    {
       AbilityHand hand = new AbilityHand(RobotSide.LEFT);
-      hand.setControlMode(AbilityHandControlMode.POSITION);
       hand.setActuatorPositions(new float[] {30f, 30f, 30f, 30f, 30f, -30f});
+      hand.update(0.01f);
+      hand.setControlMode(AbilityHandControlMode.POSITION);
       float[] goalPositions = {10f, 20f, 30f, 40f, 50f, -10f};
       hand.setGoalPositions(goalPositions);
       hand.setGoalVelocities(new float[] {30f, 30f, 30f, 30f, 30f, 30f});
@@ -189,7 +190,7 @@ public class AbilityHandTest
       hand.setControlMode(AbilityHandControlMode.GRIP);
       hand.setGrip(AbilityHandGrip.CLOSE);
 
-      int numberOfSteps = 220;
+      int numberOfSteps = 170;
       float timeStep = 0.01f;
 
       float[] times = new float[numberOfSteps];
