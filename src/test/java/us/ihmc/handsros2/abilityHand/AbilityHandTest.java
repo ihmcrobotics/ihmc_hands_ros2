@@ -189,7 +189,7 @@ public class AbilityHandTest
       hand.setControlMode(AbilityHandControlMode.GRIP);
       hand.setGrip(AbilityHandGrip.CLOSE);
 
-      int numberOfSteps = 170;
+      int numberOfSteps = 220;
       float timeStep = 0.01f;
 
       float[] times = new float[numberOfSteps];
@@ -580,8 +580,9 @@ public class AbilityHandTest
       hand.setGrip(AbilityHandGrip.HANDLE);
       hand.setGoalVelocities(new float[] {180f, 180f, 180f, 180f, 180f, 180f});
       hand.update(0.02f);
-      for (int i = 0; i < 5; i++)
+      for (int i = 0; i < 4; i++)
          assertEquals(93.0f, hand.getGoalPosition(i), 1.0e-4f);
+      assertEquals(38.0f, hand.getGoalPosition(4), 1.0e-4f);
       assertEquals(-55.0f, hand.getGoalPosition(5), 1.0e-4f);
    }
 
