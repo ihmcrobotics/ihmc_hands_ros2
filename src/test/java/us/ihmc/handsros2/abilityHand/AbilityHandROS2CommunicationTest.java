@@ -39,7 +39,7 @@ public class AbilityHandROS2CommunicationTest
       command.setControlMode(AbilityHandControlMode.POSITION.toByte());
       System.arraycopy(COMMAND_VALUES, 0, command.getGoalPositions(), 0, ACTUATOR_COUNT);
       for (int i = 0; i < 6; ++i)
-         command.getGoalVelocities()[i] = 30.0f;
+         command.getGoalVelocities()[i] = 180.0f;
       ROS2Publisher<AbilityHandCommand> publisher = node.createPublisher(AbilityHandROS2API.COMMAND_TOPICS.get(HAND_SIDE));
 
       AtomicBoolean received = new AtomicBoolean(false);
@@ -96,7 +96,7 @@ public class AbilityHandROS2CommunicationTest
       }
 
       float[] prevPos = new float[ACTUATOR_COUNT];
-      for (int i = 0; i < 50; ++i)
+      for (int i = 0; i < 150; ++i)
       {
          float dt = 0.01f;
          hand.update(dt);
